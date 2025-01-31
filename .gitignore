@@ -1,0 +1,15 @@
+# debug ulv executable
+ulv
+
+# debug command_console executable
+command_console
+
+# folder of release builds
+release_builds
+
+# any object files
+*.obj
+./obj
+
+# vim swap files
+*.swp
