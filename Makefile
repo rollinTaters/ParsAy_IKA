@@ -1,5 +1,5 @@
-SFML_dir_linux := /home/flynn/code_dumpster/cpp_stuff/game_dev_resources/SFML-2.6.x-linux
-SFML_dir_win := /home/flynn/code_dumpster/cpp_stuff/game_dev_resources/SFML-2.6.x-win
+SFML_dir_linux := ./SFML/SFML-2.6.x-linux
+SFML_dir_win := ./SFML/SFML-2.6.x-win
 
 SFML_libs := -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-system -lsfml-network
 #SFML_libs_static := -DSFML_STATIC -MMD -MP -static-libstdc++ -static-libgcc -lsfml-main -lsfml-audio-s -lsfml-graphics-s -lsfml-window-s -lsfml-system-s -lsfml-network-s  -lopengl32 -lfreetype -lwinmm -lgdi32 -lopenal32 -lFLAC -lvorbisenc -lvorbis -logg -lws2_32
