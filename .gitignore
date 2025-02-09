@@ -9,7 +9,7 @@ release_builds
 
 # any object files
 *.obj
-./obj
+obj
 
 # vim swap files
 *.swp
