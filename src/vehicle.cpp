@@ -63,6 +63,8 @@ Vehicle& Vehicle::operator =( const Vehicle& rhs )
     return *this = Vehicle(rhs);
 }
 
+BB3D Vehicle::getBox() const { return m_bb3d; }
+
 Sensor_Emulator Vehicle::getSensor( const unsigned short int number ) const
 {
     if( number >= m_num_sensors )

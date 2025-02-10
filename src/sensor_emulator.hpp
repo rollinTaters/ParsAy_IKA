@@ -48,6 +48,8 @@ class Sensor_Emulator
     bool isReady() const;
     float read();
 
+    BB3D getBox() const;    // returns 3d bounding box of sensor
+
   private:
 
     // position info, relative to the vehicle

@@ -75,3 +75,5 @@ float Sensor_Emulator::read()
     m_time_last_read = env_emulator.getTime();
     return env_emulator.getSensorData(this);
 }
+
+BB3D Sensor_Emulator::getBox() const { return m_bb3d; }

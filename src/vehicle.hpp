@@ -46,6 +46,8 @@ class Vehicle
     Vehicle( const Vehicle& );
     Vehicle& operator =( const Vehicle& );
 
+    BB3D getBox() const;    // returns 3d bounding box of vehicle
+
     Sensor_Emulator getSensor( const unsigned short int number ) const;
     float readSensor( const unsigned short int number );
 
