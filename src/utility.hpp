@@ -33,32 +33,81 @@
 #include <cmath>
 #include "SFML/System/Vector3.hpp"
 
+#define PI 3.141592
+
+class Quaternion
+{
+  public:
+    float w;
+    float x;
+    float y;
+    float z;
+
+    Quaternion() : w(1), x(0), y(0), z(0) {}
+    Quaternion( const Quaternion &q ) : w(q.w), x(q.x), y(q.y), z(q.z) {}
+    Quaternion( float _x, float _y, float _z ) : w(0), x(_x), y(_y), z(_z) {}
+    Quaternion( float _w, float _x, float _y, float _z ) : w(_w), x(_x), y(_y), z(_z) {}
+
+    Quaternion &operator=( const Quaternion &rhs );
+    Quaternion &operator*=( const Quaternion &q );
+    const Quaternion operator*( const Quaternion &q ) const { return Quaternion(*this) *= q; }
+
+    float dot( const Quaternion &q ) const;
+    float norm() const;
+    Quaternion &normalize();
+
+    const Quaternion conjugate() const;
+    void rotateVector( sf::Vector3f &vec ) const;
+
+    // these create a new quaternion and return it
+    static const Quaternion fromEuler( sf::Vector3f euler );
+    static const Quaternion fromAxisAngle( sf::Vector3f axis, float radian );
+};
+
 // 3 dimensional bounding box geometry
 struct BB3D
 {
   public:
     BB3D();
     BB3D( const sf::Vector3f pos,
-          const sf::Vector3f angles,
+          const Quaternion quat,
           const sf::Vector3f size );
 
+    // these rotate around the local object axes
+    void yawLeft( float radian );
+    void pitchUp( float radian );
+    void rollRight( float radian );
+
+    // -- setters --
     void setSize( const sf::Vector3f size );
     void setSize( const float x, const float y, const float z );
 
     void setPos( const sf::Vector3f pos );
     void setPos( const float x, const float y, const float z );
 
-    void setAng( const sf::Vector3f ang );
-    void setAng( const float x, const float y, const float z );
+    void setAng( const sf::Vector3f euler );    // (radian)
+    void setAng( const float x, const float y, const float z ); // (radian)
+
+    // -- getters --
+    sf::Vector3f getSize() const;
+
+    sf::Vector3f getPos() const;
+
+    sf::Vector3f getAngEuler() const;   // euler angles (in order: z_yaw, x_pitch, y_roll) (radian)
+    Quaternion getQuaternion() const;   // returns quaternion describing the rotation of local csys
+
+    sf::Vector3f getLocalVecX() const;
+    sf::Vector3f getLocalVecY() const;
+    sf::Vector3f getLocalVecZ() const;
 
   private:
     // unless otherwise specified, all 3d vectors are:
     // +X:starboard, +Y:bow, +Z:above, (or width, len, height) (metre)
-    // +X:pitch up, +Y:roll right, +Z:yaw left      (degree)
+    // +X:pitch up, +Y:roll right, +Z:yaw left      (radian)
 
     // positional variables
     sf::Vector3f m_pos;      // (metre)
-    sf::Vector3f m_angles;   // (degree)
+    Quaternion m_quat;       // a quaternion describing our rotation relative to global
 
     // size variable
     sf::Vector3f m_size;     // (metre)

@@ -25,20 +25,158 @@
 
 #include "utility.hpp"
 
+Quaternion &Quaternion::operator=(const Quaternion &q)
+{
+	w = q.w;
+	x = q.x;
+	y = q.y;
+	z = q.z;
+	return *this;
+}
+
+Quaternion &Quaternion::operator*=(const Quaternion &q)
+{
+	float w1 = w;
+	float x1 = x;
+	float y1 = y;
+	float z1 = z;
+
+	float w2 = q.w;
+	float x2 = q.x;
+	float y2 = q.y;
+	float z2 = q.z;
+
+	w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2;
+	x = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2;
+	y = w1 * y2 + y1 * w2 + z1 * x2 - x1 * z2;
+	z = w1 * z2 + z1 * w2 + x1 * y2 - y1 * x2;
+	return *this;
+}
+
+float Quaternion::dot(const Quaternion &q) const
+{
+	return w * q.w + x * q.x + y * q.y + z * q.z;
+}
+
+float Quaternion::norm() const
+{
+	return sqrtf(w * w + x * x + y * y + z * z);
+}
+
+Quaternion &Quaternion::normalize()
+{
+	float iLen = 1 / norm();
+	w *= iLen;
+	x *= iLen;
+	y *= iLen;
+	z *= iLen;
+	return *this;
+}
+
+const Quaternion Quaternion::conjugate() const
+{
+	return Quaternion(w, -x, -y, -z);
+}
+
+void Quaternion::rotateVector( sf::Vector3f &vec ) const
+{
+	// t = 2q x v
+	float tx = 2. * (y * vec.z - z * vec.y);
+	float ty = 2. * (z * vec.x - x * vec.z);
+	float tz = 2. * (x * vec.y - y * vec.x);
+
+	// v + w t + q x t
+	vec.x = vec.x + w * tx + y * tz - z * ty;
+	vec.y = vec.y + w * ty + z * tx - x * tz;
+	vec.z = vec.z + w * tz + x * ty - y * tx;
+}
+
+const Quaternion Quaternion::fromEuler( sf::Vector3f euler ) 
+{
+	float x = euler.x * 0.5;
+	float y = euler.y * 0.5;
+	float z = euler.z * 0.5;
+
+	float cX = cosf(x);
+	float cY = cosf(y);
+	float cZ = cosf(z);
+
+	float sX = sinf(x);
+	float sY = sinf(y);
+	float sZ = sinf(z);
+
+    // YXZ
+	return Quaternion(
+		sX * sY * sZ + cX * cY * cZ,
+		sX * sZ * cY + sY * cX * cZ,
+		sX * cY * cZ - sY * sZ * cX,
+		sZ * cX * cY - sX * sY * cZ);
+}
+
+const Quaternion Quaternion::fromAxisAngle( sf::Vector3f axis, float radian ) 
+{
+	Quaternion ret;
+
+	float halfAngle = radian * 0.5;
+
+	float sin_2 = sinf(halfAngle);
+	float cos_2 = cosf(halfAngle);
+
+	float sin_norm = sin_2 / sqrtf( axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
+
+	ret.w = cos_2;
+	ret.x = axis.x * sin_norm;
+	ret.y = axis.y * sin_norm;
+	ret.z = axis.z * sin_norm;
+
+	return ret;
+}
+
+
 BB3D::BB3D()
 {
     m_pos = sf::Vector3f(0,0,0);
-    m_angles = sf::Vector3f(0,0,0);
     m_size = sf::Vector3f(1,1,1);
 }
 
 BB3D::BB3D( const sf::Vector3f pos,
-            const sf::Vector3f angles,
+            const Quaternion quat,
             const sf::Vector3f size ):
-    m_pos(pos),m_angles(angles),m_size(size)
+    m_pos(pos),m_quat(quat),m_size(size)
 {
 }
 
+void BB3D::yawLeft( float radian )
+{
+    sf::Vector3f axis = getLocalVecZ();
+    // create a quat that rotates us in local csys
+    Quaternion q = Quaternion::fromAxisAngle( axis, radian );
+
+    // apply quat to our member quat
+    m_quat *= q;
+}
+
+void BB3D::pitchUp( float radian )
+{
+    sf::Vector3f axis = getLocalVecX();
+    // create a quat that rotates us in local csys
+    Quaternion q = Quaternion::fromAxisAngle( axis, radian );
+
+    // apply quat to our member quat
+    m_quat *= q;
+}
+
+void BB3D::rollRight( float radian )
+{
+    sf::Vector3f axis = getLocalVecY();
+    // create a quat that rotates us in local csys
+    Quaternion q = Quaternion::fromAxisAngle( axis, radian );
+
+    // apply quat to our member quat
+    m_quat *= q;
+}
+
+// -- Setters --
 void BB3D::setSize( const sf::Vector3f size )
 {
     m_size = size;
@@ -59,14 +197,60 @@ void BB3D::setPos( const float x, const float y, const float z )
     m_pos = sf::Vector3f(x,y,z);
 }
 
-void BB3D::setAng( const sf::Vector3f ang )
+void BB3D::setAng( const sf::Vector3f euler )
 {
-    m_angles = ang;
+    m_quat = Quaternion::fromEuler( euler );
 }
 
 void BB3D::setAng( const float x, const float y, const float z )
 {
-    m_angles = sf::Vector3f(x,y,z);
+    setAng( sf::Vector3f(x,y,z) );
+}
+
+// -- Getters --
+sf::Vector3f BB3D::getSize() const { return m_size; }
+
+sf::Vector3f BB3D::getPos() const { return m_pos; }
+
+sf::Vector3f BB3D::getAngEuler() const
+{
+    // conversion yanked from, then modified:
+    // https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToEuler/indexLocal.htm
+
+    // TODO axis naming convention must be checked
+    Quaternion q1 = m_quat;
+	double sqw = q1.w*q1.w;
+    double sqx = q1.x*q1.x;
+    double sqy = q1.y*q1.y;
+    double sqz = q1.z*q1.z;
+    float heading = std::atan2(2.0 * (q1.x*q1.y + q1.z*q1.w),(sqx - sqy - sqz + sqw));
+    float bank = std::atan2(2.0 * (q1.y*q1.z + q1.x*q1.w),(-sqx - sqy + sqz + sqw));
+    float attitude = std::asin(-2.0 * (q1.x*q1.z - q1.y*q1.w));
+
+    return sf::Vector3f( attitude, bank, heading );
+}
+
+Quaternion BB3D::getQuaternion() const { return m_quat; }
+
+sf::Vector3f BB3D::getLocalVecX() const
+{
+    sf::Vector3f ret(1,0,0);
+    m_quat.rotateVector( ret );
+    return ret;
+}
+
+sf::Vector3f BB3D::getLocalVecY() const 
+{
+    sf::Vector3f ret(0,1,0);
+    m_quat.rotateVector( ret );
+    return ret;
+}
+
+sf::Vector3f BB3D::getLocalVecZ() const
+{
+    sf::Vector3f ret(0,0,1);
+    m_quat.rotateVector( ret );
+    return ret;
 }
 
 
@@ -75,14 +259,7 @@ BB3D operator +( BB3D left, BB3D right )
 {
     BB3D ret = left;
     ret.m_pos += right.m_pos;
-
-    // FIXME use quaternions for angular stuff
-    // im gonna just keep going for now with only yaw angles, and ignore the rest
-    ret.m_angles.z += right.m_angles.z;
-    if( ret.m_angles.z >= 360.f )
-        ret.m_angles.z -= 360.f;
-    else if( ret.m_angles.z < 0.f )
-        ret.m_angles.z += 360.f;
+    ret.m_quat *= right.m_quat;
 
     return ret;
 }
@@ -92,14 +269,7 @@ BB3D& operator +=( BB3D& left, BB3D right )
 {
     BB3D ret = left;
     ret.m_pos += right.m_pos;
-
-    // FIXME use quaternions for angular stuff
-    // im gonna just keep going for now with only yaw angles, and ignore the rest
-    ret.m_angles.z += right.m_angles.z;
-    if( ret.m_angles.z >= 360.f )
-        ret.m_angles.z -= 360.f;
-    else if( ret.m_angles.z < 0.f )
-        ret.m_angles.z += 360.f;
+    ret.m_quat *= right.m_quat;
 
     left = ret;
     return left;
