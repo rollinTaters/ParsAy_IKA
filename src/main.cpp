@@ -53,5 +53,7 @@ int main()
     // our navigation guidance and control system
     NGC ngc_system( &simulated_vehicle );
 
+    ngc_system.start();
+
     std::cout<<"Exiting. Have a nice day\n";
 }
