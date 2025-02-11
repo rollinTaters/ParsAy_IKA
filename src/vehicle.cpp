@@ -71,6 +71,12 @@ Sensor_Emulator Vehicle::getSensor( const unsigned short int number ) const
     {
         std::cerr<<"ERROR! Requested non existing sensor, returning default constructed sensor.\n";
         return Sensor_Emulator();
+/*
+								/\/\
+								  \_\  _..._
+								  (" )(_..._)
+								   ^^  // \\
+*/
     }
     return m_sensor[ number ];
 }
