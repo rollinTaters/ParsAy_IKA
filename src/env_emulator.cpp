@@ -23,13 +23,19 @@
 */
 
 
+#include <iostream>     // cerr
 #include "env_emulator.hpp"
 
 Env_Emulator::Env_Emulator( const Vehicle& inp_vehicle ):
     m_real_vehicle(inp_vehicle)
 {
-    // constructor
-    // TODO maybe load the course image from the disk?
+    // load the course image from the disk
+    if( !m_image_course.loadFromFile("gfx/course1.png") )
+    {
+        std::cerr<<"Error. Could not load course image from file!\n";
+    }
+    // set position of m_real_vehicle in course
+    m_real_vehicle.overridePos( sf::Vector3f(340*m_metre_per_pixel, 775*m_metre_per_pixel, 0.5f) );
 
     // init clock
     m_clock = sf::Clock();
@@ -42,9 +48,43 @@ sf::Time Env_Emulator::getTime() const
 
 float Env_Emulator::getSensorData( Sensor_Emulator* sensor ) const
 {
-    // TODO read from m_real_vehicle
-    return 0.f;
-
     // determine sensor position
+    BB3D sensor_box = sensor->getBox();
+    sensor_box += m_real_vehicle.getBox();
+
+    // pixel marching setup
+    unsigned int max_iteration = 1000;
+    unsigned int iteration = 0;
+    bool march_successful = false;
+    sf::Vector3f start_pos = sensor_box.getPos();
+    start_pos /= m_metre_per_pixel; // convert meters to pixel position
+    sf::Vector3f check_pos = start_pos; // position we will iterate upon
+    sf::Vector3f direction = sensor_box.getAngEuler();
+
+    while( iteration < max_iteration )
+    {
+        // check if pixel is marked as "wall"
+        if( m_image_course.getPixel( (int)round(check_pos.x),
+                                     (int)round(check_pos.y) ) == sf::Color::Black )
+        {
+            // found wall, return it
+            march_successful = true;
+            break;
+        }
+        // TODO what about floors? at least return when point goes below Z0
+
+        // TODO we may skip some pixels if we move by a unit vector, check if this is the case
+        // move to next iteration
+        check_pos += direction;
+    }
+
+    // returning found value
+    if( !march_successful )
+    {
+        // NOTE: maybe there was no obstacle? this isnt necessarly a failure
+        std::cerr<<"Environment emulator: sensor did not hit obstacle\n";
+        return 1000.f;
+    }
+    return mag( (check_pos - start_pos)*m_metre_per_pixel );
 }
 

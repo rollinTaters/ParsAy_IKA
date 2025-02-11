@@ -55,7 +55,7 @@ class Env_Emulator
     private:
     // "real" map/course
     sf::Image m_image_course;
-    const unsigned short int m_mm_per_pixel = 5;
+    const float m_metre_per_pixel = 0.005;  // 5mm per pixel
 
     // "real" vehicle, is copied from given vehicle on constructor method
     Vehicle m_real_vehicle;

@@ -85,3 +85,7 @@ float Vehicle::readSensor( const unsigned short int number )
     return m_sensor[number].read();
 }
 
+void Vehicle::overridePos( const sf::Vector3f pos )
+{
+    m_bb3d.setPos(pos);
+}

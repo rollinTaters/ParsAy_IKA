@@ -25,6 +25,7 @@
 
 #include "utility.hpp"
 
+
 Quaternion &Quaternion::operator=(const Quaternion &q)
 {
 	w = q.w;

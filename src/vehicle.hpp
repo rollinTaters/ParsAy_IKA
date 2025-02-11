@@ -51,6 +51,8 @@ class Vehicle
     Sensor_Emulator getSensor( const unsigned short int number ) const;
     float readSensor( const unsigned short int number );
 
+    void overridePos( const sf::Vector3f ); // set position of vehicle
+
   private:
     // unless otherwise specified, all 3d vectors are:
     // +X:starboard, +Y:bow, +Z:above, (or width, len, height) (metre)

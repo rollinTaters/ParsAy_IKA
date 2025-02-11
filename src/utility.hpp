@@ -35,6 +35,12 @@
 
 #define PI 3.141592
 
+template<typename T>
+float mag( const sf::Vector3<T> v )
+{
+    return sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+}
+
 class Quaternion
 {
   public:
