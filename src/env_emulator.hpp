@@ -49,8 +49,8 @@ class Env_Emulator
     // returns time elapsed since emulator start
     sf::Time getTime() const;
 
-    // this returns the emulated sensor readings from the "real" vehicle
-    float getSensorData( Sensor_Emulator* ) const;
+    // this populates the sensor data object with emulated sensor readings from the "real" vehicle
+    bool getSensorData( Sensor_Emulator*, Sensor_Data& ) const; // returns false on read fail
 
     private:
     // "real" map/course

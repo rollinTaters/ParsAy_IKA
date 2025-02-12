@@ -33,8 +33,10 @@ Sensor_Emulator::Sensor_Emulator()
     m_time_cooldown = sf::Time::Zero;
 }
 
-Sensor_Emulator::Sensor_Emulator( const sf::Vector3f inp_pos,
+Sensor_Emulator::Sensor_Emulator( Sensor_Type type,
+                                  const sf::Vector3f inp_pos,
                                   const sf::Vector3f inp_angle )
+    :m_type(type)
 {
     m_bb3d.setPos( inp_pos );
     m_bb3d.setAng( inp_angle );
@@ -43,7 +45,8 @@ Sensor_Emulator::Sensor_Emulator( const sf::Vector3f inp_pos,
     m_time_cooldown = sf::milliseconds(200);
 }
 
-Sensor_Emulator::Sensor_Emulator( const BB3D inp_bb3d )
+Sensor_Emulator::Sensor_Emulator( Sensor_Type type, const BB3D inp_bb3d )
+    :m_type(type)
 {
     m_bb3d = inp_bb3d;
 
@@ -58,7 +61,7 @@ bool Sensor_Emulator::isReady() const
     return false;
 }
 
-float Sensor_Emulator::read()
+float Sensor_Emulator::read( Sensor_Data& data )
 {
     // we are a sensor emulator, there is no hardware to read
     // forward the call to the environment emulator
@@ -73,7 +76,8 @@ float Sensor_Emulator::read()
         return 0.f;
     }
     m_time_last_read = env_emulator.getTime();
-    return env_emulator.getSensorData(this);
+    return env_emulator.getSensorData(this, data );
 }
 
+Sensor_Type Sensor_Emulator::getType() const { return m_type; }
 BB3D Sensor_Emulator::getBox() const { return m_bb3d; }

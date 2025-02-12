@@ -46,13 +46,16 @@ sf::Time Env_Emulator::getTime() const
     return m_clock.getElapsedTime();
 }
 
-float Env_Emulator::getSensorData( Sensor_Emulator* sensor ) const
+bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) const
 {
+    // determine sensor type
+    Sensor_Type sensor_type = sensor->getType();
+
     // determine sensor position
     BB3D sensor_box = sensor->getBox();
     sensor_box += m_real_vehicle.getBox();
-
-    // pixel marching setup
+    
+    // pixel marching setup, for direction sensor
     unsigned int max_iteration = 1000;
     unsigned int iteration = 0;
     bool march_successful = false;
@@ -61,30 +64,68 @@ float Env_Emulator::getSensorData( Sensor_Emulator* sensor ) const
     sf::Vector3f check_pos = start_pos; // position we will iterate upon
     sf::Vector3f direction = sensor_box.getAngEuler();
 
-    while( iteration < max_iteration )
+    switch( sensor_type )
     {
-        // check if pixel is marked as "wall"
-        if( m_image_course.getPixel( (int)round(check_pos.x),
-                                     (int)round(check_pos.y) ) == sf::Color::Black )
-        {
-            // found wall, return it
-            march_successful = true;
-            break;
-        }
-        // TODO what about floors? at least return when point goes below Z0
+        default:
+        case E_type_undefined:
+            std::cerr<<"ERROR: Environment emulator got request to read undefined type sensors data\n";
+            return false;
+        // ---- Simple distance sensor ----
+        case E_type_distance:
 
-        // TODO we may skip some pixels if we move by a unit vector, check if this is the case
-        // move to next iteration
-        check_pos += direction;
-    }
+            while( iteration < max_iteration )
+            {
+                // check if pixel is marked as "wall"
+                if( m_image_course.getPixel( (int)round(check_pos.x),
+                                             (int)round(check_pos.y) ) == sf::Color::Black )
+                {
+                    // found wall, return it
+                    march_successful = true;
+                    break;
+                }
+                // TODO what about floors? at least return when point goes below Z0
 
-    // returning found value
-    if( !march_successful )
-    {
-        // NOTE: maybe there was no obstacle? this isnt necessarly a failure
-        std::cerr<<"Environment emulator: sensor did not hit obstacle\n";
-        return 1000.f;
+                // TODO we may skip some pixels if we move by a unit vector, check if this is the case
+                // move to next iteration
+                check_pos += direction;
+            }
+
+            // returning found value
+            if( !march_successful )
+            {
+                // NOTE: maybe there was no obstacle? this isnt necessarly a failure
+                std::cerr<<"Environment emulator: sensor did not hit obstacle\n";
+                //data.distance = 1000.f;
+                return false;
+            }
+            data.distance = mag( (check_pos - start_pos)*m_metre_per_pixel );
+            return true;
+
+        // ---- LIDAR ----
+        case E_type_LIDAR:
+            // TODO
+            std::cerr<<"ERROR: LIDAR type sensor is not implemented in environment emulator\n";
+            return false;
+
+        // ---- IMU ----
+        case E_type_IMU:
+            data.acceleration = m_real_vehicle.getAcc();
+            data.angular_rate = m_real_vehicle.getAngAcc();
+            // TODO data.magnetic_north;
+            data.barometric_pressure = 101325;
+            return true;
+
+        // ---- Temperature ----
+        case E_type_temperature:
+            // TODO
+            data.temperature = -273.3;  // ankara
+            return false;
+
+        // ---- Electric Current ----
+        case E_type_current:
+            // TODO
+            data.electric_current = 0;
+            return false;
     }
-    return mag( (check_pos - start_pos)*m_metre_per_pixel );
 }
 

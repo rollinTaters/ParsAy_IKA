@@ -30,11 +30,12 @@
 Vehicle::Vehicle()
 {
     // populate sensors on vehicle
-    m_sensor[0] = Sensor_Emulator( sf::Vector3f(-0.20, 0,0), sf::Vector3f(0,0,-50) );
-    m_sensor[1] = Sensor_Emulator( sf::Vector3f(-0.10, 0,0), sf::Vector3f(0,0,-20) );
-    m_sensor[2] = Sensor_Emulator( sf::Vector3f( 0.00, 0,0), sf::Vector3f(0,0,  0) );
-    m_sensor[3] = Sensor_Emulator( sf::Vector3f( 0.10, 0,0), sf::Vector3f(0,0, 20) );
-    m_sensor[4] = Sensor_Emulator( sf::Vector3f( 0.20, 0,0), sf::Vector3f(0,0, 50) );
+    m_sensor[0] = Sensor_Emulator( E_type_distance, sf::Vector3f(-0.20, 0,0), sf::Vector3f(0,0,-50) );
+    m_sensor[1] = Sensor_Emulator( E_type_distance, sf::Vector3f(-0.10, 0,0), sf::Vector3f(0,0,-20) );
+    m_sensor[2] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.00, 0,0), sf::Vector3f(0,0,  0) );
+    m_sensor[3] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.10, 0,0), sf::Vector3f(0,0, 20) );
+    m_sensor[4] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.20, 0,0), sf::Vector3f(0,0, 50) );
+    m_sensor[5] = Sensor_Emulator( E_type_IMU,      sf::Vector3f( 0, 0, 0), sf::Vector3f(0, 0, 0) );
 
     m_vel = sf::Vector3f( 0,0,0 );
     m_acc = sf::Vector3f( 0,0,0 );
@@ -65,6 +66,12 @@ Vehicle& Vehicle::operator =( const Vehicle& rhs )
 
 BB3D Vehicle::getBox() const { return m_bb3d; }
 
+// TODO add simulated error to these
+sf::Vector3f Vehicle::getVel() const { return m_vel; }
+sf::Vector3f Vehicle::getAcc() const { return m_acc; }
+sf::Vector3f Vehicle::getAngVel() const { return m_angVel; }
+sf::Vector3f Vehicle::getAngAcc() const { return m_angAcc; }
+
 Sensor_Emulator Vehicle::getSensor( const unsigned short int number ) const
 {
     if( number >= m_num_sensors )
@@ -82,7 +89,19 @@ float Vehicle::readSensor( const unsigned short int number )
         std::cerr<<"ERROR! Requested read on non existing sensor, returning 0 as read value.\n";
         return 0.f;
     }
-    return m_sensor[number].read();
+    return m_sensor[number].read( m_sensor_data );
+}
+
+void Vehicle::setAcceleration( const float acc )
+{
+    // TODO maybe do a limit check?
+    m_acc.y = acc;
+}
+
+void Vehicle::setTurnRadius( const float radius )
+{
+    // TODO maybe do a limit check?
+    m_turn_radius = radius;
 }
 
 void Vehicle::overridePos( const sf::Vector3f pos )
