@@ -35,25 +35,70 @@
 #include "utility.hpp"
 #include "SFML/System/Time.hpp"
 
+enum Sensor_Type{
+    E_type_undefined,
+    E_type_distance,
+    E_type_LIDAR,
+    E_type_IMU,
+    E_type_temperature,
+    E_type_current
+};
+
+struct Sensor_Data
+{
+    // this is the last sensor type that modified the data
+    Sensor_Type type;
+    // TODO maybe we should add a "last update time" for each sensor in here
+    
+    // for distance sensor
+    float distance;
+
+    // for IMU
+    sf::Vector3f acceleration;  // m/s^2
+    sf::Vector3f angular_rate;  // radian/sec
+    sf::Vector3f magnetic_north;    // unit vector
+    float barometric_pressure;      // Pa
+
+    // for LIDAR
+    // TODO probably a point cloud
+
+    // for temperature
+    float temperature;  // C
+    //float temperature_motor1;
+    //float temperature_motor2;
+    //float temperature_electronics;
+
+    // for current sensor
+    float electric_current; // amps
+    //float electric_current_motor1;
+    //float electric_current_motor2;
+    //float electric_current_electronics;
+    //float electric_current_turret??;
+};
+
 class Sensor_Emulator
 {
   public:
     Sensor_Emulator();  // DO NOT use, here to shut up the compiler
 
-    Sensor_Emulator( const sf::Vector3f inp_pos,
+    Sensor_Emulator( Sensor_Type type,
+                     const sf::Vector3f inp_pos,
                      const sf::Vector3f inp_angle );
 
-    Sensor_Emulator( const BB3D inp_bb3d );
+    Sensor_Emulator( Sensor_Type type, const BB3D inp_bb3d );
 
     bool isReady() const;
-    float read();
+    float read( Sensor_Data& );
 
+    Sensor_Type getType() const;
     BB3D getBox() const;    // returns 3d bounding box of sensor
 
   private:
 
     // position info, relative to the vehicle
     BB3D m_bb3d;
+
+    Sensor_Type m_type = E_type_undefined;
 
     // these simulate if the sensor is ready for next read
     sf::Time m_time_last_read;

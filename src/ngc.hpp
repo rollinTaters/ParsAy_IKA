@@ -35,6 +35,7 @@
 
 #pragma once
 
+#include <thread>
 #include <vector>
 #include "vehicle.hpp"
 #include "SFML/Graphics/Image.hpp"
@@ -44,12 +45,21 @@ class NGC
   public:
     // upon NGC code start, vehicle is assumed to be at 0,0 world position
     NGC( Vehicle* vehicle );
+    ~NGC();
+
+    NGC( const NGC& )  = delete;
+    NGC( const NGC&& ) = delete;
+
+    bool start();
+    bool stop();
 
   private:
 
+    // ==== Data ====
+    // NOTE 2d images are cool for debugging, but we want to switch to 3d world data
     // internal world map
     sf::Image m_image_world_map;
-    const unsigned short int m_mm_per_pixel = 5;
+    const float m_metre_per_pixel = 0.005;  // 5mm per pixel
 
     // controlled vehicle
     Vehicle* m_vehicle = nullptr;
@@ -57,6 +67,20 @@ class NGC
     // immediate surrounding obstacles
     // this will most likely be current sensor readings
     std::vector<sf::Vector3f> m_immediate_obstacles;
+
+    // thread control
+    bool m_run_main_thread = false;
+    std::thread *m_main_thread = nullptr;
+
+    
+
+    // ==== Methods ====
+
+    // main thread runs this
+    void mainThreadFunc();
+
+    // ask the lidar u-controller for fresh data
+    bool getLIDARData();
 
     // dead reckon function: ( NAVIGATION )
     // - using the IMU data, plot previous positions on internal world map

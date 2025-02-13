@@ -84,6 +84,13 @@ struct BB3D
     void pitchUp( float radian );
     void rollRight( float radian );
 
+    // these translate on the local object axes
+    void translateLocal( const sf::Vector3f );
+    void translateFWD( const float meter );
+    void translateRight( const float meter );
+    void translateUp( const float meter );
+
+
     // -- setters --
     void setSize( const sf::Vector3f size );
     void setSize( const float x, const float y, const float z );
