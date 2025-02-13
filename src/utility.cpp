@@ -177,6 +177,16 @@ void BB3D::rollRight( float radian )
     m_quat *= q;
 }
 
+void BB3D::translateLocal( const sf::Vector3f t )
+{
+    m_pos += getLocalVecX() * t.x +
+             getLocalVecY() * t.y +
+             getLocalVecZ() * t.z;
+}
+void BB3D::translateFWD( const float meter )   { translateLocal(sf::Vector3f(meter,0,0)); }
+void BB3D::translateRight( const float meter ) { translateLocal(sf::Vector3f(0,meter,0)); }
+void BB3D::translateUp( const float meter )    { translateLocal(sf::Vector3f(0,0,meter)); }
+
 // -- Setters --
 void BB3D::setSize( const sf::Vector3f size )
 {

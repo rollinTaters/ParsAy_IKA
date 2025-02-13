@@ -23,6 +23,7 @@
 */
 
 
+#include <chrono>   // thread sleep
 #include <iostream>     // cerr
 #include "env_emulator.hpp"
 
@@ -41,9 +42,59 @@ Env_Emulator::Env_Emulator( const Vehicle& inp_vehicle ):
     m_clock = sf::Clock();
 }
 
+Env_Emulator::~Env_Emulator()
+{
+    stopPhysSim();
+}
+
+bool Env_Emulator::startPhysSim()
+{
+    // check if we are already runnng the thread
+    if( m_phys_thread != nullptr )
+    {
+        std::cerr<<"Environment Emulator: Warning: Tried to start physics thread when it is already running.\n";
+        return false;
+    }
+    std::cout<<"Environment Emulator: Starting physics thread\n";
+    m_run_phys_thread = true;
+    m_phys_thread = new std::thread( &Env_Emulator::physThreadFunc, this );
+    return true;
+}
+
+bool Env_Emulator::stopPhysSim()
+{
+    // send stop signals and join the threads here
+
+    // check if we have a thread to stop
+    if( m_phys_thread == nullptr )
+    {
+        std::cerr<<"Environment Manager: Warning: Tried to stop physics thread. We dont have a physics thread to stop.\n";
+        return false;
+    }
+    std::cout<<"Environment Manager: Stopping physics thread\n";
+    // signal physics thread to stop
+    m_run_phys_thread = false;
+    m_phys_thread->join();
+    delete m_phys_thread;
+    m_phys_thread = nullptr;
+
+    // TODO is there a fail condition?? can the thread not join? what then?
+    return true;
+}
+
 sf::Time Env_Emulator::getTime() const
 {
     return m_clock.getElapsedTime();
+}
+
+void Env_Emulator::physThreadFunc()
+{
+    unsigned int step_time = 1000/30.f;
+    while( m_run_phys_thread )
+    {
+        m_real_vehicle.simulatePhys( step_time );
+        std::this_thread::sleep_for( std::chrono::milliseconds( step_time ) );
+    }
 }
 
 bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) const

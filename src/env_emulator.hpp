@@ -34,6 +34,7 @@
 // stuff goes here i guess
 
 #pragma once
+#include <thread>
 #include "SFML/Graphics/Image.hpp"
 #include "SFML/System/Clock.hpp"
 #include "vehicle.hpp"
@@ -45,6 +46,13 @@ class Env_Emulator
 {
     public:
     Env_Emulator( const Vehicle& );
+    ~Env_Emulator();
+    Env_Emulator( const Env_Emulator& )  = delete;
+    Env_Emulator( const Env_Emulator&& ) = delete;
+
+    // vehicle simulation
+    bool startPhysSim();
+    bool stopPhysSim();
 
     // returns time elapsed since emulator start
     sf::Time getTime() const;
@@ -56,6 +64,11 @@ class Env_Emulator
     // "real" map/course
     sf::Image m_image_course;
     const float m_metre_per_pixel = 0.005;  // 5mm per pixel
+
+    // physics simulation thread
+    std::thread* m_phys_thread = nullptr;
+    bool m_run_phys_thread = false;
+    void physThreadFunc();
 
     // "real" vehicle, is copied from given vehicle on constructor method
     Vehicle m_real_vehicle;

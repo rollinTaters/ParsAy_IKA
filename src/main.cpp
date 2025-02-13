@@ -53,7 +53,9 @@ int main()
     // our navigation guidance and control system
     NGC ngc_system( &simulated_vehicle );
 
+    env_emulator.startPhysSim();
     ngc_system.start();
+    std::this_thread::sleep_for( std::chrono::seconds(3) );
 
     std::cout<<"Exiting. Have a nice day\n";
 }

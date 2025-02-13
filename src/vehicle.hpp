@@ -62,6 +62,8 @@ class Vehicle
 
     void overridePos( const sf::Vector3f ); // set position of vehicle
 
+    void simulatePhys( const float time_step ); // update vehicle physics, this is for simulation
+
   private:
     // unless otherwise specified, all 3d vectors are:
     // +X:starboard, +Y:bow, +Z:above, (or width, len, height) (metre)
