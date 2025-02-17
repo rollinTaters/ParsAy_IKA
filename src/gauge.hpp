@@ -25,6 +25,9 @@
 
 #pragma once
 #include "SFML/Graphics.hpp"
+#include <cmath>
+#include <iostream>
+#define PI 3.141592
 
 enum gauge_type{
     type1,
@@ -38,12 +41,16 @@ class Gauge
 
     void updateVal( const float );  // input is value to be displayed
     void updateProportionalVal( const float );  // input is from 0.f to 1.f
-    void render();
+    void render(sf::RenderTarget& target);
 
   private:
-
+    sf::CircleShape m_gaugeFrame;    // gauge shape
+    std::vector<sf::Vertex> m_ticks; // lines
+    std::vector<sf::Text> m_numbers; // numbers in gauge
+    sf::Font m_font;          // font type
     sf::Vector2f m_size;    // in pixels
     sf::Vector2f m_pos;     // of top left corner
+    sf::RectangleShape m_needle; // needle 
     float m_dia;        // diameter in pixels
     
     float m_max_value;

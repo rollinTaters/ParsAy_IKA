@@ -25,7 +25,6 @@
 
 #include "gauge.hpp"
 
-
 ///// Gauge /////
 
 Gauge::Gauge( gauge_type gt )
@@ -33,28 +32,74 @@ Gauge::Gauge( gauge_type gt )
     m_size = sf::Vector2f( 200, 200 );
     m_pos = sf::Vector2f( 300, 50 );
     m_dia = 200;
-
+    
     // TODO write a big switch statement for setting up different gauge types
     switch( gt )
     {
         default:
-            m_max_value = 120;
-            m_min_value = -10;
-            m_value     = 0;
-
-            m_needle_min_degree = -150;   // angle at which needle rests when min
-            m_needle_max_degree = 150;
-
-            m_red_start_value   = m_max_value * 0.80f;
-            m_red_end_value     = m_max_value;
-
-            m_green_start_value = m_max_value * 0.25f;
-            m_green_end_value   = m_max_value * 0.35f;
-            break;
+        m_max_value = 120;
+        m_min_value = -10;
+        m_value     = 0;
+        
+        m_needle_min_degree = -150;   // angle at which needle rests when min
+        m_needle_max_degree = 150;
+        
+        m_red_start_value   = m_max_value * 0.80f;
+        m_red_end_value     = m_max_value;
+        
+        m_green_start_value = m_max_value * 0.25f;
+        m_green_end_value   = m_max_value * 0.35f;
+        break;
         case type1:
-            // stuff goes here
-            break;
+        // stuff goes here
+        break;
     }
+    // setting gauge frame.
+    m_gaugeFrame.setRadius(m_dia/2);
+    m_gaugeFrame.setFillColor(sf::Color::White);
+    m_gaugeFrame.setOutlineThickness(5);
+    m_gaugeFrame.setOutlineColor(sf::Color::Black);
+    m_gaugeFrame.setOrigin(m_dia/2,m_dia/2);
+    m_gaugeFrame.setPosition(m_pos.x + m_dia / 2, m_pos.y + m_dia / 2);
+    
+    // uploading Font   
+    if (!m_font.loadFromFile("../assets/fonts/arial.ttf")){
+        std::cerr << "Font yuklenemedi!";
+    }
+    // creating needle 
+    m_needle.setSize(sf::Vector2f(m_dia*0.65f,3)); // needle size
+    m_needle.setFillColor(sf::Color::Red);
+    m_needle.setOrigin(0,1.5f); // making left end the rotation point
+    m_needle.setPosition(m_pos.x + m_dia / 2 , m_pos.y + m_dia / 2 ); // center of gauge
+    m_needle.setRotation(m_needle_min_degree); // starting point.
+
+    // creating gauge marks
+
+    for (int i = 0 ; i<= 20; i++) {
+        float angle = (i * 9 + m_needle_min_degree ) * PI /180.0f ;
+        float outerRadius  = m_dia / 2;  
+        float innerRadius = (i % 2 == 0) ? outerRadius - 20 : outerRadius - 10;
+
+        sf::Vector2f outerPoint(m_pos.x + outerRadius * cos(angle), m_pos.y + outerRadius * sin(angle));
+        sf::Vector2f innerPoint(m_pos.x + innerRadius * cos(angle), m_pos.y + innerRadius * sin(angle));
+        
+        m_ticks.push_back(sf::Vertex(outerPoint, sf::Color::Black));
+        m_ticks.push_back(sf::Vertex(innerPoint, sf::Color::Black));
+
+        if (i % 2 == 0) {
+            sf::Text text(std::to_string(i),m_font,18);
+            text.setFillColor(i <= 6 ? sf::Color::Black : (i <= 10 ? sf::Color::Yellow : sf::Color::Red));
+            float textRadius =  (m_dia/2) - 35; 
+
+            sf::Vector2f textPos ( m_pos.x + textRadius * cos(angle) -10,
+                                   m_pos.y + textRadius * sin(angle) -10 );
+            text.setPosition(textPos);
+            m_numbers.push_back(text);                       
+
+        }
+    }
+    
+    // creating numbers
 }
 
 void Gauge::updateVal( const float val )
@@ -67,9 +112,18 @@ void Gauge::updateProportionalVal( const float prop )
     m_value = (prop * (m_max_value-m_min_value)) + m_min_value;
 }
 
-void Gauge::render()
+void Gauge::render(sf::RenderTarget& target)
 {
+    target.draw(m_gaugeFrame);
+    target.draw(m_ticks.data(),m_ticks.size(),sf::Lines);
+    for(const auto& num : m_numbers){
+        target.draw(num);
+    }
+    float needleAngle = m_needle_min_degree + ((m_value - m_min_value) / (m_max_value - m_min_value)) * (m_needle_max_degree - m_needle_min_degree);
+    m_needle.setRotation(needleAngle);
+    target.draw(m_needle);
     // TODO render to global render_target
+    // by adding sf::RenderTarget% target parameter i tried to provide some flexibility
 }
 
 
