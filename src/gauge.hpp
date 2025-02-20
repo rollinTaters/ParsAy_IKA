@@ -1,7 +1,7 @@
 /*
     MIT License
 
-    Copyright (c) 2025 rollinTaters
+	Copyright (c) 2025 rollinTaters, guvenchemy
 
     Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
@@ -30,8 +30,8 @@
 #define PI 3.141592
 
 enum gauge_type {
-    type1,
-    type2
+    type_temperature,
+    type_amp
 };
 
 class Gauge
@@ -45,18 +45,26 @@ public:
 
 private:
     sf::CircleShape m_gaugeFrame;    // gauge shape
+    
     std::vector<sf::Vertex> m_ticks; // lines
     std::vector<sf::Text> m_numbers; // numbers in gauge
-	sf::CircleShape m_center;        // center dot of gauge
     sf::Font m_font;          // font type
+    
     sf::Vector2f m_size;    // in pixels
     sf::Vector2f m_pos;     // of top left corner
+	
+    sf::CircleShape m_center;        // center dot of gauge
     sf::RectangleShape m_needle; // needle 
+	
+    sf::Text m_label; // temperature - amp 
+    std::string m_label_text;
+
     float m_dia;        // diameter in pixels
 
     float m_max_value;
     float m_min_value;
     float m_value;
+
 
     // 0 degree is towards top, ex. -90 to 90 will be from left horizon to right horizon
     float m_needle_min_degree;   // angle at which needle rests when min
