@@ -37,7 +37,7 @@ enum gauge_type {
 class Gauge
 {
 public:
-    Gauge(gauge_type);
+    Gauge(gauge_type type, sf::Vector2f pos, float dia);
 
     void updateVal(const float);  // input is value to be displayed
     void updateProportionalVal(const float);  // input is from 0.f to 1.f

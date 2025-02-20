@@ -27,11 +27,11 @@
 
 ///// Gauge /////
 
-Gauge::Gauge(gauge_type gt)
+Gauge::Gauge(gauge_type gt, sf::Vector2f pos, float dia)
 {
-    m_size = sf::Vector2f(200, 200);
-    m_pos = sf::Vector2f(300, 50);
-    m_dia = 200;
+    m_size = sf::Vector2f(dia, dia);
+    m_pos = pos;
+    m_dia = dia;
 
 
     // setting gauge frame.
