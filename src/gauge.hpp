@@ -29,14 +29,15 @@
 #include <iostream>
 #define PI 3.141592
 
-enum gauge_type {
-    type_temperature,
-    type_amp
-};
 
 class Gauge
 {
 public:
+    enum gauge_type {
+        type_temperature,
+        type_amp
+    };
+
     Gauge(gauge_type type, sf::Vector2f pos, float dia);
 
     void updateVal(const float);  // input is value to be displayed

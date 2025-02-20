@@ -29,6 +29,9 @@
 sf::RenderTarget* render_target = nullptr;;
 bool graphics_initialized = false;
 
+Gauge gauge_temp( Gauge::type_temperature, sf::Vector2f(300,50), 200 );
+Gauge gauge_amp( Gauge::type_amp, sf::Vector2f(600,50), 200 );
+
 bool init_graphics( sf::RenderTarget* inp_rt )
 {
     // TODO or not todo, that is the question
@@ -39,3 +42,23 @@ bool init_graphics( sf::RenderTarget* inp_rt )
     graphics_initialized = true;
     return true;
 }
+
+// -- DEBUG --
+float g_val1 = 0.f;
+float g_val2 = 0.f;
+void DEBUG_gauge_test()
+{
+    // nudge value towards a random direction
+    g_val1 += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+    g_val2 += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+
+    // clamp value to be between 0 and 1
+    g_val1 = std::max( 0.f, std::min( g_val1, 1.f ));
+    g_val2 = std::max( 0.f, std::min( g_val2, 1.f ));
+
+    // update gauges
+    gauge_amp.updateProportionalVal( g_val1 );
+    gauge_temp.updateProportionalVal( g_val2 );
+}
+// -- END OF DEBUG --
+
