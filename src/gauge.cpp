@@ -43,8 +43,8 @@ Gauge::Gauge(gauge_type gt)
     m_gaugeFrame.setPosition(m_pos.x + m_dia / 2, m_pos.y + m_dia / 2);
 
     // uploading Font   
-    if (!m_font.loadFromFile("C:\\WINDOWS\\Fonts\\Arial.ttf")) {
-        std::cerr << "Font yuklenemedi!";
+    if (!m_font.loadFromFile("./assets/fonts/arial.ttf")) {
+        std::cerr << "Error: gauge class could not load font\n";
     }
 
     // TODO write a big switch statement for setting up different gauge types
