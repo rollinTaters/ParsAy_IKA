@@ -42,7 +42,7 @@ Sensor_Emulator::Sensor_Emulator( Sensor_Type type,
     m_bb3d.setAng( inp_angle );
 
     m_time_last_read = env_emulator.getTime();
-    m_time_cooldown = sf::milliseconds(200);
+    m_time_cooldown = sf::milliseconds(20);
 }
 
 Sensor_Emulator::Sensor_Emulator( Sensor_Type type, const BB3D inp_bb3d )
@@ -51,12 +51,13 @@ Sensor_Emulator::Sensor_Emulator( Sensor_Type type, const BB3D inp_bb3d )
     m_bb3d = inp_bb3d;
 
     m_time_last_read = env_emulator.getTime();
-    m_time_cooldown = sf::milliseconds(200);
+    m_time_cooldown = sf::milliseconds(20);
 }
 
 bool Sensor_Emulator::isReady() const
 {
-    if( env_emulator.getTime() >= m_time_last_read + m_time_cooldown )
+    // this is stupid, we dont know shit about sensors yet
+    //if( env_emulator.getTime() >= m_time_last_read + m_time_cooldown )
         return true;
     return false;
 }

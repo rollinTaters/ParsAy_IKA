@@ -23,14 +23,6 @@
 */
 
 
-/*
-   this is our vehicle... 
-   thanks captain obvious.
-
-
-   - has sensor emulators
-   - has motion actuator emulators
-   */
 
 #pragma once
 
@@ -62,7 +54,11 @@ class Vehicle
 
     void overridePos( const sf::Vector3f ); // set position of vehicle
 
+    // NOTE: this method is only to be called from environment emulator:
     void simulatePhys( const float time_step ); // update vehicle physics, this is for simulation
+
+    // NOTE: this method is only to be called from NGC code
+    void setNavigationState( const int time_step ); // does dead reckoning using internal sensor data
 
   private:
     // unless otherwise specified, all 3d vectors are:

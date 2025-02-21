@@ -30,12 +30,12 @@
 Vehicle::Vehicle()
 {
     // populate sensors on vehicle
-    m_sensor[0] = Sensor_Emulator( E_type_distance, sf::Vector3f(-0.20, 0,0), sf::Vector3f(0,0,-50) );
-    m_sensor[1] = Sensor_Emulator( E_type_distance, sf::Vector3f(-0.10, 0,0), sf::Vector3f(0,0,-20) );
-    m_sensor[2] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.00, 0,0), sf::Vector3f(0,0,  0) );
-    m_sensor[3] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.10, 0,0), sf::Vector3f(0,0, 20) );
-    m_sensor[4] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.20, 0,0), sf::Vector3f(0,0, 50) );
-    m_sensor[5] = Sensor_Emulator( E_type_IMU,      sf::Vector3f( 0, 0, 0), sf::Vector3f(0, 0, 0) );
+    m_sensor[0] = Sensor_Emulator( E_type_IMU,      sf::Vector3f( 0, 0, 0), sf::Vector3f(0, 0, 0) );
+    m_sensor[1] = Sensor_Emulator( E_type_distance, sf::Vector3f(-0.20, 0,0), sf::Vector3f(0,0,-50) );
+    m_sensor[2] = Sensor_Emulator( E_type_distance, sf::Vector3f(-0.10, 0,0), sf::Vector3f(0,0,-20) );
+    m_sensor[3] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.00, 0,0), sf::Vector3f(0,0,  0) );
+    m_sensor[4] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.10, 0,0), sf::Vector3f(0,0, 20) );
+    m_sensor[5] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.20, 0,0), sf::Vector3f(0,0, 50) );
 
     m_vel = sf::Vector3f( 0,0,0 );
     m_acc = sf::Vector3f( 0,0,0 );
@@ -152,4 +152,9 @@ void Vehicle::simulatePhys( const float time_step )
     */
 }
 
+void Vehicle::setNavigationState( const int time_step )
+{
+    // TODO dead reckoning calculations
+    std::cout<<"DEBUG: setNavigationState got "<<time_step<<" as time step\n";
+}
 
