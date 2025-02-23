@@ -14,8 +14,6 @@
 
 int main(int argc, char *argv[])
 {
-  (void) argc; 
-
   std::cout << "Image Processing App" << "\n";
   
   try {
