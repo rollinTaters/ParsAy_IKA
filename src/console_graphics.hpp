@@ -52,6 +52,10 @@
 #include "SFML/Graphics.hpp"
 #include "gauge.hpp"
 
+extern Gauge gauge_temp;
+extern Gauge gauge_amp;
+
 bool init_graphics( sf::RenderTarget* );
 
+void DEBUG_gauge_test();
 

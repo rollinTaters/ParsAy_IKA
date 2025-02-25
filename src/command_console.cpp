@@ -28,6 +28,7 @@
 
 
 
+
 int main()
 {
     std::cout<<"Unmanned Land Vehicle Command Console v0.1\n";
@@ -54,9 +55,22 @@ int main()
                 // do we wanna do any actions before closing?
                 window.close();
             }
+            // this handles resizing of window, shows more stuff if window is resized, (prevents stretching)
+            if( event.type == sf::Event::Resized )
+            {
+                window.setView( sf::View( sf::FloatRect( {0,0}, sf::Vector2f(window.getSize().x,window.getSize().y) ) ) );
+            }
         }   // end of event processing
 
+        // clear window for next frame
+        window.clear( sf::Color(180,180,180) );
+
         //do stuff
+        DEBUG_gauge_test();
+
+        // render gauges
+        gauge_amp.render(window);
+        gauge_temp.render(window);
         // a call to render stuff
 
         window.display();
