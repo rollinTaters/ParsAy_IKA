@@ -53,6 +53,9 @@ class NGC
     bool start();
     bool stop();
 
+    bool startDeadReckoning();
+    bool stopDeadReckoning();
+
   private:
 
     // ==== Data ====
@@ -60,6 +63,11 @@ class NGC
     // internal world map
     sf::Image m_image_world_map;
     const float m_metre_per_pixel = 0.005;  // 5mm per pixel
+
+    // time keeping and clocks
+    std::chrono::steady_clock m_clock;
+    std::chrono::milliseconds m_dead_reckoning_interval = std::chrono::milliseconds(50);
+    std::chrono::time_point<std::chrono::steady_clock> m_last_dead_reckon_time;
 
     // controlled vehicle
     Vehicle* m_vehicle = nullptr;
@@ -70,7 +78,9 @@ class NGC
 
     // thread control
     bool m_run_main_thread = false;
+    bool m_run_dead_reckoning_thread = false;
     std::thread *m_main_thread = nullptr;
+    std::thread *m_dead_reckoning_thread = nullptr;
 
     
 
@@ -82,14 +92,14 @@ class NGC
     // ask the lidar u-controller for fresh data
     bool getLIDARData();
 
-    // dead reckon function: ( NAVIGATION )
+    // dead reckon function/thread: ( NAVIGATION )
     // - using the IMU data, plot previous positions on internal world map
-    bool deadReckon();
+    void deadReckonFunc();
 
     // obstacle mark function: ( NAVIGATION )
     // - using the LIDAR data mark obstacles on internal world map
     //  this adds them to the world map as permanent obstacles
-    //  is used for mapping an area
+    //  is used for mapping an area (aka SLAM)
     bool markObstacles();
 
     // immediate obstacle mark function: ( NAVIGATION )
@@ -113,4 +123,9 @@ class NGC
     // - takes an input position and finds a new position which is furthest away from any obstacles, but closest to input pos
     bool createOpenSpaceWaypoint();
 
+    // TODO add CONTROL type methods
+    
 };
+
+
+

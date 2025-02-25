@@ -44,6 +44,7 @@ NGC::NGC( Vehicle* vehicle )
 NGC::~NGC()
 {
     stop();
+    stopDeadReckoning();
 }
 
 bool NGC::start()
@@ -83,15 +84,55 @@ bool NGC::stop()
     return true;
 }
 
+bool NGC::startDeadReckoning()
+{
+    m_last_dead_reckon_time = m_clock.now();
+    if( m_dead_reckoning_thread != nullptr )
+    {
+        //std::cerr<<"NGC: Warning: Dead reckoning thread is already running.\n";
+        return false;
+    }
+    m_run_dead_reckoning_thread = true;
+    m_dead_reckoning_thread = new std::thread( &NGC::deadReckonFunc, this );
+    return true;
+}
+
+bool NGC::stopDeadReckoning()
+{
+    if( m_dead_reckoning_thread == nullptr )
+    {
+        //std::cerr<<"NGC: Warning: Tried to stop dead reckoning thread, there is no thread.\n";
+        return false;
+    }
+    m_run_dead_reckoning_thread = false;
+    m_dead_reckoning_thread->join();
+    delete m_dead_reckoning_thread;
+    m_dead_reckoning_thread = nullptr;
+    return true;
+}
 
 // == private: ==
 
 void NGC::mainThreadFunc()
 {
+    // on first start, check if dead reckoning is active
+    if( startDeadReckoning() )
+        std::cout<<"Starting dead reckoning\n";
+
     int counter = 0;
     while( m_run_main_thread )
     {
         // roll rol roll
+        // TODO check if dead reckoning is still active??
+
+        // TODO run predictTrajectory and send it to command console for debug visualization
+
+        // TODO read lidar and run markImmediateObstacles
+
+        // TODO run createTargetWaypoint, createOpenSpaceWaypoint
+
+        // TODO run CONTROL type methods
+
         std::cout<<"ngc main thread spam. counter:"<<counter<<"\n";
         counter++;
         std::this_thread::sleep_for( std::chrono::milliseconds(200) );
@@ -107,9 +148,35 @@ bool NGC::getLIDARData()
     return false;
 }
 
-bool NGC::deadReckon()
+void NGC::deadReckonFunc()
 {
-    return false;
+    using namespace std::chrono;
+    std::chrono::milliseconds time_step;
+    while( m_run_dead_reckoning_thread )
+    {
+        // check if its time to do it
+        if( m_clock.now() < m_last_dead_reckon_time + m_dead_reckoning_interval )
+        {
+            // nope, not now
+            std::this_thread::sleep_for( m_dead_reckoning_interval /5 );
+            continue;
+        }else{
+            time_step = duration_cast<milliseconds>(steady_clock::now() - m_last_dead_reckon_time);
+        }
+
+        // make sure the vehicles internal IMU sensor data is up to date
+        // NOTE: sensor[0] is always the IMU (i just decided that)
+        // request IMU sensor read
+        m_vehicle->readSensor(0);
+
+        // immediately update time point
+        m_last_dead_reckon_time = m_clock.now();
+
+        // run vehicles setNavigationState, which actually does the dead reckoning calculations
+        m_vehicle->setNavigationState( time_step.count() );
+
+        // TODO this time step should be reported as a quality measure to the command console
+    }
 }
 
 bool NGC::markObstacles()
