@@ -1,8 +1,8 @@
-# debug ulv executable
-ulv
-
 # debug command_console executable
-command_console
+command_console/command_console
+
+# debug ngc executable
+ngc/ngc
 
 # folder of release builds
 release_builds
