@@ -71,6 +71,8 @@ int main()
         // render gauges
         gauge_amp.render(window);
         gauge_temp.render(window);
+        gauge_adi.render(window);
+        gauge_compass.render(window);
         // a call to render stuff
 
         window.display();
