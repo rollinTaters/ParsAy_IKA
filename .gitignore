@@ -13,3 +13,6 @@ obj
 
 # vim swap files
 *.swp
+
+# vim swo files
+*.swo
