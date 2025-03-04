@@ -4,6 +4,7 @@ command_console/command_console
 # debug ngc executable
 ngc/ngc
 
+
 # folder of release builds
 release_builds
 
@@ -16,3 +17,11 @@ obj
 
 # vim swo files
 *.swo
+
+# Emacs
+*~                    # Backup files
+.#*                   # Auto-save files
+\#*                   # Auto-save files
+
+
+
