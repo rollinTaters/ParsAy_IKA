@@ -160,7 +160,29 @@ void Vehicle::simulatePhys( const float time_step )
 
 void Vehicle::setNavigationState( const int time_step )
 {
-    // TODO dead reckoning calculations
-    std::cout<<"DEBUG: setNavigationState got "<<time_step<<" as time step\n";
+    // -- dead reckoning calculations --
+    // this part ive yanked from the simulatePhys method.
+    // this is using the eulers method for integration, we should switch to RungeKutta 4th order
+
+    // set our acceleration values from imu sensor output
+    m_acc = m_sensor_data.acceleration;
+    // this line commented out because IMU outputs angular velocity???
+    //m_angAcc = m_sensor_data.angular_rate;
+    m_angVel = m_sensor_data.angular_rate;
+
+    // translations
+    m_bb3d.translateLocal( m_vel );
+
+    // rotations, we should switch to quaternions...
+    m_bb3d.yawLeft( m_angVel.z );
+    m_bb3d.pitchUp( m_angVel.x );
+    m_bb3d.rollRight( m_angVel.y );
+
+    // first derivatives (using eulers method)
+    m_vel += m_acc * (float)time_step;
+    // this line commented out because IMU outputs angular velocity???
+    //m_angVel += m_angAcc * time_step;
+
+    //std::cout<<"DEBUG: setNavigationState got "<<time_step<<" as time step\n";
 }
 

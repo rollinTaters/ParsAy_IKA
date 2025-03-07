@@ -199,7 +199,87 @@ bool NGC::createTargetWaypoint()
     return false;
 }
 
-bool NGC::createOpenSpaceWaypoint()
+bool NGC::createOpenSpaceWaypoint( Point& start_point )
 {
-    return false;
+    // output waypoint will be at least this distance away from any obstacles
+    float avoid_radius = 1.f; // metre 
+
+    float target_seperation = 1.5f; // metre
+
+    // search for obstacles (LIDAR points) in this radius from starting point
+    float search_radius = 4.f; // metre
+
+    std::vector<Point> relevant_points;
+
+    // TODO maybe a "merge" filter, that merges two points that are closer than a threshold together
+
+    // find lidar points in a given radius
+    for( Point point : m_immediate_obstacles )
+    {
+        if( point.absDist( start_point ) <= search_radius )
+            relevant_points.push_back( point );
+    }
+
+    // Iterating to find an output point that satisfies given seperation with relevant points
+    // iteration controls
+    unsigned int current_it = 0;
+    unsigned int max_it = 100;
+    float target_mean_sq_err = 0.5f;
+
+    // iteration variables
+    float total_sq_err = 0;
+    float mean_sq_err = 0;
+    Point out_point = start_point;
+    Point total_sq_err_vector;
+
+    // nudge output point to be seperation distance away from relevant points
+    while( true )
+    {
+        for( Point p : relevant_points )
+        {
+            // find square of error
+            float sq_err = out_point.sqErrSep( p, target_seperation );
+
+            // add it to total squared error accumulator
+            total_sq_err += sq_err;
+
+            // find error direction
+            Point sq_err_vector = out_point - p;
+
+            // make it a unit vector
+            sq_err_vector = sq_err_vector.unit();
+
+            // scale unit vector by squared error amount
+            sq_err_vector *= sq_err;
+
+            // add it to total squared error vector
+            total_sq_err_vector += sq_err_vector;
+        }
+        mean_sq_err = total_sq_err / relevant_points.size();
+
+        // nudge output point by total squared error vector
+        out_point += total_sq_err_vector * 0.5f;    // FIXME is this + or -
+
+        if( mean_sq_err < target_mean_sq_err )
+        {   // success
+            break;
+        }
+        // iteration status checks
+        if( current_it > max_it )
+        {   // fail
+            std::cerr<<"NGC: createOpenSpaceWaypoint method exeded max iteration limit ("
+                <<current_it<<"/"<<max_it<<")\n";
+            std::cerr<<"---: mse: "<<mean_sq_err<<" | target mse: "<<target_mean_sq_err<<"\n";
+            return false;
+        }
+        // increment iteration counter
+        current_it++;
+    }
+
+    // TODO make sure the output point satisfies avoid radius
+    // TODO make sure output point is xx distance above the "ground"
+
+    // return the calculated point
+    start_point = out_point;
+    return true;
 }

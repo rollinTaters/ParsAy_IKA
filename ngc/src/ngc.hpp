@@ -74,7 +74,7 @@ class NGC
 
     // immediate surrounding obstacles
     // this will most likely be current sensor readings
-    std::vector<sf::Vector3f> m_immediate_obstacles;
+    std::vector<Point> m_immediate_obstacles;
 
     // thread control
     bool m_run_main_thread = false;
@@ -121,7 +121,7 @@ class NGC
     // - this may be used to modify an existing waypoint,
     //  or created and then "merged" with an existing waypoint to modify it
     // - takes an input position and finds a new position which is furthest away from any obstacles, but closest to input pos
-    bool createOpenSpaceWaypoint();
+    bool createOpenSpaceWaypoint( Point& );
 
     // TODO add CONTROL type methods
     

@@ -25,6 +25,83 @@
 
 #include "utility.hpp"
 
+// ---- Point ----
+Point::Point():x(0), y(0), z(0) {}
+Point::Point( const float in_x, const float in_y, const float in_z ):
+    x(in_x), y(in_y), z(in_z) {}
+
+float Point::mag() const
+{
+    return sqrt( x*x + y*y + z*z );
+}
+
+Point Point::unit() const
+{
+    float m = mag();
+    return Point( x/m, y/m, z/m );
+}
+
+float Point::absDist( const Point inp ) const
+{
+    Point delta = *this - inp;
+    return delta.mag();
+}
+
+float Point::sqErrSep( const Point p1, float seperation )
+{
+    Point delta = *this - p1;
+    float current_sep = abs( delta.mag() );
+    return ( (seperation-current_sep) * (seperation-current_sep) );
+}
+
+Point& Point::operator+=( const Point &rhs )
+{
+    x += rhs.x;
+    y += rhs.y;
+    z += rhs.z;
+    return *this;
+}
+
+Point& Point::operator-=( const Point &rhs )
+{
+    x -= rhs.x;
+    y -= rhs.y;
+    z -= rhs.z;
+    return *this;
+}
+
+Point& Point::operator*=( const Point &rhs )
+{
+    x *= rhs.x;
+    y *= rhs.y;
+    z *= rhs.z;
+    return *this;
+}
+
+Point& Point::operator*=( const float & f )
+{
+    x*=f;
+    y*=f;
+    z*=f;
+    return *this;
+}
+
+Point operator+( const Point &p1, const Point &p2 )
+{
+    return Point( p1.x+p2.x, p1.y+p2.y, p1.z+p2.z );
+}
+
+Point operator-( const Point &p1, const Point &p2 )
+{
+    return Point( p1.x-p2.x, p1.y-p2.y, p1.z-p2.z );
+}
+
+Point operator*( const Point &p1, const float f )
+{
+    return Point( p1.x*f, p1.y*f, p1.z*f );
+}
+
+// ---- End of Point ----
 
 Quaternion &Quaternion::operator=(const Quaternion &q)
 {
