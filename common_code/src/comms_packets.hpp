@@ -14,7 +14,7 @@ enum Request
 };
 
 // use sf::Packet ???
-struct Packet
+struct DPacket
 {
     std::int16_t data1;
     std::int16_t data2;

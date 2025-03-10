@@ -38,6 +38,7 @@
 #include <thread>
 #include <vector>
 #include "vehicle.hpp"
+#include "../../common_code/src/comms_module.hpp"
 #include "SFML/Graphics/Image.hpp"
 
 class NGC
@@ -81,6 +82,9 @@ class NGC
     bool m_run_dead_reckoning_thread = false;
     std::thread *m_main_thread = nullptr;
     std::thread *m_dead_reckoning_thread = nullptr;
+
+    // communications module
+    CommsModule m_comms_module;
 
     
 

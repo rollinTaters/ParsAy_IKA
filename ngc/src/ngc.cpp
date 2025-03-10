@@ -29,7 +29,7 @@
 
 // == public: ==
 
-NGC::NGC( Vehicle* vehicle )
+NGC::NGC( Vehicle* vehicle ): m_comms_module(CommsModule::udp, CommsModule::ngc_channel)
 {
     // init internal world map
     int internal_map_size = 40; // metre

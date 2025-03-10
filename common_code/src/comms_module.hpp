@@ -6,12 +6,15 @@
    this is intended to be a global class that can be used everywhere in the codebase
 */
 
+// FORCE DEFINE LOCALHOST FOR TESTING
+#define LOCALHOST
 
 #include "comms_packets.hpp"
+#include <iostream> // cerr
 
 #ifdef LOCALHOST
-#include "SFML/TcpSocket.hpp"
-#include "SFML/UdpSocket.hpp"
+//#include "SFML/TcpSocket.hpp"
+#include "SFML/Network.hpp"
 #endif
 
 #ifdef ARDUINO_NANO
@@ -31,24 +34,37 @@ class CommsModule
         i2c
     };
 
-    CommsModule( Type );
+    enum Channel{
+        ngc_channel = 54000,
+        drive_channel = 54001,
+        turret_channel = 54002,
+        console_channel = 54003,    // this will be nrf24 or lora
+        command_channel = 54004,
+        undefined = 0
+    };
+
+    CommsModule( Type, Channel );
     ~CommsModule();
 
-    bool sendPacket( Packet );
+    bool openCommsChannel( Channel );
+
+    bool sendPacket( DPacket, Channel );
 
     bool sendRequest( Request );
 
     bool packetAvailable();
 
-    bool readPacket( Packet& );
+    bool readPacket( DPacket& );
 
   private:
 
     Type m_type;
 
 #ifdef LOCALHOST
-    // maybe use UdpSocket instead ??
-    sf::UdpSocket m_udp;
+    // a socket bound to classes selected channel for receiving data
+    sf::UdpSocket m_receive_socket;
+    // opened udp sockets for sending data
+    std::vector<sf::UdpSocket*> m_vector_udp;
     sf::SocketSelector m_selector;
     // NOTE: use sf::IpAddress::LocalHost
 #endif
