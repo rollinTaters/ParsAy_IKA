@@ -31,11 +31,22 @@ bool drive_auto_mode_enabled = false;
 bool turret_auto_mode_enabled = false;
 
 CommsModule ccm_comms( CommsModule::udp, CommsModule::command_channel );
-//CommsModule ccm_comms2( CommsModule::udp, CommsModule::ngc_channel );
 
 // lets define some parkour parameters
-std::array<OperationMode, 1> legs =
+std::array<OperationMode, 4> legs =
 {
+    OperationMode{ 
+            5,
+            3,
+            1 },
+    OperationMode{ 
+            5,
+            3,
+            1 },
+    OperationMode{ 
+            5,
+            3,
+            1 },
     OperationMode{ 
             5,
             3,
@@ -47,9 +58,10 @@ int main()
 {
     // what now..?
 
-    DPacket pack1;
+    Custom_Packet1 pack1;
     pack1.data1 = 0;
     pack1.data2 = 0;
+    pack1.data3 = 0;
 
     while( true )
     {
@@ -60,6 +72,7 @@ int main()
         }
         pack1.data1 += 1;
         pack1.data2 += 2;
+        pack1.data3 -= 2;
     }
 }
 

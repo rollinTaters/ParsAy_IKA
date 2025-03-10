@@ -61,7 +61,7 @@ class CommsModule
         ngc_channel = 54000,
         drive_channel = 54001,
         turret_channel = 54002,
-        console_channel = 54003,    // this will be nrf24 or lora
+        console_channel = 54003,    // this will later be linked to nrf24 or lora
         command_channel = 54004,
         random_channel1 = 54005,
         random_channel2 = 54006,

@@ -13,9 +13,56 @@ enum Request
     request3
 };
 
-// use sf::Packet ???
+
+// data sent to the drive module
+struct Drive_Packet
+{
+    std::int16_t target_vel;    // (m/s)
+    std::int16_t steer_position;    // units
+};
+
+// data sent from drive module
+struct Drive_Telemetry_Packet
+{
+    std::int16_t motor_temp1;
+    std::int16_t motor_temp2;
+    std::int16_t motor_amp1;
+    std::int16_t motor_amp2;
+
+    // may be moved to the bms
+    std::int16_t battery_voltage;
+};
+
+
+// data sent/received to/from the turret module
+struct Turret_Packet
+{
+    std::int16_t pan;
+    std::int16_t tilt;
+    bool laser_on;
+};
+
+
+// data sent to the ngc module
+struct NGC_Packet
+{
+    bool autonomous_mode;
+};
+
+// from NGC to CCM
+struct NGC_Telemetry_Packet
+{
+    float heading;
+    float pitch;
+    float yaw;
+    // blah blah blah
+};
+
+
+// For testing reasons
 struct DPacket
 {
-    std::int16_t data1;
-    std::int16_t data2;
+    std::uint8_t packet_type;
 };
+
+
