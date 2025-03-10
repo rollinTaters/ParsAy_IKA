@@ -41,6 +41,33 @@ float mag( const sf::Vector3<T> v )
     return sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
 }
 
+struct Point
+{
+    float x;
+    float y;
+    float z;
+
+    Point();
+    Point( const float, const float, const float );
+
+    float mag() const;  // returns magnitude of this point (threats it as a vector)
+    Point unit() const; // returns unit vector of this point (threats it as a vector)
+    float absDist( const Point ) const; // returns absolute distance between this and given
+
+    // returns squared error of desired seperation between two points
+    float sqErrSep( const Point p1, float seperation );
+
+    Point& operator+=( const Point & );
+    Point& operator-=( const Point & );
+    Point& operator*=( const Point & );
+    Point& operator*=( const float & );
+
+};
+
+Point operator+( const Point &, const Point & );
+Point operator-( const Point &, const Point & );
+Point operator*( const Point &, const float );
+
 class Quaternion
 {
   public:

@@ -38,6 +38,7 @@
 #include <thread>
 #include <vector>
 #include "vehicle.hpp"
+#include "../../common_code/src/comms_module.hpp"
 #include "SFML/Graphics/Image.hpp"
 
 class NGC
@@ -74,13 +75,16 @@ class NGC
 
     // immediate surrounding obstacles
     // this will most likely be current sensor readings
-    std::vector<sf::Vector3f> m_immediate_obstacles;
+    std::vector<Point> m_immediate_obstacles;
 
     // thread control
     bool m_run_main_thread = false;
     bool m_run_dead_reckoning_thread = false;
     std::thread *m_main_thread = nullptr;
     std::thread *m_dead_reckoning_thread = nullptr;
+
+    // communications module
+    CommsModule m_comms_module;
 
     
 
@@ -121,7 +125,7 @@ class NGC
     // - this may be used to modify an existing waypoint,
     //  or created and then "merged" with an existing waypoint to modify it
     // - takes an input position and finds a new position which is furthest away from any obstacles, but closest to input pos
-    bool createOpenSpaceWaypoint();
+    bool createOpenSpaceWaypoint( Point& );
 
     // TODO add CONTROL type methods
     

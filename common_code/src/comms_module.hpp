@@ -1,3 +1,26 @@
+/*
+	MIT License
+
+	Copyright (c) 2025 rollinTaters
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+	
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
+*/
 
 
 /* 
@@ -6,12 +29,15 @@
    this is intended to be a global class that can be used everywhere in the codebase
 */
 
+// FORCE DEFINE LOCALHOST FOR TESTING
+#define LOCALHOST
 
 #include "comms_packets.hpp"
+#include <iostream> // cerr
 
 #ifdef LOCALHOST
-#include "SFML/TcpSocket.hpp"
-#include "SFML/UdpSocket.hpp"
+//#include "SFML/TcpSocket.hpp"
+#include "SFML/Network.hpp"
 #endif
 
 #ifdef ARDUINO_NANO
@@ -31,24 +57,37 @@ class CommsModule
         i2c
     };
 
-    CommsModule( Type );
+    enum Channel{
+        ngc_channel = 54000,
+        drive_channel = 54001,
+        turret_channel = 54002,
+        console_channel = 54003,    // this will be nrf24 or lora
+        command_channel = 54004,
+        undefined = 0
+    };
+
+    CommsModule( Type, Channel );
     ~CommsModule();
 
-    bool sendPacket( Packet );
+    bool openCommsChannel( Channel );
+
+    bool sendPacket( DPacket, Channel );
 
     bool sendRequest( Request );
 
     bool packetAvailable();
 
-    bool readPacket( Packet& );
+    bool readPacket( DPacket& );
 
   private:
 
     Type m_type;
 
 #ifdef LOCALHOST
-    // maybe use UdpSocket instead ??
-    sf::UdpSocket m_udp;
+    // a socket bound to classes selected channel for receiving data
+    sf::UdpSocket m_receive_socket;
+    // opened udp sockets for sending data
+    std::vector<sf::UdpSocket*> m_vector_udp;
     sf::SocketSelector m_selector;
     // NOTE: use sf::IpAddress::LocalHost
 #endif
