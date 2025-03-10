@@ -119,10 +119,21 @@ void NGC::mainThreadFunc()
     if( startDeadReckoning() )
         std::cout<<"Starting dead reckoning\n";
 
+    // ==== DEBUG ====
+    // temporary packet
+    DPacket packet1;
+    // ==== END OF DEBUG ====
+
     int counter = 0;
     while( m_run_main_thread )
     {
         // roll rol roll
+        // check if there are any incoming packets
+        if( m_comms_module.packetAvailable() )
+        {
+            m_comms_module.readPacket( packet1 );
+            std::cout<<"NGC: got packet, data1:"<<packet1.data1<<" data2:"<<packet1.data2<<"\n";
+        }
         // TODO check if dead reckoning is still active??
 
         // TODO run predictTrajectory and send it to command console for debug visualization

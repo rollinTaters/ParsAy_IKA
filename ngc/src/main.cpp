@@ -48,14 +48,14 @@ Env_Emulator env_emulator( simulated_vehicle );
 
 int main()
 {
-    std::cout<<"ULV NGC Emulator v0.1\n";
+    std::cout<<"ULV NGC Emulator v0.2\n";
 
     // our navigation guidance and control system
     NGC ngc_system( &simulated_vehicle );
 
     env_emulator.startPhysSim();
     ngc_system.start();
-    std::this_thread::sleep_for( std::chrono::seconds(3) );
+    std::this_thread::sleep_for( std::chrono::seconds(10) );
 
     std::cout<<"Exiting. Have a nice day\n";
 }

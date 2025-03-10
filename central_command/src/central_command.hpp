@@ -26,4 +26,16 @@
 // sets the internal flags/states of the vehicle
 // is responsible for overall vehicle control
 
-#include "../../common_code/comms_module.hpp"
+#include "../../common_code/src/comms_module.hpp"
+
+struct OperationMode
+{
+    float max_speed;    // (m/s) max speed allowed for vehicle
+    float nom_speed;    // (m/s) nominal speed which we want the vehicle to travel with
+    float max_accel;    // (m/s^2) max acceleration allowed for vehicle
+};
+
+extern bool drive_auto_mode_enabled;
+extern bool turret_auto_mode_enabled;
+
+extern CommsModule ccm_comms;

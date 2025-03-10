@@ -4,6 +4,9 @@ command_console/command_console
 # debug ngc executable
 ngc/ngc
 
+#debug ccm executable
+central_command/ccm
+
 
 # folder of release builds
 release_builds

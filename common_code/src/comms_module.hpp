@@ -63,13 +63,13 @@ class CommsModule
         turret_channel = 54002,
         console_channel = 54003,    // this will be nrf24 or lora
         command_channel = 54004,
+        random_channel1 = 54005,
+        random_channel2 = 54006,
         undefined = 0
     };
 
     CommsModule( Type, Channel );
     ~CommsModule();
-
-    bool openCommsChannel( Channel );
 
     bool sendPacket( DPacket, Channel );
 
@@ -84,10 +84,8 @@ class CommsModule
     Type m_type;
 
 #ifdef LOCALHOST
-    // a socket bound to classes selected channel for receiving data
-    sf::UdpSocket m_receive_socket;
-    // opened udp sockets for sending data
-    std::vector<sf::UdpSocket*> m_vector_udp;
+    // a socket bound to classes selected channel for rx/tx of data
+    sf::UdpSocket m_udp;
     sf::SocketSelector m_selector;
     // NOTE: use sf::IpAddress::LocalHost
 #endif

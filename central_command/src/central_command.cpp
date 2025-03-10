@@ -23,4 +23,43 @@
 */
 
 #include "central_command.hpp"
+#include <array>
+#include <iostream>
+#include <thread>   // this_thread::sleep_for
+
+bool drive_auto_mode_enabled = false;
+bool turret_auto_mode_enabled = false;
+
+CommsModule ccm_comms( CommsModule::udp, CommsModule::command_channel );
+//CommsModule ccm_comms2( CommsModule::udp, CommsModule::ngc_channel );
+
+// lets define some parkour parameters
+std::array<OperationMode, 1> legs =
+{
+    OperationMode{ 
+            5,
+            3,
+            1 }
+};
+
+
+int main()
+{
+    // what now..?
+
+    DPacket pack1;
+    pack1.data1 = 0;
+    pack1.data2 = 0;
+
+    while( true )
+    {
+        std::this_thread::sleep_for( std::chrono::seconds(1) );
+        if(ccm_comms.sendPacket( pack1, CommsModule::ngc_channel ))
+        {
+            std::cout<<"CCM: packet sent succesfully\n";
+        }
+        pack1.data1 += 1;
+        pack1.data2 += 2;
+    }
+}
 
