@@ -119,11 +119,6 @@ void NGC::mainThreadFunc()
     if( startDeadReckoning() )
         std::cout<<"Starting dead reckoning\n";
 
-    // ==== DEBUG ====
-    // temporary packet
-    Custom_Packet1 packet1;
-    // ==== END OF DEBUG ====
-
     int counter = 0;
     while( m_run_main_thread )
     {
@@ -131,10 +126,10 @@ void NGC::mainThreadFunc()
         // check if there are any incoming packets
         if( m_comms_module.packetAvailable() )
         {
-            m_comms_module.readPacket( packet1 );
-            std::cout<<"NGC: got packet, data1:"<<packet1.data1<<
-                                       " data2:"<<packet1.data2<<
-                                       " data3:"<<packet1.data3<<"\n";
+            m_comms_module.readPacket( m_command_packet );
+            std::cout<<"NGC: got packet, data1:"<<m_command_packet.data1<<
+                                       " data2:"<<m_command_packet.data2<<
+                                       " data3:"<<m_command_packet.data3<<"\n";
         }
         // TODO check if dead reckoning is still active??
 

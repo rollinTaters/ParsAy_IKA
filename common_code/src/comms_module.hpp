@@ -71,13 +71,13 @@ class CommsModule
     CommsModule( Type, Channel );
     ~CommsModule();
 
-    bool sendPacket( DPacket, Channel );
+    bool sendPacket( PacketBase, Channel );
 
     bool sendRequest( Request );
 
     bool packetAvailable();
 
-    bool readPacket( DPacket& );
+    bool readPacket( PacketBase& );
 
   private:
 

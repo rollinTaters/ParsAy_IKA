@@ -85,6 +85,7 @@ class NGC
 
     // communications module
     CommsModule m_comms_module;
+    NGC_Command_Packet m_command_packet;
 
     
 
