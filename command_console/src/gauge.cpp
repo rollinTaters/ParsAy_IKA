@@ -202,6 +202,8 @@ Gauge::Gauge(gauge_type gt, sf::Vector2f pos, float dia)
         setupNeedle(); 
         break;
     case type_adi:
+        m_max_value = 360;
+        m_min_value = 0;
         // uploading textures
         if (!roll_markings.loadFromFile("./assets/attitude_director_indicator/roll_markings_.png")) {
             std::cerr << "Error: gauge class could not load Roll markings texture!";
@@ -231,13 +233,16 @@ Gauge::Gauge(gauge_type gt, sf::Vector2f pos, float dia)
         horizon_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
 
         break;
-        case type_compass:
+    case type_compass:
+        m_max_value = 360;
+        m_min_value = 0;
         if (!compass_bg.loadFromFile("assets/compass/compass_bg.png")) {
             std::cerr << "Error: gauge class could not load Compass background texture!";
         }
         if (!compass_ticks_numbers.loadFromFile("assets/compass/compass_ticks_numbers.png")) {
             std::cerr << "Error: gauge class could not load Compass ticks and numbers texture!"; 
         }
+
         compass_bg_sprite.setTexture(compass_bg);
         compass_ticks_numbers_sprite.setTexture(compass_ticks_numbers);
 
@@ -296,19 +301,12 @@ void Gauge::updateProportionalVal(const float prop)
 
 void Gauge::render(sf::RenderTarget& target)
 {
-    if (m_type == type_adi) 
+
+    if (m_type == type_compass) 
     {
-        // Safely check if textures are loaded before trying to draw sprites     
-        // Draw ADI components in correct order
-        target.draw(horizon_sprite);
-        target.draw(pitch_scale_sprite);
-        target.draw(roll_markings_sprite);
-        
-    }
-    else if (m_type == type_compass) 
-    { 
         target.draw(compass_bg_sprite);
         target.draw(compass_ticks_numbers_sprite);
+        
     }
     else 
     {
@@ -329,6 +327,8 @@ void Gauge::render(sf::RenderTarget& target)
         //std::cout << "m_value: " << m_value << " -> Needle Angle: " << needleAngle << std::endl; // for debugging
         // by adding sf::RenderTarget% target parameter i tried to provide some flexibility
     }
+        compass_ticks_numbers_sprite.setRotation(m_value);
+        
         float needleAngle = m_needle_min_degree + (m_value - m_min_value) * (m_needle_max_degree - m_needle_min_degree) / (m_max_value - m_min_value);
         m_needle.setRotation(needleAngle);
         

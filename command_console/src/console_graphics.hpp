@@ -51,11 +51,12 @@
 #pragma once
 #include "SFML/Graphics.hpp"
 #include "gauge.hpp"
-
+#include "adi.hpp"
 extern Gauge gauge_temp;
 extern Gauge gauge_amp;
-extern Gauge gauge_adi;
+extern Adi gauge_adi;
 extern Gauge gauge_compass;
+
 bool init_graphics( sf::RenderTarget* );
 
 void DEBUG_gauge_test();
