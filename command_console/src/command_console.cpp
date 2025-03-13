@@ -43,7 +43,7 @@ int main()
     NGC_Telemetry_Packet ngctp;
 
     // graphics initialization
-    sf::RenderWindow window( sf::VideoMode(800,600), "Command Console" );
+    sf::RenderWindow window( sf::VideoMode( 1000, 800 ), "Command Console" );
     window.setFramerateLimit(60);
     if( !init_graphics(&window) )
     {
@@ -74,7 +74,7 @@ int main()
         // clear window for next frame
         window.clear( sf::Color(180,180,180) );
 
-        //do stuff
+        //do seizure inducing stuff
         DEBUG_gauge_test();
 
         // check incoming transmission packets
