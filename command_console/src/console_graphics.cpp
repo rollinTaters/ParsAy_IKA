@@ -48,6 +48,12 @@ bool init_graphics( sf::RenderTarget* inp_rt )
 // -- DEBUG --
 float g_amp_val     = 0.f;
 float g_temp_val    = 0.f;
+/*                    __
+                     // \
+                     \\_/ //
+   ''-.._.-''-.._.. -(||)(')
+                     '''
+*/                     
 float g_pitch_val   = 0.f;
 float g_roll_val    = 0.f;
 float g_heading_val = 0.f;
