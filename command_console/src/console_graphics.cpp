@@ -31,7 +31,7 @@ bool graphics_initialized = false;
 
 Gauge gauge_temp( Gauge::type_temperature, sf::Vector2f(300,50), 200 );
 Gauge gauge_amp( Gauge::type_amp, sf::Vector2f(600,50), 200 );
-Adi gauge_adi(sf::Vector2f(150,50), 200 );
+Adi gauge_adi(sf::Vector2f(500,300), 400 );
 Gauge gauge_compass ( Gauge::type_compass, sf::Vector2f(150,350),200);
 
 bool init_graphics( sf::RenderTarget* inp_rt )
@@ -46,37 +46,39 @@ bool init_graphics( sf::RenderTarget* inp_rt )
 }
 
 // -- DEBUG --
-float g_val1 = 0.f;
-float g_val2 = 0.f;
-float g_val3 = 0.f;
-float g_val4 = 0.f;
+float g_amp_val     = 0.f;
+float g_temp_val    = 0.f;
+float g_pitch_val   = 0.f;
+float g_roll_val    = 0.f;
+float g_heading_val = 0.f;
 
 
 void DEBUG_gauge_test()
 {
     // nudge value towards a random direction
-    g_val1 += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-    g_val2 += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-	g_val3 += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-    g_val4 += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-
+    g_amp_val      += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+    g_temp_val     += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+	g_pitch_val    += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+    g_roll_val     += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+    g_heading_val  += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
 
     // clamp value to be between 0 and 1
-    g_val1 = std::max( 0.f, std::min( g_val1, 1.f ));
-    g_val2 = std::max( 0.f, std::min( g_val2, 1.f ));
-	g_val3 = std::max( 0.f, std::min( g_val3, 1.f ));
-    g_val4 = std::max( 0.f, std::min( g_val4, 1.f ));
+    g_amp_val     = std::max( 0.f, std::min( g_amp_val    , 1.f ));
+    g_temp_val    = std::max( 0.f, std::min( g_temp_val   , 1.f ));
+	g_pitch_val   = std::max( 0.f, std::min( g_pitch_val  , 1.f ));
+    g_roll_val    = std::max( 0.f, std::min( g_roll_val   , 1.f ));
+    g_heading_val = std::max( 0.f, std::min( g_heading_val, 1.f ));
 
 
 
     // update gauges
-    gauge_amp.updateProportionalVal( g_val1 );
-    gauge_temp.updateProportionalVal( g_val2 );
+    gauge_amp.updateProportionalVal( g_amp_val );
+    gauge_temp.updateProportionalVal( g_temp_val );
 
-	gauge_adi.updateRotationVal( g_val3 );
-	gauge_adi.updatePitchScaleVal( g_val3 );
+	gauge_adi.updateRollVal_prop( g_roll_val );
+	gauge_adi.updatePitchVal_prop( g_pitch_val );
 
-	gauge_compass.updateProportionalVal( g_val4 );
+	gauge_compass.updateProportionalVal( g_heading_val );
 }
 // -- END OF DEBUG --
 

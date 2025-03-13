@@ -31,8 +31,10 @@ class Adi
 {
     public:
         Adi(sf::Vector2f pos, float dia);
-        void updateRotationVal(const float);
-        void updatePitchScaleVal(const float);
+        void updateRollVal_prop(const float);   // 0-1
+        void updatePitchVal_prop(const float);  // 0-1
+        void updateRollVal(const float);    // degree
+        void updatePitchVal(const float);   // degree
         void render(sf::RenderTarget& target);
 
     private:
@@ -46,12 +48,15 @@ class Adi
     
         float m_dia;        // diameter in pixels
 
-        float m_max_value;
-        float m_min_value;
-        float m_value;
-        float m_pitch_scale_val;
-        float m_pitch_scale_val_min;
-        float m_pitch_scale_val_max;
+        float m_max_roll_value;
+        float m_min_roll_value;
+        float m_roll_value;
+
+        float m_max_pitch_value;
+        float m_min_pitch_value;
+        float m_pitch_value;
+        const float m_pitch_scale = 0.5f; //FIXME this needs tuning
+
         sf::Vector2f m_size;    // in pixels
         sf::Vector2f m_pos;     // of top left corner    
 

@@ -30,12 +30,13 @@ Adi::Adi(sf::Vector2f pos, float dia){
         m_dia = dia;
         m_pos = pos;
 
-        m_max_value = 360;
-        m_min_value = 0;
+        m_roll_value = 0;
+        m_max_roll_value = 180;
+        m_min_roll_value = -180;
 
-        m_pitch_scale_val = 0;
-        m_pitch_scale_val_max = 100;
-        m_pitch_scale_val_min = 200;
+        m_pitch_value = 0;
+        m_max_pitch_value = 100;
+        m_min_pitch_value = 200;
         // uploading textures
         if (!roll_markings.loadFromFile("./assets/attitude_director_indicator/roll_markings_.png")) {
             std::cerr << "Error: adi class could not load Roll markings texture!";
@@ -51,9 +52,11 @@ Adi::Adi(sf::Vector2f pos, float dia){
         horizon_sprite.setTexture(horizon);
         
         // Calculate scale factors to match the gauge size
-        roll_markings_sprite.setScale(0.5f,0.5f);
-        pitch_scale_sprite.setScale(0.5f,0.5f);
-        horizon_sprite.setScale(0.5f,0.5f);
+        // our textures are 600x600
+        roll_markings_sprite.setScale( dia/600, dia/600 );
+        pitch_scale_sprite.setScale( dia/600, dia/600 );
+        horizon_sprite.setScale( dia/600, dia/600 );
+
         // Set origin to center of texture
         roll_markings_sprite.setOrigin(roll_markings.getSize().x / 2.f, roll_markings.getSize().y / 2.f);
         pitch_scale_sprite.setOrigin(pitch_scale.getSize().x / 2.f, pitch_scale.getSize().y / 2.f);
@@ -69,38 +72,41 @@ Adi::Adi(sf::Vector2f pos, float dia){
 
 
 }
-void Adi::updateRotationVal(const float prop)
+void Adi::updateRollVal_prop(const float prop)
 {
-    m_value = (prop * (m_max_value - m_min_value)) + m_min_value;
+    m_roll_value = (prop * (m_max_roll_value - m_min_roll_value)) + m_min_roll_value;
 }
-void Adi::updatePitchScaleVal(const float prop)
+void Adi::updatePitchVal_prop(const float prop)
 {
-    m_pitch_scale_val = (prop * (m_pitch_scale_val_max - m_pitch_scale_val_min)) + m_pitch_scale_val_min;
+    m_pitch_value = (prop * (m_max_pitch_value - m_min_pitch_value)) + m_min_pitch_value;
+}
 
-    if (m_pitch_scale_val < m_pitch_scale_val_min)
-        m_pitch_scale_val = m_pitch_scale_val_min;
-    if (m_pitch_scale_val > m_pitch_scale_val_max)
-        m_pitch_scale_val = m_pitch_scale_val_max;
+void Adi::updateRollVal(const float val)
+{
+    m_roll_value = val;
 
+    if (m_roll_value < m_min_roll_value)
+        m_roll_value = m_min_roll_value;
+    if (m_roll_value > m_max_roll_value)
+        m_roll_value = m_max_roll_value;
+}
+
+void Adi::updatePitchVal(const float val)
+{
+    m_pitch_value = val;
+
+    if (m_pitch_value < m_min_pitch_value)
+        m_pitch_value = m_min_pitch_value;
+    if (m_pitch_value > m_max_pitch_value)
+        m_pitch_value = m_max_pitch_value;
 }
 
 void Adi::render(sf::RenderTarget& target){
         // Safely check if textures are loaded before trying to draw sprites     
-        // Draw ADI components in correct order
-        target.draw(horizon_sprite);
-        target.draw(pitch_scale_sprite);
-        target.draw(roll_markings_sprite);
-        horizon_sprite.setRotation(m_value);
-        pitch_scale_sprite.setRotation(m_value);
 
-        float angle = pitch_scale_sprite.getRotation();
-        float radian = angle * PI / 180; 
-  
-
-        
         sf::Vector2f originalPosition(m_pos.x , m_pos.y + m_dia / 2.f); 
-        float newX = originalPosition.x + m_pitch_scale_val * std::sin(radian);
-        float newY = originalPosition.y - m_pitch_scale_val * std::cos(radian);
+        float newX = originalPosition.x;
+        float newY = originalPosition.y - m_pitch_value * m_pitch_scale;
         
         float x_min = m_pos.x - m_dia / 2.f;
         float x_max = m_pos.x + m_dia / 2.f;
@@ -113,6 +119,15 @@ void Adi::render(sf::RenderTarget& target){
         if (newY > y_max) newY = y_max;
     
 
+        horizon_sprite.setRotation(m_roll_value);
+        pitch_scale_sprite.setRotation(m_roll_value);
+
+        horizon_sprite.setPosition(newX, newY);
         pitch_scale_sprite.setPosition(newX, newY);
+
+        // Draw ADI components in correct order (after updating their pos and rotations)
+        target.draw(horizon_sprite);
+        target.draw(pitch_scale_sprite);
+        target.draw(roll_markings_sprite);
   
 }
