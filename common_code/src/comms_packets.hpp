@@ -43,6 +43,15 @@ struct Drive_Command_Packet : public PacketBase
 // data sent from drive module
 struct Drive_Telemetry_Packet1 : public PacketBase
 {
+    Drive_Telemetry_Packet1(){ packet_type = drive_telemetry1; data1 = 0; data2 = 0; data3 = 0; }
+    Drive_Telemetry_Packet1( PacketBase& pb )
+    {
+        packet_type = pb.packet_type;
+        data1 = pb.data1;
+        data2 = pb.data2;
+        data3 = pb.data3;
+    }
+
     std::uint16_t getMotor1Temp(){ return data1; }
     std::uint16_t getMotor1Amps(){ return data2; }
     std::uint16_t getMotor1Vel() { return data3; }

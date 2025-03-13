@@ -34,8 +34,8 @@ RELEASE_PATH := release_builds/v$(BUILD_VER)
 
 
 # ==== Command Console Linux Debug buid ====
-command_console: $(LINUX_CC_DEBUG_O3_OBJECTS)
-	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) $(LINUX_CC_DEBUG_O3_OBJECTS) -o command_console $(LINUX_DEBUG_LDFLAGS)
+command_console: $(LINUX_CC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS)
+	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) $(LINUX_CC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS) -o command_console $(LINUX_DEBUG_LDFLAGS)
 
 $(LINUX_COMMON_OBJECTS): ../common_code/obj/linux_%.o: ../common_code/src/%.cpp ../common_code/src/%.hpp
 	make -C ../common_code

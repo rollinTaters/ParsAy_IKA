@@ -65,7 +65,7 @@ bool CommsModule::sendPacket( PacketBase p, Channel c )
 }
 
 
-bool CommsModule::sendRequest( Request )
+bool CommsModule::sendRequest( PacketType req )
 {
     return false;
 }

@@ -73,7 +73,7 @@ class CommsModule
 
     bool sendPacket( PacketBase, Channel );
 
-    bool sendRequest( Request );
+    bool sendRequest( PacketType );
 
     bool packetAvailable();
 

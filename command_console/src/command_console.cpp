@@ -25,13 +25,22 @@
 
 #include <iostream>
 #include "console_graphics.hpp"
+#include "../../common_code/src/comms_module.hpp"
 
 
 
 
 int main()
 {
-    std::cout<<"Unmanned Land Vehicle Command Console v0.1\n";
+    std::cout<<"Unmanned Land Vehicle Command Console v0.2\n";
+
+    // create communications module
+    CommsModule comms_module( CommsModule::udp, CommsModule::console_channel );
+    // declare dummy packets
+    PacketBase raw_packet;
+    Drive_Telemetry_Packet1 dtp1;
+    Drive_Telemetry_Packet2 dtp2;
+    NGC_Telemetry_Packet ngctp;
 
     // graphics initialization
     sf::RenderWindow window( sf::VideoMode(800,600), "Command Console" );
@@ -67,6 +76,32 @@ int main()
 
         //do stuff
         DEBUG_gauge_test();
+
+        // check incoming transmission packets
+        if( comms_module.packetAvailable() )
+        {
+            // read packet
+            comms_module.readPacket( raw_packet );
+
+            // make sense of packet
+            switch( raw_packet.packet_type )
+            {
+                case drive_telemetry1:
+                    dtp1 = raw_packet;
+                    gauge_temp.updateVal( dtp1.getMotor1Temp() );
+                    // TODO update other gauges
+                    break;
+                case drive_telemetry2:
+                    // TODO update engine 2's gauges
+                    break;
+                case ngc_telemetry:
+                    // TODO update adi, compas
+                    break;
+                default:
+                    // fail condition, discard packet and continue
+                    break;
+            };
+        }
 
         // render gauges
         gauge_amp.render(window);
