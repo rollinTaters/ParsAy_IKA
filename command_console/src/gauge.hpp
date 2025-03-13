@@ -35,7 +35,9 @@ class Gauge
 public:
     enum gauge_type {
         type_temperature,
-        type_amp
+        type_amp,
+        type_adi,
+        type_compass
     };
 
     Gauge(gauge_type type, sf::Vector2f pos, float dia);
@@ -43,8 +45,28 @@ public:
     void updateVal(const float);  // input is value to be displayed
     void updateProportionalVal(const float);  // input is from 0.f to 1.f
     void render(sf::RenderTarget& target);
+    void setupGaugeFrame();
+    void setupNeedle();
 
 private:
+    gauge_type m_type; // to store gauge type
+    // adi things
+    sf::Texture roll_markings; // roll markings
+    sf::Texture pitch_scale; // pitch scale
+    sf::Texture horizon; // horizon
+    sf::Sprite roll_markings_sprite;
+    sf::Sprite pitch_scale_sprite;
+    sf::Sprite horizon_sprite;
+
+    // compass things
+    sf::Texture compass_bg; // compass background
+    sf::Texture compass_ticks_numbers; // compass ticks and numbers
+    sf::Sprite compass_bg_sprite;
+    sf::Sprite compass_ticks_numbers_sprite;
+
+
+
+    // ampere and temperature meter things 
     sf::CircleShape m_gaugeFrame;    // gauge shape
     
     std::vector<sf::Vertex> m_ticks; // lines

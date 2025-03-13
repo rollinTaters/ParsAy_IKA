@@ -5,7 +5,7 @@ SFML_libs := -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-system -lsfml-net
 #SFML_libs_static := -DSFML_STATIC -MMD -MP -static-libstdc++ -static-libgcc -lsfml-main -lsfml-audio-s -lsfml-graphics-s -lsfml-window-s -lsfml-system-s -lsfml-network-s  -lopengl32 -lfreetype -lwinmm -lgdi32 -lopenal32 -lFLAC -lvorbisenc -lvorbis -logg -lws2_32
 
 # ==== command console objects ====
-CC_OBJECTS := command_console.o console_graphics.o gauge.o
+CC_OBJECTS := command_console.o console_graphics.o gauge.o adi.o
 COMMON_OBJECTS := utility.o comms_module.o
 
 LINUX_CC_RELEASE_OBJECTS = $(addprefix obj/linux_, $(CC_OBJECTS))
