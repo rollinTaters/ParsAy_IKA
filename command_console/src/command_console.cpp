@@ -26,6 +26,7 @@
 #include <iostream>
 #include "console_graphics.hpp"
 #include "../../common_code/src/comms_module.hpp"
+#include "user_input.hpp"
 
 
 
@@ -41,6 +42,7 @@ int main()
     Drive_Telemetry_Packet1 dtp1;
     Drive_Telemetry_Packet2 dtp2;
     NGC_Telemetry_Packet ngctp;
+    UserInput input;
 
     // graphics initialization
     sf::RenderWindow window( sf::VideoMode( 1000, 800 ), "Command Console" );
@@ -89,12 +91,18 @@ int main()
                 case drive_telemetry1:
                     dtp1 = raw_packet;
                     gauge_temp.updateVal( dtp1.getMotor1Temp() );
+                    gauge_amp.updateVal( dtp1.getMotor1Amps() );
                     // TODO update other gauges
                     break;
                 case drive_telemetry2:
+
                     // TODO update engine 2's gauges
                     break;
                 case ngc_telemetry:
+                    
+                    gauge_compass.updateVal( ngctp.getHeading() );
+                    gauge_adi.updateRollVal( ngctp.getRoll() );
+                    gauge_adi.updatePitchVal( ngctp.getPitch() );
                     // TODO update adi, compas
                     break;
                 default:
@@ -102,7 +110,7 @@ int main()
                     break;
             };
         }
-
+        input.proccesInput();
         // render gauges
         gauge_amp.render(window);
         gauge_temp.render(window);
