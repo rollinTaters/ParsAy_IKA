@@ -52,11 +52,13 @@
 #include "SFML/Graphics.hpp"
 #include "gauge.hpp"
 #include "adi.hpp"
+#include "user_input.hpp"
+
 extern Gauge gauge_temp;
 extern Gauge gauge_amp;
 extern Adi gauge_adi;
 extern Gauge gauge_compass;
-
+extern UserInput input;
 bool init_graphics( sf::RenderTarget* );
 
 void DEBUG_gauge_test();

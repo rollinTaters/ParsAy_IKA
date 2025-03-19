@@ -26,7 +26,7 @@
 #include <iostream>
 #include "console_graphics.hpp"
 #include "../../common_code/src/comms_module.hpp"
-#include "user_input.hpp"
+
 
 
 
@@ -42,7 +42,7 @@ int main()
     Drive_Telemetry_Packet1 dtp1;
     Drive_Telemetry_Packet2 dtp2;
     NGC_Telemetry_Packet ngctp;
-    UserInput input;
+
 
     // graphics initialization
     sf::RenderWindow window( sf::VideoMode( 1000, 800 ), "Command Console" );
@@ -112,9 +112,9 @@ int main()
         }
         input.proccesInput();
         // render gauges
+        gauge_adi.render(window);
         gauge_amp.render(window);
         gauge_temp.render(window);
-        gauge_adi.render(window);
         gauge_compass.render(window);
         // a call to render stuff
 

@@ -47,28 +47,43 @@ Adi::Adi(sf::Vector2f pos, float dia){
         if (!horizon.loadFromFile("./assets/attitude_director_indicator/horizon.png")) {
             std::cerr << "Error: adi class could not load Horizon texture!";
         }
+        if (!horizon_outline.loadFromFile("../assets/attitude_director_indicator/horizon.png")) {
+            std::cerr << "Error: adi class could not load Horizon texture!";
+        }
+
         roll_markings_sprite.setTexture(roll_markings);
         pitch_scale_sprite.setTexture(pitch_scale);
         horizon_sprite.setTexture(horizon);
-        
+
+      
         // Calculate scale factors to match the gauge size
         // our textures are 600x600
         roll_markings_sprite.setScale( dia/600, dia/600 );
         pitch_scale_sprite.setScale( dia/600, dia/600 );
-        horizon_sprite.setScale( dia/600, dia/600 );
-
+        horizon_sprite.setScale( dia/600 , dia/600 );
+       
         // Set origin to center of texture
         roll_markings_sprite.setOrigin(roll_markings.getSize().x / 2.f, roll_markings.getSize().y / 2.f);
         pitch_scale_sprite.setOrigin(pitch_scale.getSize().x / 2.f, pitch_scale.getSize().y / 2.f);
         horizon_sprite.setOrigin(horizon.getSize().x / 2.f, horizon.getSize().y / 2.f);
+      
         
         // Position at center of gauge
         roll_markings_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
         pitch_scale_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
         horizon_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
+       
 
         horizon_sprite.setRotation(0);
         pitch_scale_sprite.setRotation(0);
+
+        m_background.setFillColor(sf::Color::Transparent);
+        m_background.setRadius(m_dia/2);
+        m_background.setOrigin(m_dia/2,m_dia/2);
+        m_background.setScale(m_dia/500, m_dia/500);
+        m_background.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
+        m_background.setOutlineThickness(500);
+        m_background.setOutlineColor(sf::Color(180,180,180));
 
 
 }
@@ -127,7 +142,9 @@ void Adi::render(sf::RenderTarget& target){
 
         // Draw ADI components in correct order (after updating their pos and rotations)
         target.draw(horizon_sprite);
+       
         target.draw(pitch_scale_sprite);
+        target.draw(m_background); 
         target.draw(roll_markings_sprite);
-  
+        
 }

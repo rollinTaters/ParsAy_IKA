@@ -201,38 +201,6 @@ Gauge::Gauge(gauge_type gt, sf::Vector2f pos, float dia)
         // create needle
         setupNeedle(); 
         break;
-    case type_adi:
-        m_max_value = 360;
-        m_min_value = 0;
-        // uploading textures
-        if (!roll_markings.loadFromFile("./assets/attitude_director_indicator/roll_markings_.png")) {
-            std::cerr << "Error: gauge class could not load Roll markings texture!";
-        }
-        if (!pitch_scale.loadFromFile("./assets/attitude_director_indicator/pitch_scale_.png")) {
-            std::cerr << "Error: gauge class could not load Pitch scale texture!";
-        }
-        if (!horizon.loadFromFile("./assets/attitude_director_indicator/horizon.png")) {
-            std::cerr << "Error: gauge class could not load Horizon texture!";
-        }
-        roll_markings_sprite.setTexture(roll_markings);
-        pitch_scale_sprite.setTexture(pitch_scale);
-        horizon_sprite.setTexture(horizon);
-        
-        // Calculate scale factors to match the gauge size
-        roll_markings_sprite.setScale(0.5f,0.5f);
-        pitch_scale_sprite.setScale(0.5f,0.5f);
-        horizon_sprite.setScale(0.5f,0.5f);
-        // Set origin to center of texture
-        roll_markings_sprite.setOrigin(roll_markings.getSize().x / 2.f, roll_markings.getSize().y / 2.f);
-        pitch_scale_sprite.setOrigin(pitch_scale.getSize().x / 2.f, pitch_scale.getSize().y / 2.f);
-        horizon_sprite.setOrigin(horizon.getSize().x / 2.f, horizon.getSize().y / 2.f);
-        
-        // Position at center of gauge
-        roll_markings_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
-        pitch_scale_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
-        horizon_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
-
-        break;
     case type_compass:
         m_max_value = 360;
         m_min_value = 0;
@@ -325,7 +293,6 @@ void Gauge::render(sf::RenderTarget& target)
         target.draw(m_center);
     
         //std::cout << "m_value: " << m_value << " -> Needle Angle: " << needleAngle << std::endl; // for debugging
-        // by adding sf::RenderTarget% target parameter i tried to provide some flexibility
     }
         compass_ticks_numbers_sprite.setRotation(m_value);
         
