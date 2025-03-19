@@ -75,8 +75,8 @@ int main()
         window.clear( sf::Color(180,180,180) );
 
         //do seizure inducing stuff
-        DEBUG_gauge_test();
-
+        //DEBUG_gauge_test();
+//
         // check incoming transmission packets
         if( comms_module.packetAvailable() )
         {

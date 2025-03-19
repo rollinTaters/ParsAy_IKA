@@ -129,6 +129,19 @@ class NGC
     bool createOpenSpaceWaypoint( Point& );
 
     // TODO add CONTROL type methods
+
+    // navigation happens with a queue of waypoints, sub waypoints may need to be calculated for this queueueueu
+
+    // Control modes with waypoints
+    // (mode 1) find attitude to reach target wp
+    // (mode 2) (interpolated wp) calculate intermediate wp that when used, makes us reach target wp with desired attitude
+    // (mode 3) (immediate after wp) use mode1 then add new wp immediately after it to match a given attitude
+
+    // Waypoint usage modes
+    // (mode 1) hit waypoint
+    // (mode 2-3) hit wp with attitude
+    // (mode 4) wp is apex of turn, calculate turn arc using prev and next wp, these points may be used as sub-waypoints
+    // (mode 5) wp is arc center of turn, rest is same as mode4
     
 };
 
