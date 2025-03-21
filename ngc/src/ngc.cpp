@@ -111,6 +111,12 @@ bool NGC::stopDeadReckoning()
     return true;
 }
 
+bool NGC::addWP( Point wp )
+{
+    m_waypoints.push_back( wp );
+    return true;
+}
+
 // == private: ==
 
 void NGC::mainThreadFunc()
@@ -140,6 +146,14 @@ void NGC::mainThreadFunc()
         // TODO run createTargetWaypoint, createOpenSpaceWaypoint
 
         // TODO run CONTROL type methods
+        // DEBUG
+        if( !m_waypoints.empty() )
+        {
+            hitWP( m_waypoints.front() );
+        }else{
+            halt();
+        }
+        // END OF DEBUG
 
         std::cout<<"ngc main thread spam. counter:"<<counter<<"\n";
         counter++;
@@ -291,3 +305,31 @@ bool NGC::createOpenSpaceWaypoint( Point& start_point )
     start_point = out_point;
     return true;
 }
+
+bool NGC::hitWP( Point wp )
+{
+    float t_vel = 0;
+    float t_radius = 0;
+    BB3D box = m_vehicle->getBox();
+    
+    float heading = box.getAngEuler().x;    // x:yaw, y:pitch, z:roll
+
+    // calc an angle to target wp
+
+    // set turn radius as necessary
+
+    // set target speed as necessary
+
+    m_vehicle->setAcceleration( );
+    m_vehicle->setTurnRadius( t_radius );
+    return true;
+}
+
+bool NGC::halt()
+{
+    m_vehicle->setAcceleration( );
+    m_vehicle->setTurnRadius( 0.f );    // center steering
+    return true;
+}
+
+

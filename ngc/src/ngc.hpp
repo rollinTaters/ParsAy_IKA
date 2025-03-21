@@ -37,8 +37,10 @@
 
 #include <thread>
 #include <vector>
+#include <queue>
 #include "vehicle.hpp"
 #include "../../common_code/src/comms_module.hpp"
+#include "../../common_code/src/utility.hpp"
 #include "SFML/Graphics/Image.hpp"
 
 class NGC
@@ -57,6 +59,8 @@ class NGC
     bool startDeadReckoning();
     bool stopDeadReckoning();
 
+    bool addWP( Point );
+
   private:
 
     // ==== Data ====
@@ -64,6 +68,9 @@ class NGC
     // internal world map
     sf::Image m_image_world_map;
     const float m_metre_per_pixel = 0.005;  // 5mm per pixel
+
+    // waypoints
+    std::queue<Point> m_waypoints;
 
     // time keeping and clocks
     std::chrono::steady_clock m_clock;
@@ -142,6 +149,9 @@ class NGC
     // (mode 2-3) hit wp with attitude
     // (mode 4) wp is apex of turn, calculate turn arc using prev and next wp, these points may be used as sub-waypoints
     // (mode 5) wp is arc center of turn, rest is same as mode4
+
+    bool hitWP( Point );
+    bool halt();
     
 };
 
