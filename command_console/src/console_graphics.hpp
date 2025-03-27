@@ -58,6 +58,8 @@ extern Gauge gauge_temp;
 extern Gauge gauge_amp;
 extern Adi gauge_adi;
 extern Gauge gauge_compass;
+extern Gauge gauge_amp2;
+extern Gauge gauge_temp2;
 extern UserInput input;
 bool init_graphics( sf::RenderTarget* );
 

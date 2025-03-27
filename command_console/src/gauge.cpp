@@ -99,7 +99,7 @@ Gauge::Gauge(gauge_type gt, sf::Vector2f pos, float dia)
         m_max_value = 120;
 		m_min_value = -5;
         
-        m_value = 0;
+        m_value = -5;
 
         m_needle_min_degree = -150;   // angle at which needle rests when min
         m_needle_max_degree = 150;

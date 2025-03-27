@@ -42,11 +42,9 @@ class Adi
         sf::Texture roll_markings; // roll markings
         sf::Texture pitch_scale; // pitch scale
         sf::Texture horizon; // horizon
-        
         sf::Texture horizon_outline;
-
-        //sf::Sprite horizon_outline_sprite;
         
+        //sf::Sprite horizon_outline_sprite;
         sf::Sprite roll_markings_sprite;
         sf::Sprite pitch_scale_sprite;
         sf::Sprite horizon_sprite;

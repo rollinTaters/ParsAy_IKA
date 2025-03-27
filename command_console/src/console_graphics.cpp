@@ -31,8 +31,12 @@ bool graphics_initialized = false;
 
 Gauge gauge_temp( Gauge::type_temperature, sf::Vector2f(300,50), 200 );
 Gauge gauge_amp( Gauge::type_amp, sf::Vector2f(600,50), 200 );
-Adi gauge_adi(sf::Vector2f(500,300), 400 );
+Gauge gauge_amp2( Gauge::type_amp, sf::Vector2f(50,50), 200 );
+Gauge gauge_temp2( Gauge::type_temperature, sf::Vector2f(700,350), 200 );
+Adi gauge_adi( sf::Vector2f(500,300), 400 );
 Gauge gauge_compass ( Gauge::type_compass, sf::Vector2f(150,350),200);
+
+
 UserInput input;
 
 bool init_graphics( sf::RenderTarget* inp_rt )
