@@ -59,7 +59,8 @@ class NGC
     bool startDeadReckoning();
     bool stopDeadReckoning();
 
-    bool addWP( Point );
+    bool addWP( Point );    // add new waypoint to the queues end
+    bool executeWPs();  // starts executing current waypoints
 
   private:
 
@@ -71,6 +72,7 @@ class NGC
 
     // waypoints
     std::queue<Point> m_waypoints;
+    bool m_execute_waypoints = false;
 
     // time keeping and clocks
     std::chrono::steady_clock m_clock;

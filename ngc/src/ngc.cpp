@@ -117,6 +117,17 @@ bool NGC::addWP( Point wp )
     return true;
 }
 
+bool NGC::executeWPs()
+{
+    if( m_waypoints.empty() )
+    {
+        m_execute_waypoints = false;
+        return false;
+    }
+    m_execute_waypoints = true;
+    return true;
+}
+
 // == private: ==
 
 void NGC::mainThreadFunc()
@@ -147,10 +158,12 @@ void NGC::mainThreadFunc()
 
         // TODO run CONTROL type methods
         // DEBUG
-        if( !m_waypoints.empty() )
+        if( !m_waypoints.empty() && m_execute_waypoints )
         {
+            // TODO checking wp satisfaction
             hitWP( m_waypoints.front() );
         }else{
+            m_execute_waypoints = false;
             halt();
         }
         // END OF DEBUG
@@ -312,22 +325,60 @@ bool NGC::hitWP( Point wp )
     float t_radius = 0;
     BB3D box = m_vehicle->getBox();
     
-    float heading = box.getAngEuler().x;    // x:yaw, y:pitch, z:roll
 
-    // calc an angle to target wp
+    // delta between target wp and vehicle position
+    Point d_wp( wp.x - box.getPos().x,
+                wp.y - box.getPos().y,
+                wp.z - box.getPos().z );
 
-    // set turn radius as necessary
+    // wp's heading
+    float wp_heading = d_wp.heading();
 
-    // set target speed as necessary
+    // our vehicles heading
+    float vehicle_heading = box.getAngEuler().x;    // x:yaw, y:pitch, z:roll
 
-    m_vehicle->setAcceleration( );
+    // wp's bearing (aka target bearing)
+    float t_bearing = wp_heading - vehicle_heading;
+
+    // make sure bearing is between 0 and 2pi
+    t_bearing += 2*PI;
+    t_bearing = t_bearing % (2*PI);
+
+    // -- setting turn radius as necessary --
+
+    // TODO front and rear mobility cones
+    // 0-5 degrees -> ignore turn, just go straight
+    // 5-30 degrees -> do regular arc turn
+    // 30 - 90 degrees -> do point turn, then straight line move
+    // same shit is mirrored for reverse operations
+
+
+    // with some math, we find that angle of rotation from arc center is 2*bearing
+    // this also means that we will have a heading change of this same 2*bearing value
+
+    // using cosine theorem: c^2 = a^2 + b^2 - 2ab(cos(C))
+    // d_wp.mag()^2 = 2(t_radius^2) - 2(t_radius^2)*cos(2*t_bearing)
+    // d_wp.mag()^2 = (2(t_radius^2)) * (1-cos(2*t_bearing)) 
+    // (d_wp.mag()^2) / (1-cos(2*t_bearing) = 2*(t_radius^2)
+    // t_radius^2 = (d_wp.mag()^2) / ((1-cos(2*t_bearing)*2)
+    t_radius = sqrt( (pow(d_wp.mag(),2)) / (2.f*(1.f-cos(2*t_bearing))) );
+
+    // t_radius should have a sign determining the left or right handedness of turn
+    if( t_bearing > PI ) // port side, sign should be (-)
+        t_radius *= -1.f;
+
+    // -- setting target speed as necessary --
+
+    // FIXME we need to send a "target speed" signal to drive motor controller program
+    m_vehicle->setAcceleration(/* FIXME */);
     m_vehicle->setTurnRadius( t_radius );
     return true;
 }
 
 bool NGC::halt()
 {
-    m_vehicle->setAcceleration( );
+    // FIXME we need to send a "target speed" signal to drive motor controller program
+    m_vehicle->setAcceleration(/* FIXME */);
     m_vehicle->setTurnRadius( 0.f );    // center steering
     return true;
 }

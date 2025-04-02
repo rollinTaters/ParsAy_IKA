@@ -47,6 +47,83 @@ float Point::absDist( const Point inp ) const
     return delta.mag();
 }
 
+float Point::heading() const
+{
+    // start by making a unit vector
+    Point unit_vec(x,y,0);
+    unit_vec = unit_vec.unit();
+
+    float rad = 0;
+
+    // this whole thing is a shit-show.
+    // avert your eyes for your own good.
+    // you have been warned.
+
+    // on axis (and possible divide by zero) checks
+    if( unit_vec.x == 0 )
+    {
+        if( unit_vec.y > 0 )
+            return 0;   // north 000
+        else
+            return PI;  // south 180
+    }
+    if( unit_vec.y == 0 )
+    {
+        if( unit_vec. x > 0 )
+            return PI/2.f;  // east 090
+        else
+            return (3.f/2.f) * PI; // west 270
+    }
+    // an edge case where the input vector had only z component (which we discarded)
+    // or no components at all
+    if( unit_vec.x == 0 && unit_vec.y == 0 ) return 0;
+
+    // use arcsin when closer to x axis
+    bool use_arcsin = false;
+    if( abs(unit_vec.x) > abs(unit_vec.y) )
+        use_arcsin = true;
+
+    // here be demons, turn back
+    if( unit_vec.y > 0 )
+    {
+        if( unit_vec.x > 0 )
+        {
+            // sector I
+            if( use_arcsin )
+                rad = asin( unit_vec.y );
+            else
+                rad = (PI/2.f) - acos( unit_vec.x );
+            rad = PI/2.f - rad;
+        }else{
+            // sector II
+            if( use_arcsin )
+                rad = asin( unit_vec.y );
+            else
+                rad = (PI/2.f) - acos( -unit_vec.x );
+            rad = (3.f*PI)/2.f + rad;
+        }
+    }else{
+        if( unit_vec.x > 0 )
+        {
+            // sector IV
+            if( use_arcsin )
+                rad = asin( -unit_vec.y );
+            else
+                rad = (PI/2.f) - acos( unit_vec.x );
+            rad = PI/2.f + rad;
+        }else{
+            // sector III
+            if( use_arcsin )
+                rad = asin( -unit_vec.y );
+            else
+                rad = (PI/2.f) - acos( -unit_vec.x );
+            rad = PI + rad;
+        }
+    }
+    // fucking finally
+    return rad;
+}
+
 float Point::sqErrSep( const Point p1, float seperation )
 {
     Point delta = *this - p1;

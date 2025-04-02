@@ -53,6 +53,7 @@ struct Point
     float mag() const;  // returns magnitude of this point (threats it as a vector)
     Point unit() const; // returns unit vector of this point (threats it as a vector)
     float absDist( const Point ) const; // returns absolute distance between this and given
+    float heading() const;  // north is +Y, Z (up-down) is ignored, return value is in radians
 
     // returns squared error of desired seperation between two points
     float sqErrSep( const Point p1, float seperation );
