@@ -30,15 +30,15 @@
 Vehicle::Vehicle()
 {
     // populate sensors on vehicle
-    m_sensor[0] = Sensor_Emulator( E_type_IMU,      sf::Vector3f( 0, 0, 0), sf::Vector3f(0, 0, 0) );
-    m_sensor[1] = Sensor_Emulator( E_type_distance, sf::Vector3f(-0.20, 0,0), sf::Vector3f(0,0,-50) );
-    m_sensor[2] = Sensor_Emulator( E_type_distance, sf::Vector3f(-0.10, 0,0), sf::Vector3f(0,0,-20) );
-    m_sensor[3] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.00, 0,0), sf::Vector3f(0,0,  0) );
-    m_sensor[4] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.10, 0,0), sf::Vector3f(0,0, 20) );
-    m_sensor[5] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.20, 0,0), sf::Vector3f(0,0, 50) );
+    m_sensor[0] = Sensor_Emulator( E_type_IMU,      v3f( 0, 0, 0), v3f(0, 0, 0) );
+    m_sensor[1] = Sensor_Emulator( E_type_distance, v3f(-0.20, 0,0), v3f(0,0,-50) );
+    m_sensor[2] = Sensor_Emulator( E_type_distance, v3f(-0.10, 0,0), v3f(0,0,-20) );
+    m_sensor[3] = Sensor_Emulator( E_type_distance, v3f( 0.00, 0,0), v3f(0,0,  0) );
+    m_sensor[4] = Sensor_Emulator( E_type_distance, v3f( 0.10, 0,0), v3f(0,0, 20) );
+    m_sensor[5] = Sensor_Emulator( E_type_distance, v3f( 0.20, 0,0), v3f(0,0, 50) );
 
-    m_vel = sf::Vector3f( 0,0,0 );
-    m_acc = sf::Vector3f( 0,0,0 );
+    m_vel = v3f( 0,0,0 );
+    m_acc = v3f( 0,0,0 );
 
     m_bb3d.setSize(0.8, 1.3, 0.6);
     m_bb3d.setPos(0,0,0);
@@ -67,10 +67,10 @@ Vehicle& Vehicle::operator =( const Vehicle& rhs )
 BB3D Vehicle::getBox() const { return m_bb3d; }
 
 // TODO add simulated error to these
-sf::Vector3f Vehicle::getVel() const { return m_vel; }
-sf::Vector3f Vehicle::getAcc() const { return m_acc; }
-sf::Vector3f Vehicle::getAngVel() const { return m_angVel; }
-sf::Vector3f Vehicle::getAngAcc() const { return m_angAcc; }
+v3f Vehicle::getVel() const { return m_vel; }
+v3f Vehicle::getAcc() const { return m_acc; }
+v3f Vehicle::getAngVel() const { return m_angVel; }
+v3f Vehicle::getAngAcc() const { return m_angAcc; }
 
 Sensor_Emulator Vehicle::getSensor( const unsigned short int number ) const
 {
@@ -110,7 +110,7 @@ void Vehicle::setTurnRadius( const float radius )
     m_turn_radius = radius;
 }
 
-void Vehicle::overridePos( const sf::Vector3f pos )
+void Vehicle::overridePos( const v3f pos )
 {
     m_bb3d.setPos(pos);
 }
@@ -152,7 +152,7 @@ void Vehicle::simulatePhys( const float time_step )
     // here be gravity
     /*  TODO we are not ready yet, there is no floor to resist our fall
     Quaternion qc = m_bb3d.getQuat().conjugate();
-    sf::Vector3f gravity( 0, 0, -9.81f );
+    v3f gravity( 0, 0, -9.81f );
     qc.rotateVector( gravity ); // gravity on local csys
     m_acc += gravity;
     */

@@ -35,8 +35,7 @@
 
 #pragma once
 #include <thread>
-#include "SFML/Graphics/Image.hpp"
-#include "SFML/System/Clock.hpp"
+#include "raylib.h" // course image
 #include "vehicle.hpp"
 //#include "sensor_emulator.hpp"  // getSensorData needs to know what a sensor is
 
@@ -55,14 +54,14 @@ class Env_Emulator
     bool stopPhysSim();
 
     // returns time elapsed since emulator start
-    sf::Time getTime() const;
+    // SWITCH TO CHRONO sf::Time getTime() const;
 
     // this populates the sensor data object with emulated sensor readings from the "real" vehicle
     bool getSensorData( Sensor_Emulator*, Sensor_Data& ) const; // returns false on read fail
 
     private:
     // "real" map/course
-    sf::Image m_image_course;
+    Image m_image_course;
     const float m_metre_per_pixel = 0.005;  // 5mm per pixel
 
     // physics simulation thread
@@ -74,7 +73,7 @@ class Env_Emulator
     Vehicle m_real_vehicle;
 
     // simulation clock
-    sf::Clock m_clock;
+    std::chrono::steady_clock m_clock;
 
 };
 

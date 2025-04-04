@@ -40,10 +40,10 @@ class Vehicle
     Vehicle& operator =( const Vehicle& );
 
     BB3D getBox() const;    // returns 3d bounding box of vehicle
-    sf::Vector3f getVel() const;
-    sf::Vector3f getAcc() const;
-    sf::Vector3f getAngVel() const;
-    sf::Vector3f getAngAcc() const;
+    v3f getVel() const;
+    v3f getAcc() const;
+    v3f getAngVel() const;
+    v3f getAngAcc() const;
 
     Sensor_Emulator getSensor( const unsigned short int number ) const;
     float readSensor( const unsigned short int number );
@@ -52,7 +52,7 @@ class Vehicle
     void setAcceleration( const float );
     void setTurnRadius( const float );  // note: 0 is dead ahead
 
-    void overridePos( const sf::Vector3f ); // set position of vehicle
+    void overridePos( const v3f ); // set position of vehicle
 
     // NOTE: this method is only to be called from environment emulator:
     void simulatePhys( const float time_step ); // update vehicle physics, this is for simulation
@@ -75,14 +75,14 @@ class Vehicle
 
     // vehicle physical properties
     // NOTE: in reality we can only measure these with sensors, there will be errors
-    sf::Vector3f m_vel;     // velocity vector in local csys, (m/s)
-    sf::Vector3f m_acc;     // acceleration vector in local csys, (m/s^2)
-    sf::Vector3f m_angVel;  // angular velocity in local csys, (rad/s)
-    sf::Vector3f m_angAcc;  // angular acceleration in local csys (rad/s^2)
+    v3f m_vel;     // velocity vector in local csys, (m/s)
+    v3f m_acc;     // acceleration vector in local csys, (m/s^2)
+    v3f m_angVel;  // angular velocity in local csys, (rad/s)
+    v3f m_angAcc;  // angular acceleration in local csys (rad/s^2)
     float m_turn_radius = 0; // radius of turn circle, positive is towards port, 0 is dead ahead (m)
     float m_mass = 10;          // vehicle mass (kg)
-    //sf::Vector3f m_moment_of_inertia;
-    //sf::Vector3f m_center_of_mass;
+    //v3f m_moment_of_inertia;
+    //v3f m_center_of_mass;
 
 };
 

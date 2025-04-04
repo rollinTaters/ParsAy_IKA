@@ -23,7 +23,7 @@
 */
 
 
-#include <chrono>   // thread sleep
+#include <chrono>   // thread sleep steady_clock
 #include <iostream>     // cerr
 #include "env_emulator.hpp"
 
@@ -31,15 +31,13 @@ Env_Emulator::Env_Emulator( const Vehicle& inp_vehicle ):
     m_real_vehicle(inp_vehicle)
 {
     // load the course image from the disk
-    if( !m_image_course.loadFromFile("gfx/course1.png") )
+    m_image_course = LoadImage("gfx/course1.png");
+    if( !IsImageValid( m_image_course ) )
     {
         std::cerr<<"Error. Could not load course image from file!\n";
     }
     // set position of m_real_vehicle in course
-    m_real_vehicle.overridePos( sf::Vector3f(340*m_metre_per_pixel, 775*m_metre_per_pixel, 0.5f) );
-
-    // init clock
-    m_clock = sf::Clock();
+    m_real_vehicle.overridePos( Point(340*m_metre_per_pixel, 775*m_metre_per_pixel, 0.5f) );
 }
 
 Env_Emulator::~Env_Emulator()
@@ -82,10 +80,13 @@ bool Env_Emulator::stopPhysSim()
     return true;
 }
 
+/*
+   SWITCH TO CHRONO
 sf::Time Env_Emulator::getTime() const
 {
     return m_clock.getElapsedTime();
 }
+*/
 
 void Env_Emulator::physThreadFunc()
 {
@@ -110,10 +111,10 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
     unsigned int max_iteration = 1000;
     unsigned int iteration = 0;
     bool march_successful = false;
-    sf::Vector3f start_pos = sensor_box.getPos();
+    Point start_pos = sensor_box.getPos();
     start_pos /= m_metre_per_pixel; // convert meters to pixel position
-    sf::Vector3f check_pos = start_pos; // position we will iterate upon
-    sf::Vector3f direction = sensor_box.getAngEuler();
+    Point check_pos = start_pos; // position we will iterate upon
+    Point direction = sensor_box.getAngEuler();
 
     switch( sensor_type )
     {
@@ -127,8 +128,9 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
             while( iteration < max_iteration )
             {
                 // check if pixel is marked as "wall"
-                if( m_image_course.getPixel( (int)round(check_pos.x),
-                                             (int)round(check_pos.y) ) == sf::Color::Black )
+                // TODO this is stupid, getimagecolor takes the image argument by copy to its function frame. change this to be a straight up "height" array
+                if( GetImageColor( m_course_map, (int)round(check_pos.x),
+                                                 (int)round(check_pos.y) ) == BLACK )
                 {
                     // found wall, return it
                     march_successful = true;
@@ -149,7 +151,7 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
                 //data.distance = 1000.f;
                 return false;
             }
-            data.distance = mag( (check_pos - start_pos)*m_metre_per_pixel );
+            data.distance = ( (check_pos - start_pos)*m_metre_per_pixel ).mag();
             return true;
 
         // ---- LIDAR ----

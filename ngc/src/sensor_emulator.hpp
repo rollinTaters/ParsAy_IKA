@@ -33,7 +33,6 @@
 
 #pragma once
 #include "../../common_code/src/utility.hpp"
-#include "SFML/System/Time.hpp"
 
 enum Sensor_Type{
     E_type_undefined,
@@ -54,9 +53,9 @@ struct Sensor_Data
     float distance;
 
     // for IMU
-    sf::Vector3f acceleration;  // m/s^2
-    sf::Vector3f angular_rate;  // radian/sec
-    sf::Vector3f magnetic_north;    // unit vector
+    v3f acceleration;  // m/s^2
+    v3f angular_rate;  // radian/sec
+    v3f magnetic_north;    // unit vector
     float barometric_pressure;      // Pa
 
     // for LIDAR
@@ -82,12 +81,11 @@ class Sensor_Emulator
     Sensor_Emulator();  // DO NOT use, here to shut up the compiler
 
     Sensor_Emulator( Sensor_Type type,
-                     const sf::Vector3f inp_pos,
-                     const sf::Vector3f inp_angle );
+                     const v3f inp_pos,
+                     const v3f inp_angle );
 
     Sensor_Emulator( Sensor_Type type, const BB3D inp_bb3d );
 
-    bool isReady() const;
     float read( Sensor_Data& );
 
     Sensor_Type getType() const;
@@ -99,9 +97,5 @@ class Sensor_Emulator
     BB3D m_bb3d;
 
     Sensor_Type m_type = E_type_undefined;
-
-    // these simulate if the sensor is ready for next read
-    sf::Time m_time_last_read;
-    sf::Time m_time_cooldown;
 
 };
