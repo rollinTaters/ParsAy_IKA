@@ -65,10 +65,13 @@ class NGC
   private:
 
     // ==== Data ====
+    /*
     // NOTE 2d images are cool for debugging, but we want to switch to 3d world data
     // internal world map
-    sf::Image m_image_world_map;
+    sf::Image m_image_world_map;    // DEPRECATED
     const float m_metre_per_pixel = 0.005;  // 5mm per pixel
+    */
+
 
     // waypoints
     std::queue<Point> m_waypoints;

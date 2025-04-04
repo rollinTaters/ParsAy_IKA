@@ -40,6 +40,10 @@
 #include "sensor_emulator.hpp"
 #include "ngc.hpp"
 
+#ifdef DEBUG_GUI
+#include "raylib.h"
+#endif
+
 // this is the vehicle we are managing/controlling
 Vehicle simulated_vehicle;
 
@@ -55,7 +59,44 @@ int main()
 
     env_emulator.startPhysSim();
     ngc_system.start();
-    std::this_thread::sleep_for( std::chrono::seconds(10) );
+
+#ifdef DEBUG_GUI
+    // create a window for gui rendering
+    InitWindow( 1000,800, "NGC DEBUG GUI" );
+
+    // camera setup
+    Camera camera = {0};
+    camera.position = (Vector3){ 0.f, 10.f, 10.f };
+    camera.target = (Vector3){ 0.f, 0.f, 0.f };
+    camera.up = (Vector3){ 0.f, 1.f, 0.f };
+    camera.fovy = 45.f;
+    camera.projection = CAMERA_PERSPECTİVE;
+
+    SetTargetFPS(60);
+
+    // main draw loop
+    while( !WindowShouldClose() )
+    {
+        BeginDrawing();
+        ClearBackground( RAYWHITE );
+
+        BeginMode3D( camera );  //--- mode 3D start
+
+        // position, radius_top, radius_bottom, height, sides, color
+        DrawCylinder( (Vector3){2,0,0}, 2, 2, 3, 5, SKYBLUE );
+
+        DrawFPS( 10, 10 );
+        EndMode3D();  //------------- mode 3D end
+
+        EndDrawing();
+    }
+
+    // de-initialization of window and opengl context
+    CloseWindow();
+
+#endif  // DEBUG_GUI
+
+    //std::this_thread::sleep_for( std::chrono::seconds(10) );
 
     std::cout<<"Exiting. Have a nice day\n";
 }

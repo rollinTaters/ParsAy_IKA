@@ -370,7 +370,7 @@ bool NGC::hitWP( Point wp )
     // -- setting target speed as necessary --
 
     // FIXME we need to send a "target speed" signal to drive motor controller program
-    m_vehicle->setAcceleration(/* FIXME */);
+    m_vehicle->setAcceleration( 0 /* FIXME */);
     m_vehicle->setTurnRadius( t_radius );
     return true;
 }
@@ -378,7 +378,7 @@ bool NGC::hitWP( Point wp )
 bool NGC::halt()
 {
     // FIXME we need to send a "target speed" signal to drive motor controller program
-    m_vehicle->setAcceleration(/* FIXME */);
+    m_vehicle->setAcceleration( 0 /* FIXME */);
     m_vehicle->setTurnRadius( 0.f );    // center steering
     return true;
 }
