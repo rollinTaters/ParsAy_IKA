@@ -42,6 +42,7 @@
 
 #ifdef DEBUG_GUI
 #include "raylib.h"
+#include "raymath.h"
 #endif
 
 // this is the vehicle we are managing/controlling
@@ -61,29 +62,44 @@ int main()
     ngc_system.start();
 
 #ifdef DEBUG_GUI
+    std::cout<<"\n==\t==\nWE BE IN DEBUG_GUI\n==\t==\n";
     // create a window for gui rendering
     InitWindow( 1000,800, "NGC DEBUG GUI" );
 
     // camera setup
-    Camera camera = {0};
+    Camera3D camera = {0};
     camera.position = (Vector3){ 0.f, 10.f, 10.f };
     camera.target = (Vector3){ 0.f, 0.f, 0.f };
     camera.up = (Vector3){ 0.f, 1.f, 0.f };
     camera.fovy = 45.f;
-    camera.projection = CAMERA_PERSPECTİVE;
+    camera.projection = CAMERA_PERSPECTIVE;
 
     SetTargetFPS(60);
 
     // main draw loop
     while( !WindowShouldClose() )
     {
+        // moving camera around
+        if( IsKeyDown( KEY_H ) )
+            camera.position = Vector3RotateByAxisAngle( camera.position, (Vector3){0,1,0},  2*DEG2RAD );
+        if( IsKeyDown( KEY_L ) )
+            camera.position = Vector3RotateByAxisAngle( camera.position, (Vector3){0,1,0}, -2*DEG2RAD );
+        if( IsKeyDown( KEY_J ) )
+            camera.position = Vector3RotateByAxisAngle( camera.position, (Vector3){1,0,0},  2*DEG2RAD );
+        if( IsKeyDown( KEY_K ) )
+            camera.position = Vector3RotateByAxisAngle( camera.position, (Vector3){1,0,0}, -2*DEG2RAD );
+
         BeginDrawing();
         ClearBackground( RAYWHITE );
 
         BeginMode3D( camera );  //--- mode 3D start
 
+        // slices, spacing
+        DrawGrid(10, 2);
+
         // position, radius_top, radius_bottom, height, sides, color
         DrawCylinder( (Vector3){2,0,0}, 2, 2, 3, 5, SKYBLUE );
+        DrawCylinderWires( (Vector3){2,0,0}, 2, 2, 3, 5, DARKBLUE );
 
         DrawFPS( 10, 10 );
         EndMode3D();  //------------- mode 3D end

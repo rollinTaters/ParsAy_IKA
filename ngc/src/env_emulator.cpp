@@ -129,8 +129,9 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
             {
                 // check if pixel is marked as "wall"
                 // TODO this is stupid, getimagecolor takes the image argument by copy to its function frame. change this to be a straight up "height" array
-                if( GetImageColor( m_course_map, (int)round(check_pos.x),
-                                                 (int)round(check_pos.y) ) == BLACK )
+                Color colour =  GetImageColor( m_image_course, (int)round(check_pos.x),
+                                                   (int)round(check_pos.y) );
+                if( ColorIsEqual( colour, BLACK ) )
                 {
                     // found wall, return it
                     march_successful = true;

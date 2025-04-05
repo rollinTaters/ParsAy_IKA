@@ -31,10 +31,12 @@
 
 NGC::NGC( Vehicle* vehicle ): m_comms_module(CommsModule::udp, CommsModule::ngc_channel)
 {
+    /*
     // init internal world map
     int internal_map_size = 40; // metre
     m_image_world_map.create( internal_map_size / m_metre_per_pixel,
                               internal_map_size / m_metre_per_pixel );
+                              */
 
     // assign controlled vehicle
     m_vehicle = vehicle;
@@ -113,7 +115,7 @@ bool NGC::stopDeadReckoning()
 
 bool NGC::addWP( Point wp )
 {
-    m_waypoints.push_back( wp );
+    m_waypoints.push( wp );
     return true;
 }
 
@@ -342,7 +344,7 @@ bool NGC::hitWP( Point wp )
 
     // make sure bearing is between 0 and 2pi
     t_bearing += 2*PI;
-    t_bearing = t_bearing % (2*PI);
+    t_bearing = fmod( t_bearing, (2*PI) );
 
     // -- setting turn radius as necessary --
 
