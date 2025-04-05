@@ -50,21 +50,12 @@ public:
 
 private:
     gauge_type m_type; // to store gauge type
-    // adi things
-    sf::Texture roll_markings; // roll markings
-    sf::Texture pitch_scale; // pitch scale
-    sf::Texture horizon; // horizon
-    sf::Sprite roll_markings_sprite;
-    sf::Sprite pitch_scale_sprite;
-    sf::Sprite horizon_sprite;
 
     // compass things
     sf::Texture compass_bg; // compass background
     sf::Texture compass_ticks_numbers; // compass ticks and numbers
     sf::Sprite compass_bg_sprite;
     sf::Sprite compass_ticks_numbers_sprite;
-
-
 
     // ampere and temperature meter things 
     sf::CircleShape m_gaugeFrame;    // gauge shape

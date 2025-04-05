@@ -37,8 +37,9 @@ class UserInput
     };
     public:
         UserInput();
-        float calculateSpeed(float currentSpeed, float acceleration, bool isAccelerating);
-        float calculateRotation(float currentAngle, float rotationSpeed, bool isTurningLeft, bool isTurningRight);
-        DriveMode switchDriveMode(DriveMode currentMode);
+        void switchDriveMode(DriveMode newMode);
+        void proccesInput();
+    private:
+        DriveMode m_drive_mode;
 
 };

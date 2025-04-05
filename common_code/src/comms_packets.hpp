@@ -62,6 +62,15 @@ struct Drive_Telemetry_Packet1 : public PacketBase
 };
 struct Drive_Telemetry_Packet2 : public PacketBase
 {
+    Drive_Telemetry_Packet2(){ packet_type = drive_telemetry2; data1 = 0; data2 = 0; data3 = 0; }
+    Drive_Telemetry_Packet2( PacketBase& pb )
+    {
+        packet_type = pb.packet_type;
+        data1 = pb.data1;
+        data2 = pb.data2;
+        data3 = pb.data3;
+    }
+
     std::uint16_t getMotor2Temp(){ return data1; }
     std::uint16_t getMotor2Amps(){ return data2; }
     std::uint16_t getMotor2Vel() { return data3; }
@@ -96,6 +105,14 @@ struct NGC_Command_Packet : public PacketBase
 // from NGC to CCM
 struct NGC_Telemetry_Packet : public PacketBase
 {
+    NGC_Telemetry_Packet(){ packet_type = ngc_telemetry; data1 = 0; data2 = 0; data3 = 0; }
+    NGC_Telemetry_Packet( PacketBase& pb )
+    {
+        packet_type = pb.packet_type;
+        data1 = pb.data1;
+        data2 = pb.data2;
+        data3 = pb.data3;
+    }
     std::uint16_t getHeading(){ return data1; }
     std::uint16_t getPitch(){ return data2; }
     std::uint16_t getRoll(){ return data3; }

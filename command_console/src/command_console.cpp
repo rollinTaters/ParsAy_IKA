@@ -30,6 +30,7 @@
 
 
 
+
 int main()
 {
     std::cout<<"Unmanned Land Vehicle Command Console v0.2\n";
@@ -41,6 +42,7 @@ int main()
     Drive_Telemetry_Packet1 dtp1;
     Drive_Telemetry_Packet2 dtp2;
     NGC_Telemetry_Packet ngctp;
+
 
     // graphics initialization
     sf::RenderWindow window( sf::VideoMode( 1000, 800 ), "Command Console" );
@@ -89,24 +91,40 @@ int main()
                 case drive_telemetry1:
                     dtp1 = raw_packet;
                     gauge_temp.updateVal( dtp1.getMotor1Temp() );
+                    gauge_amp.updateVal( dtp1.getMotor1Amps() );
                     // TODO update other gauges
                     break;
                 case drive_telemetry2:
+                    dtp2 = raw_packet;
+                    gauge_amp2.updateVal( dtp2.getMotor2Amps() );
+                    gauge_temp2.updateVal( dtp2.getMotor2Temp() );
                     // TODO update engine 2's gauges
                     break;
                 case ngc_telemetry:
+                    ngctp = raw_packet;
+                    gauge_compass.updateVal( ngctp.getHeading() );
+                    gauge_adi.updateRollVal( ngctp.getRoll() );
+                    gauge_adi.updatePitchVal( ngctp.getPitch() );
                     // TODO update adi, compas
                     break;
+                case undefined:
+                    std::cerr << "Warning: Received undefined packet type" << std::endl;
+                    break;
                 default:
-                    // fail condition, discard packet and continue
+                    // Unknown packet type - log error and discard
+                    std::cerr << "Error: Received unknown packet type: " << raw_packet.packet_type << std::endl;
+                    // debugging info here
+                    std::cerr << "Packet data: " << raw_packet.data1 << ", " << raw_packet.data2 << ", " << raw_packet.data3 << std::endl;
                     break;
             };
         }
-
+        input.proccesInput();
         // render gauges
+        gauge_adi.render(window);
+        gauge_amp2.render(window);
+        gauge_temp2.render(window);
         gauge_amp.render(window);
         gauge_temp.render(window);
-        gauge_adi.render(window);
         gauge_compass.render(window);
         // a call to render stuff
 
