@@ -98,17 +98,6 @@ float Vehicle::readSensor( const unsigned short int number )
     return m_sensor[number].read( m_sensor_data );
 }
 
-void Vehicle::setAcceleration( const float acc )
-{
-    // TODO maybe do a limit check?
-    m_acc.y = acc;
-}
-
-void Vehicle::setTurnRadius( const float radius )
-{
-    // TODO maybe do a limit check?
-    m_turn_radius = radius;
-}
 
 void Vehicle::overridePos( const v3f pos )
 {

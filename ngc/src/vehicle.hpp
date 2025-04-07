@@ -48,10 +48,6 @@ class Vehicle
     Sensor_Emulator getSensor( const unsigned short int number ) const;
     float readSensor( const unsigned short int number );
 
-    // NOTE: wrote these to test out ngc, these may change in the future
-    void setAcceleration( const float );
-    void setTurnRadius( const float );  // note: 0 is dead ahead
-
     void overridePos( const v3f ); // set position of vehicle
 
     // NOTE: this method is only to be called from environment emulator:
@@ -63,7 +59,7 @@ class Vehicle
   private:
     // unless otherwise specified, all 3d vectors are:
     // +X:starboard, +Y:bow, +Z:above, (or width, len, height) (metre)
-    // +X:pitch up, +Y:roll right, +Z:yaw left      (degree)
+    // +X:pitch up, +Y:roll right, +Z:yaw left      (radian)
 
     // sensors on vehicle
     const unsigned short int m_num_sensors = 6;

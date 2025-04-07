@@ -52,6 +52,8 @@ NGC::~NGC()
 bool NGC::start()
 {
     // start necessary threads and do runtime initializations
+    motor_R.startControlLoop();
+    motor_L.startControlLoop();
 
     // check if we are already runnng the thread
     if( m_main_thread != nullptr )
@@ -68,6 +70,8 @@ bool NGC::start()
 bool NGC::stop()
 {
     // send stop signals and join the threads here
+    motor_R.stopControlLoop();
+    motor_L.stopControlLoop();
 
     // check if we have a thread to stop
     if( m_main_thread == nullptr )
@@ -328,6 +332,7 @@ bool NGC::hitWP( Point wp )
     float target_reverse_speed = -1.2;   // m/s
     float point_turn_rate = 10 * (PI/180.f);    // rad/s
 
+    float t_speed = 0;  // will be set accordingly
     float t_radius = 0; // will be calculated if needed
     BB3D box = m_vehicle->getBox();
     
@@ -371,43 +376,39 @@ bool NGC::hitWP( Point wp )
     // find out in which cone we are
     if( t_bearing <= fwd_r_nt || t_bearing >= fwd_l_nt )
     {   // forward no turn
-        m_vehicle->setSpeed( target_speed );
-        m_vehicle->setTurnRadius( 0 );
+        setControlOutput_rate( target_speed, 0 );
         return true;
 
     }else if( t_bearing <= fwd_r_at )
     {   // forward right arc turn
-        m_vehicle->setSpeed( target_speed );
+        t_speed = target_speed;
 
     }else if( t_bearing <= bcw_r_at )
     {   // Point turn right
-        m_vehicle->setSpeed( 0 );
-        m_vehicle->setTurnRate( -point_turn_rate );
+        setControlOutput_rate( 0, -point_turn_rate );
         return true;
 
     }else if( t_bearing <= bcw_r_nt )
     {   // backward right arc turn
-        m_vehicle->setSpeed( target_reverse_speed );
+        t_speed = target_reverse_speed;
 
     }else if( t_bearing <= bcw_l_nt )
     {   // backward no turn
-        m_vehicle->setSpeed( target_reverse_speed );
-        m_vehicle->setTurnRadius( 0 );
+        setControlOutput_rate( target_reverse_speed, 0 );
         return true;
 
     }else if( t_bearing <= bcw_l_at )
     {   // backward left arc turn
-        m_vehicle->setSpeed( target_reverse_speed );
+        t_speed = target_reverse_speed;
 
     }else if( t_bearing <= fwd_l_at )
     {   // forward left point turn
-        m_vehicle->setSpeed( 0 );
-        m_vehicle->setTurnRate( point_turn_rate );
+        setControlOutput_rate( 0, point_turn_rate );
         return true;
 
     }else //if( t_bearing <= fwd_l_nt )
     {   // forward left arc turn
-        m_vehicle->setSpeed( target_speed );
+        t_speed = target_speed;
     }
 
 
@@ -429,16 +430,58 @@ bool NGC::hitWP( Point wp )
 
     // -- setting target speed as necessary --
 
-    // we need to send a "target speed" signal to drive motor controller program
-    m_vehicle->setTurnRadius( t_radius );
+    // send a "target speed" signal to drive motor controller program
+    setControlOutput_radius( t_speed, t_radius );
     return true;
 }
 
-bool NGC::halt()
+void NGC::halt()
 {
-    m_vehicle->setSpeed( 0 );
-    m_vehicle->setTurnRadius( 0.f );    // center steering
-    return true;
+    motor_R.setSpeed(0);
+    motor_L.setSpeed(0);
 }
 
+void NGC::setControlOutput_rate( float speed, float turn_rate )
+{
+    // TODO get this value from m_vehicle
+    float track_width = 1.3f;   // metre
+
+    // a crude way of calculating speed difference between sides
+    float diff = turn_rate * track_width / 2.f;
+
+    motor_R.setSpeed( speed + diff );
+    motor_L.setSpeed( speed - diff );
+}
+
+void NGC::setControlOutput_radius( float speed, float turn_radius )
+{
+    if( turn_radius == 0 )
+    {
+        motor_R.setSpeed( speed );
+        motor_L.setSpeed( speed );
+        return;
+    }
+
+    // TODO get this value from m_vehicle
+    float track_width = 1.3f;   // metre
+    
+    // TODO if radius is smaller than the vehicles width/2 there must be reverse track movement
+
+    float abs_radi = fabs(turn_radius);
+
+    float outer_radius = abs_radi + track_width/2.f;
+    float inner_radius = abs_radi - track_width/2.f;
+
+    float outer_coef = outer_radius / abs_radi;
+    float inner_coef = inner_radius / abs_radi;
+
+    if( turn_radius > 0 )
+    {
+        motor_R.setSpeed( outer_coef * speed );
+        motor_L.setSpeed( inner_coef * speed );
+    }else{
+        motor_R.setSpeed( inner_coef * speed );
+        motor_L.setSpeed( outer_coef * speed );
+    }
+}
 

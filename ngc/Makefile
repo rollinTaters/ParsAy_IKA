@@ -5,7 +5,7 @@ raylib_dir := ./../raylib-5.5_linux_amd64
 #SFML_libs_static := -DSFML_STATIC -MMD -MP -static-libstdc++ -static-libgcc -lsfml-main -lsfml-audio-s -lsfml-graphics-s -lsfml-window-s -lsfml-system-s -lsfml-network-s  -lopengl32 -lfreetype -lwinmm -lgdi32 -lopenal32 -lFLAC -lvorbisenc -lvorbis -logg -lws2_32
 
 # ==== Navigation Guidance and Control objects ====
-NGC_OBJECTS := main.o vehicle.o ngc.o sensor_emulator.o env_emulator.o
+NGC_OBJECTS := main.o vehicle.o ngc.o sensor_emulator.o env_emulator.o traction_motor.o
 COMMON_OBJECTS := utility.o comms_module.o
 
 LINUX_NGC_RELEASE_OBJECTS = $(addprefix obj/linux_, $(NGC_OBJECTS))

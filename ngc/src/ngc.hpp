@@ -39,6 +39,7 @@
 #include <vector>
 #include <queue>
 #include "vehicle.hpp"
+#include "traction_motor.hpp"
 #include "../../common_code/src/comms_module.hpp"
 #include "../../common_code/src/utility.hpp"
 #include "SFML/Graphics/Image.hpp"
@@ -84,6 +85,8 @@ class NGC
 
     // controlled vehicle
     Vehicle* m_vehicle = nullptr;
+    TractionMotor motor_R;
+    TractionMotor motor_L;
 
     // immediate surrounding obstacles
     // this will most likely be current sensor readings
@@ -140,7 +143,8 @@ class NGC
     // - takes an input position and finds a new position which is furthest away from any obstacles, but closest to input pos
     bool createOpenSpaceWaypoint( Point& );
 
-    // TODO add CONTROL type methods
+
+    bool hitWP( Point );
 
     // navigation happens with a queue of waypoints, sub waypoints may need to be calculated for this queueueueu
 
@@ -155,8 +159,10 @@ class NGC
     // (mode 4) wp is apex of turn, calculate turn arc using prev and next wp, these points may be used as sub-waypoints
     // (mode 5) wp is arc center of turn, rest is same as mode4
 
-    bool hitWP( Point );
-    bool halt();
+    // == Control Methods ==
+    void halt();
+    void setControlOutput_rate( float, float );
+    void setControlOutput_radius( float, float );
     
 };
 
