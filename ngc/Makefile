@@ -27,14 +27,14 @@ LINUX_COMPILER := g++
 BUILD_VER := 0.2
 RELEASE_PATH := release_builds/v$(BUILD_VER)
 
-.PHONY: clean clear release gui src/main.hpp
+.PHONY: clean clear release gui headless src/main.hpp
 
 # ==== Unmanned Land Vehicle Linux Debug build ====
-ngc: $(LINUX_NGC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS)
-	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) $(LINUX_NGC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS) -o ngc $(LINUX_DEBUG_LDFLAGS)
-
 gui: $(LINUX_NGC_DEBUG_GUI_OBJECTS) $(LINUX_COMMON_OBJECTS)
 	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) -DDEBUG_GUI $(LINUX_NGC_DEBUG_GUI_OBJECTS) $(LINUX_COMMON_OBJECTS) -o ngc $(LINUX_DEBUG_LDFLAGS)
+
+headless: $(LINUX_NGC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS)
+	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) $(LINUX_NGC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS) -o ngc $(LINUX_DEBUG_LDFLAGS)
 
 $(LINUX_COMMON_OBJECTS): ../common_code/obj/linux_%.o: ../common_code/src/%.cpp ../common_code/src/%.hpp
 	make -C ../common_code
