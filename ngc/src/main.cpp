@@ -41,9 +41,9 @@
 #include "ngc.hpp"
 
 #ifdef DEBUG_GUI
-#include "raylib.h"
-#include "raymath.h"
+#include "gui.hpp"  // raylib joins here
 #endif
+
 
 // this is the vehicle we are managing/controlling
 Vehicle simulated_vehicle;
@@ -62,57 +62,35 @@ int main()
     ngc_system.start();
 
 #ifdef DEBUG_GUI
-    std::cout<<"\n==\t==\nWE BE IN DEBUG_GUI\n==\t==\n";
-    // create a window for gui rendering
-    InitWindow( 1000,800, "NGC DEBUG GUI" );
-
-    // camera setup
-    Camera3D camera = {0};
-    camera.position = (Vector3){ 0.f, 10.f, 10.f };
-    camera.target = (Vector3){ 0.f, 0.f, 0.f };
-    camera.up = (Vector3){ 0.f, 1.f, 0.f };
-    camera.fovy = 45.f;
-    camera.projection = CAMERA_PERSPECTIVE;
-
-    SetTargetFPS(60);
+    // this will create a window and initialize gui stuff
+    GUI::initGUI();
 
     // main draw loop
     while( !WindowShouldClose() )
     {
-        // moving camera around
-        if( IsKeyDown( KEY_H ) )
-            camera.position = Vector3RotateByAxisAngle( camera.position, (Vector3){0,1,0},  2*DEG2RAD );
-        if( IsKeyDown( KEY_L ) )
-            camera.position = Vector3RotateByAxisAngle( camera.position, (Vector3){0,1,0}, -2*DEG2RAD );
-        if( IsKeyDown( KEY_J ) )
-            camera.position = Vector3RotateByAxisAngle( camera.position, (Vector3){1,0,0},  2*DEG2RAD );
-        if( IsKeyDown( KEY_K ) )
-            camera.position = Vector3RotateByAxisAngle( camera.position, (Vector3){1,0,0}, -2*DEG2RAD );
+        // this will mainly move camera around
+        GUI::checkUserInput();
 
         BeginDrawing();
         ClearBackground( RAYWHITE );
 
-        BeginMode3D( camera );  //--- mode 3D start
+        BeginMode3D( GUI::camera );  //--- mode 3D start
 
-        // slices, spacing
-        DrawGrid(10, 2);
+        GUI::drawAxisBillboards();
+        GUI::drawVehicle();
 
-        // position, radius_top, radius_bottom, height, sides, color
-        DrawCylinder( (Vector3){2,0,0}, 2, 2, 3, 5, SKYBLUE );
-        DrawCylinderWires( (Vector3){2,0,0}, 2, 2, 3, 5, DARKBLUE );
+        EndMode3D();  //------------- mode 3D end
 
         DrawFPS( 10, 10 );
-        EndMode3D();  //------------- mode 3D end
 
         EndDrawing();
     }
 
-    // de-initialization of window and opengl context
-    CloseWindow();
-
+    // this also closes the window
+    GUI::deInitGUI();
+#else   // HEADLESS MODE
+    std::this_thread::sleep_for( std::chrono::seconds(10) );
 #endif  // DEBUG_GUI
-
-    //std::this_thread::sleep_for( std::chrono::seconds(10) );
 
     std::cout<<"Exiting. Have a nice day\n";
 }
