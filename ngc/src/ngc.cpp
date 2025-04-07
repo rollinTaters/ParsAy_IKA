@@ -323,8 +323,12 @@ bool NGC::createOpenSpaceWaypoint( Point& start_point )
 
 bool NGC::hitWP( Point wp )
 {
-    float t_vel = 0;
-    float t_radius = 0;
+    // TODO what is our target speed for the part of the course, get that from the CCM
+    float target_speed = 2; // m/s
+    float target_reverse_speed = -1.2;   // m/s
+    float point_turn_rate = 10 * (PI/180.f);    // rad/s
+
+    float t_radius = 0; // will be calculated if needed
     BB3D box = m_vehicle->getBox();
     
 
@@ -346,14 +350,68 @@ bool NGC::hitWP( Point wp )
     t_bearing += 2*PI;
     t_bearing = fmod( t_bearing, (2*PI) );
 
-    // -- setting turn radius as necessary --
-
-    // TODO front and rear mobility cones
+    // front and rear mobility cones
     // 0-5 degrees -> ignore turn, just go straight
+    constexpr float no_turn_deg = 5;
     // 5-30 degrees -> do regular arc turn
+    constexpr float arc_turn_deg = 30;
     // 30 - 90 degrees -> do point turn, then straight line move
     // same shit is mirrored for reverse operations
 
+    constexpr float fwd_r_nt = no_turn_deg * (180/PI);
+    constexpr float fwd_l_nt = (2*PI) - (no_turn_deg * (180/PI));
+    constexpr float fwd_r_at = arc_turn_deg * (180/PI);
+    constexpr float fwd_l_at = (2*PI) - (arc_turn_deg * (180/PI));
+    
+    constexpr float bcw_r_nt = fwd_l_nt - PI;
+    constexpr float bcw_l_nt = fwd_r_nt + PI;
+    constexpr float bcw_r_at = fwd_l_at - PI;
+    constexpr float bcw_l_at = fwd_r_at + PI;
+
+    // find out in which cone we are
+    if( t_bearing <= fwd_r_nt || t_bearing >= fwd_l_nt )
+    {   // forward no turn
+        m_vehicle->setSpeed( target_speed );
+        m_vehicle->setTurnRadius( 0 );
+        return true;
+
+    }else if( t_bearing <= fwd_r_at )
+    {   // forward right arc turn
+        m_vehicle->setSpeed( target_speed );
+
+    }else if( t_bearing <= bcw_r_at )
+    {   // Point turn right
+        m_vehicle->setSpeed( 0 );
+        m_vehicle->setTurnRate( -point_turn_rate );
+        return true;
+
+    }else if( t_bearing <= bcw_r_nt )
+    {   // backward right arc turn
+        m_vehicle->setSpeed( target_reverse_speed );
+
+    }else if( t_bearing <= bcw_l_nt )
+    {   // backward no turn
+        m_vehicle->setSpeed( target_reverse_speed );
+        m_vehicle->setTurnRadius( 0 );
+        return true;
+
+    }else if( t_bearing <= bcw_l_at )
+    {   // backward left arc turn
+        m_vehicle->setSpeed( target_reverse_speed );
+
+    }else if( t_bearing <= fwd_l_at )
+    {   // forward left point turn
+        m_vehicle->setSpeed( 0 );
+        m_vehicle->setTurnRate( point_turn_rate );
+        return true;
+
+    }else //if( t_bearing <= fwd_l_nt )
+    {   // forward left arc turn
+        m_vehicle->setSpeed( target_speed );
+    }
+
+
+    // -- setting turn radius as necessary --
 
     // with some math, we find that angle of rotation from arc center is 2*bearing
     // this also means that we will have a heading change of this same 2*bearing value
@@ -371,16 +429,14 @@ bool NGC::hitWP( Point wp )
 
     // -- setting target speed as necessary --
 
-    // FIXME we need to send a "target speed" signal to drive motor controller program
-    m_vehicle->setAcceleration( 0 /* FIXME */);
+    // we need to send a "target speed" signal to drive motor controller program
     m_vehicle->setTurnRadius( t_radius );
     return true;
 }
 
 bool NGC::halt()
 {
-    // FIXME we need to send a "target speed" signal to drive motor controller program
-    m_vehicle->setAcceleration( 0 /* FIXME */);
+    m_vehicle->setSpeed( 0 );
     m_vehicle->setTurnRadius( 0.f );    // center steering
     return true;
 }
