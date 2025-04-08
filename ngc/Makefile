@@ -43,7 +43,7 @@ $(LINUX_NGC_DEBUG_O3_OBJECTS): obj/debug_o3_%.o: src/%.cpp src/%.hpp
 	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) -c $< -o $@ $(LINUX_DEBUG_LDFLAGS)
 
 $(LINUX_NGC_DEBUG_GUI_OBJECTS): obj/debug_gui_%.o: src/%.cpp src/%.hpp
-	$(LINUX_COMPILER) $(DEBUG_FLAGS_O0) -DDEBUG_GUI -c $< -o $@ $(LINUX_DEBUG_LDFLAGS)
+	$(LINUX_COMPILER) $(DEBUG_FLAGS_O0) -Wno-missing-field-initializers -DDEBUG_GUI -c $< -o $@ $(LINUX_DEBUG_LDFLAGS)
 
 clean:
 	rm -f *.o obj/*.o ngc ../common_code/obj/*.o
