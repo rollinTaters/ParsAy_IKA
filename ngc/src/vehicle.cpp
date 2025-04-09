@@ -66,7 +66,7 @@ Vehicle& Vehicle::operator =( const Vehicle& rhs )
 
 BB3D Vehicle::getBox() const { return m_bb3d; }
 
-// TODO add simulated error to these
+v3f Vehicle::getPos() const { return m_bb3d.getPos(); }
 v3f Vehicle::getVel() const { return m_vel; }
 v3f Vehicle::getAcc() const { return m_acc; }
 v3f Vehicle::getAngVel() const { return m_angVel; }
@@ -78,15 +78,15 @@ Sensor_Emulator Vehicle::getSensor( const unsigned short int number ) const
     {
         std::cerr<<"ERROR! Requested non existing sensor, returning default constructed sensor.\n";
         return Sensor_Emulator();
+    }
+    return m_sensor[ number ];
+}
 /*
 								/\/\
 								  \_\  _..._
 								  (" )(_..._)
 								   ^^  // \\
 */
-    }
-    return m_sensor[ number ];
-}
 
 float Vehicle::readSensor( const unsigned short int number )
 {
@@ -104,49 +104,6 @@ void Vehicle::overridePos( const v3f pos )
     m_bb3d.setPos(pos);
 }
 
-void Vehicle::simulatePhys( const float time_step )
-{
-    // ah shit, here we go again...
-    
-    // we calculate new iteration values
-    // and set current values to new iterations values
-    // we do not want to mix old and new iteration values
-
-    // to avoid mixing
-    float fwd_vel = m_vel.y;
-
-    // translations
-    m_bb3d.translateLocal( m_vel );
-
-    // rotations, we should switch to quaternions...
-    m_bb3d.yawLeft( m_angVel.z );
-    m_bb3d.pitchUp( m_angVel.x );
-    m_bb3d.rollRight( m_angVel.y );
-
-    // first derivatives (using eulers method)
-    m_vel += m_acc * time_step;
-    m_angVel += m_angAcc * time_step;
-
-    // second derivatives
-    // these are affected by forces, we dont simulate forces. shit.
-    // unless we simulate forces, we must model them
-    
-    // this is centripetal acceleration to model tire sideways friction
-    m_acc.x = -(fwd_vel*fwd_vel)/m_turn_radius;
-    //m_angAcc = /*DONT HAVE FORCE DATA*/;
-
-    // modelling turning
-    m_angVel.z = fwd_vel/m_turn_radius;
-
-    // here be gravity
-    /*  TODO we are not ready yet, there is no floor to resist our fall
-    Quaternion qc = m_bb3d.getQuat().conjugate();
-    v3f gravity( 0, 0, -9.81f );
-    qc.rotateVector( gravity ); // gravity on local csys
-    m_acc += gravity;
-    */
-}
-
 void Vehicle::setNavigationState( const int time_step )
 {
     // -- dead reckoning calculations --
@@ -160,18 +117,22 @@ void Vehicle::setNavigationState( const int time_step )
     m_angVel = m_sensor_data.angular_rate;
 
     // translations
-    m_bb3d.translateLocal( m_vel );
+    m_bb3d.translateLocal( m_vel * time_step );
 
     // rotations, we should switch to quaternions...
-    m_bb3d.yawLeft( m_angVel.z );
-    m_bb3d.pitchUp( m_angVel.x );
-    m_bb3d.rollRight( m_angVel.y );
+    m_bb3d.yawLeft( m_angVel.z * time_step );
+    m_bb3d.pitchUp( m_angVel.x * time_step );
+    m_bb3d.rollRight( m_angVel.y * time_step );
 
     // first derivatives (using eulers method)
     m_vel += m_acc * (float)time_step;
     // this line commented out because IMU outputs angular velocity???
     //m_angVel += m_angAcc * time_step;
 
-    //std::cout<<"DEBUG: setNavigationState got "<<time_step<<" as time step\n";
+    /*// DEBUG
+    std::cout<<"dead reckon time step: "<<time_step<<"\n";
+    std::cout<<"IMU acce: "<<m_acc.x<<"x "<<m_acc.y<<"y "<<m_acc.z<<"z\n";
+    std::cout<<"IMU rate: "<<m_angVel.x<<"x "<<m_angVel.y<<"y "<<m_angVel.z<<"z\n";
+    */
 }
 

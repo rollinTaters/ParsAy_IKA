@@ -93,7 +93,48 @@ void Env_Emulator::physThreadFunc()
     unsigned int step_time = 1000/30.f;
     while( m_run_phys_thread )
     {
-        m_real_vehicle.simulatePhys( step_time );
+        // ah shit, here we go again...
+        
+        // we calculate new iteration values
+        // and set current values to new iterations values
+        // we do not want to mix old and new iteration values
+
+        // to avoid mixing
+        float fwd_vel = m_real_vehicle.m_vel.y;
+
+        // translations
+        m_real_vehicle.m_bb3d.translateLocal( m_real_vehicle.m_vel * step_time );
+
+        // rotations, we should switch to quaternions...
+        m_real_vehicle.m_bb3d.yawLeft( m_real_vehicle.m_angVel.z * step_time );
+        m_real_vehicle.m_bb3d.pitchUp( m_real_vehicle.m_angVel.x * step_time );
+        m_real_vehicle.m_bb3d.rollRight( m_real_vehicle.m_angVel.y * step_time );
+
+        // first derivatives (using eulers method)
+        m_real_vehicle.m_vel += m_real_vehicle.m_acc * step_time;
+        m_real_vehicle.m_angVel += m_real_vehicle.m_angAcc * step_time;
+
+        // second derivatives
+        // these are affected by forces, we dont simulate forces. shit.
+        // unless we simulate forces, we must model them
+        
+        // this is centripetal acceleration to model tire sideways friction
+        if( m_real_vehicle.m_turn_radius != 0 )
+            m_real_vehicle.m_acc.x = -(fwd_vel*fwd_vel)/m_real_vehicle.m_turn_radius;
+        //m_angAcc = /*DONT HAVE FORCE DATA*/;
+
+        // modelling turning
+        if( m_real_vehicle.m_turn_radius != 0 )
+            m_real_vehicle.m_angVel.z = fwd_vel/m_real_vehicle.m_turn_radius;
+
+        // here be gravity
+        /*  TODO we are not ready yet, there is no floor to resist our fall
+        Quaternion qc = m_bb3d.getQuat().conjugate();
+        v3f gravity( 0, 0, -9.81f );
+        qc.rotateVector( gravity ); // gravity on local csys
+        m_acc += gravity;
+        */
+
         std::this_thread::sleep_for( std::chrono::milliseconds( step_time ) );
     }
 }

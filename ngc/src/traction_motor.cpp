@@ -53,6 +53,9 @@ void TractionMotor::m_control_loop()
         // TODO read a sensor to get the current speed
         m_error = m_target_speed - m_current_speed;
 
+        // FIXME im gonna hard set this for now
+        m_current_speed = m_target_speed;
+
         // TODO maybe a PID
         
         // TODO this is where we do GPIO magic

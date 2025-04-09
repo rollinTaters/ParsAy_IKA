@@ -119,8 +119,21 @@ bool NGC::stopDeadReckoning()
 
 bool NGC::addWP( Point wp )
 {
-    m_waypoints.push( wp );
+    m_waypoints.push_back( wp );
     return true;
+}
+
+bool NGC::addWP( Point wp, int i_num )
+{
+    if( i_num > m_waypoints.size() )
+        return false;
+    m_waypoints.insert( m_waypoints.begin()+i_num, wp );
+    return true;
+}
+
+std::vector<Point> NGC::getWPs() const
+{
+    return m_waypoints;
 }
 
 bool NGC::executeWPs()
@@ -142,7 +155,7 @@ void NGC::mainThreadFunc()
     if( startDeadReckoning() )
         std::cout<<"Starting dead reckoning\n";
 
-    int counter = 0;
+    //int counter = 0;
     while( m_run_main_thread )
     {
         // roll rol roll
@@ -167,6 +180,7 @@ void NGC::mainThreadFunc()
         if( !m_waypoints.empty() && m_execute_waypoints )
         {
             // TODO checking wp satisfaction
+            std::cout<<"NGC: executing...\n";
             hitWP( m_waypoints.front() );
         }else{
             m_execute_waypoints = false;
@@ -174,8 +188,8 @@ void NGC::mainThreadFunc()
         }
         // END OF DEBUG
 
-        std::cout<<"ngc main thread spam. counter:"<<counter<<"\n";
-        counter++;
+        //std::cout<<"ngc main thread spam. counter:"<<counter<<"\n";
+        //counter++;
         std::this_thread::sleep_for( std::chrono::milliseconds(200) );
     }
     // DEBUG

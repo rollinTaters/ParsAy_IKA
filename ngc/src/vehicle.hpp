@@ -30,6 +30,7 @@
 #include "sensor_emulator.hpp"
 
 
+class Env_Emulator; // we be friends, them and I
 
 // in the final product this class may evolve into "VehicleManager"
 class Vehicle
@@ -40,6 +41,7 @@ class Vehicle
     Vehicle& operator =( const Vehicle& );
 
     BB3D getBox() const;    // returns 3d bounding box of vehicle
+    v3f getPos() const;
     v3f getVel() const;
     v3f getAcc() const;
     v3f getAngVel() const;
@@ -50,11 +52,15 @@ class Vehicle
 
     void overridePos( const v3f ); // set position of vehicle
 
-    // NOTE: this method is only to be called from environment emulator:
-    void simulatePhys( const float time_step ); // update vehicle physics, this is for simulation
+    friend Env_Emulator;
 
     // NOTE: this method is only to be called from NGC code
     void setNavigationState( const int time_step ); // does dead reckoning using internal sensor data
+    
+    static constexpr float wheelbase = 1.3f;
+    static constexpr float track = 1.0f;
+    static constexpr float wheel_dia = 0.5f;
+    static constexpr float wheel_width = 0.25f;
 
   private:
     // unless otherwise specified, all 3d vectors are:

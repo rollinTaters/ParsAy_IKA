@@ -37,7 +37,7 @@
 
 #include <thread>
 #include <vector>
-#include <queue>
+#include <vector>
 #include "vehicle.hpp"
 #include "traction_motor.hpp"
 #include "../../common_code/src/comms_module.hpp"
@@ -61,6 +61,8 @@ class NGC
     bool stopDeadReckoning();
 
     bool addWP( Point );    // add new waypoint to the queues end
+    bool addWP( Point, int );   // add it after given slot
+    std::vector<Point> getWPs() const;
     bool executeWPs();  // starts executing current waypoints
 
   private:
@@ -75,7 +77,7 @@ class NGC
 
 
     // waypoints
-    std::queue<Point> m_waypoints;
+    std::vector<Point> m_waypoints;
     bool m_execute_waypoints = false;
 
     // time keeping and clocks

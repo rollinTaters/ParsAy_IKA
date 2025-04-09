@@ -51,12 +51,13 @@ Vehicle simulated_vehicle;
 // our global environment emulator, if you included env_emulator.hpp, you know about its existance
 Env_Emulator env_emulator( simulated_vehicle );
 
+// our navigation guidance and control system
+NGC ngc_system( &simulated_vehicle );
+
 int main()
 {
     std::cout<<"ULV NGC Emulator v0.2\n";
 
-    // our navigation guidance and control system
-    NGC ngc_system( &simulated_vehicle );
 
     env_emulator.startPhysSim();
     ngc_system.start();
@@ -78,10 +79,13 @@ int main()
 
         GUI::drawAxisBillboards();
         GUI::drawVehicle();
+        GUI::drawCrosshair();
 
         EndMode3D();  //------------- mode 3D end
 
         DrawFPS( 10, 10 );
+        GUI::drawWPs();
+        GUI::drawOverlay();
 
         EndDrawing();
     }
