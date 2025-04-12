@@ -34,6 +34,8 @@
 #pragma once
 #include "../../common_code/src/utility.hpp"
 
+#define LIDAR_POINTS 50
+
 enum Sensor_Type{
     E_type_undefined,
     E_type_distance,
@@ -51,6 +53,11 @@ struct Sensor_Data
     
     // for distance sensor
     float distance;
+
+    // for lidar sensor
+    float lidar[LIDAR_POINTS];  // metre
+    float lidar_angle[LIDAR_POINTS];    // radian
+    //float lidar_quality[LIDAR_POINTS];
 
     // for IMU
     v3f acceleration;  // m/s^2

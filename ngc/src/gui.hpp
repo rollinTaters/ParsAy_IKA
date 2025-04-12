@@ -5,6 +5,7 @@
 // a slight nod to external objects
 extern NGC ngc_system;
 extern Vehicle simulated_vehicle;
+extern Env_Emulator env_emulator;
 
 namespace GUI
 {
@@ -30,6 +31,10 @@ namespace GUI
     Texture2D texture_yn;
     Texture2D texture_zp;
     Texture2D texture_zn;
+    Texture2D tex_height_map;
+    Image im_height_map;
+    Mesh hm_mesh;
+    Model hm_model;
 
     // crosshair variables
     Vector3 crosshair;
@@ -67,6 +72,41 @@ namespace GUI
         texture_zp = LoadTextureFromImage( ImageTextEx( font, "Z+", 110, 5, BLACK ) );
         texture_zn = LoadTextureFromImage( ImageTextEx( font, "Z-", 110, 5, BLACK ) );
 
+        // height map setup
+        im_height_map = LoadImage("./gfx/course1.png");
+        //im_height_map = GenImageCellular( 2000, 3000, 75 );
+        //ImageFlipVertical( &im_height_map );
+        //ImageFlipHorizontal( &im_height_map );
+        //ImageBlurGaussian( &im_height_map, 12 );
+        //ImageColorInvert( &im_height_map );
+        //ImageColorGrayscale( &im_height_map );
+
+        float resize_factor = 0.2f;
+        // grab original mesh size
+        Vector3 mesh_size = {0.050d*im_height_map.width, 2, 0.050d*im_height_map.height};
+        // resize image down
+        ImageResize( &im_height_map,
+                im_height_map.width*resize_factor,
+                im_height_map.height*resize_factor );
+        // generate height map
+        hm_mesh = GenMeshHeightmap( im_height_map, (mesh_size) );
+        // resize image to original, ( here be losses )
+        ImageResize( &im_height_map,
+                im_height_map.width/resize_factor,
+                im_height_map.height/resize_factor );
+
+        // invert color before loading texture, so its lighter color
+        ImageColorInvert( &im_height_map );
+        Image im_overlay = GenImageCellular( im_height_map.width, im_height_map.height, 20 );
+        Rectangle rect = {0,0,im_height_map.width,im_height_map.height};
+        ImageDraw( &im_height_map, im_overlay, rect, rect, Fade(WHITE, 0.5f) );
+
+        tex_height_map = LoadTextureFromImage( im_height_map );
+        hm_model = LoadModelFromMesh( hm_mesh );
+        hm_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = tex_height_map;
+        UnloadImage( im_height_map );
+
+
         SetTargetFPS(60);
 
         ngc_wps = ngc_system.getWPs();
@@ -82,6 +122,8 @@ namespace GUI
         UnloadTexture( texture_yn );
         UnloadTexture( texture_zp );
         UnloadTexture( texture_zn );
+        UnloadTexture( tex_height_map );
+        UnloadModel( hm_model );
         // de-initialization of window and opengl context
         CloseWindow();
     }
@@ -256,6 +298,39 @@ namespace GUI
             DrawTextEx( font, TextFormat("%d",wp_num),
                         pos2d, 20, 1, ORANGE );
             wp_num++;
+        }
+    }
+
+    void drawHMap()
+    {
+        v3f real_vehicle_pos = env_emulator.getRealVehicleBox().getPos();
+        real_vehicle_pos += v3f( 0, -1080*0.05, -0.25 ); // move map a bit
+        //real_vehicle_pos += v3f( -10, -10, 0 ); // map spawn point offset
+        //real_vehicle_pos = v3f(-5,0,0);  // DEBUG
+/*
+        DrawModelEx(
+                hm_model,   // model
+                taters2raylib(real_vehicle_pos),    // position
+                (Vector3){1,0,0},   // rotation axis, (taters2raylib axis)
+                (3.0f/2)*PI,   // rotation angle (taters2raylib angle)
+                (Vector3){1,1,1},    // scale
+                GREEN );    // tint
+*/
+        DrawModel(
+                hm_model,
+                taters2raylib(real_vehicle_pos*-1.f),
+                1.f,
+                DARKGREEN );
+    }
+
+    void drawLIDAR()
+    {
+        std::vector<Point> pts = ngc_system.getImObPoints();
+        //std::cout<<"DEBUG: ImObPoints count: "<< pts.size()<<"\n";  // DEBUG
+        for( Point &p : pts )
+        {
+            DrawSphere( taters2raylib(p), 0.1, RED );
+            std::cout<<"ImObP: "<<p.x<<"x "<<p.y<<"y "<<p.z<<"z\n"; // DEBUG
         }
     }
 

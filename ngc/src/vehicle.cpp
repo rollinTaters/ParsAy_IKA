@@ -31,11 +31,12 @@ Vehicle::Vehicle()
 {
     // populate sensors on vehicle
     m_sensor[0] = Sensor_Emulator( E_type_IMU,      v3f( 0, 0, 0), v3f(0, 0, 0) );
-    m_sensor[1] = Sensor_Emulator( E_type_distance, v3f(-0.20, 0,0), v3f(0,0,-50) );
-    m_sensor[2] = Sensor_Emulator( E_type_distance, v3f(-0.10, 0,0), v3f(0,0,-20) );
-    m_sensor[3] = Sensor_Emulator( E_type_distance, v3f( 0.00, 0,0), v3f(0,0,  0) );
-    m_sensor[4] = Sensor_Emulator( E_type_distance, v3f( 0.10, 0,0), v3f(0,0, 20) );
-    m_sensor[5] = Sensor_Emulator( E_type_distance, v3f( 0.20, 0,0), v3f(0,0, 50) );
+    m_sensor[1] = Sensor_Emulator( E_type_LIDAR,    v3f( 0, 0, 0.7), v3f(0, 0, 0) );
+    m_sensor[2] = Sensor_Emulator( E_type_distance, v3f(-0.20, 0,0), v3f(0,0,-50) );
+    m_sensor[3] = Sensor_Emulator( E_type_distance, v3f(-0.10, 0,0), v3f(0,0,-20) );
+    m_sensor[4] = Sensor_Emulator( E_type_distance, v3f( 0.00, 0,0), v3f(0,0,  0) );
+    m_sensor[5] = Sensor_Emulator( E_type_distance, v3f( 0.10, 0,0), v3f(0,0, 20) );
+    m_sensor[6] = Sensor_Emulator( E_type_distance, v3f( 0.20, 0,0), v3f(0,0, 50) );
 
     m_vel = v3f( 0,0,0 );
     m_acc = v3f( 0,0,0 );
@@ -71,6 +72,8 @@ v3f Vehicle::getVel() const { return m_vel; }
 v3f Vehicle::getAcc() const { return m_acc; }
 v3f Vehicle::getAngVel() const { return m_angVel; }
 v3f Vehicle::getAngAcc() const { return m_angAcc; }
+
+Sensor_Data Vehicle::getSensorData() const { return m_sensor_data; };
 
 Sensor_Emulator Vehicle::getSensor( const unsigned short int number ) const
 {

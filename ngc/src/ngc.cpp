@@ -147,6 +147,8 @@ bool NGC::executeWPs()
     return true;
 }
 
+std::vector<Point> NGC::getImObPoints() const { return m_immediate_obstacles; }
+
 // == private: ==
 
 void NGC::mainThreadFunc()
@@ -171,7 +173,8 @@ void NGC::mainThreadFunc()
 
         // TODO run predictTrajectory and send it to command console for debug visualization
 
-        // TODO read lidar and run markImmediateObstacles
+        // read lidar and run markImmediateObstacles
+        getLIDARData();
 
         // TODO run createTargetWaypoint, createOpenSpaceWaypoint
 
@@ -198,9 +201,31 @@ void NGC::mainThreadFunc()
 
 bool NGC::getLIDARData()
 {
-    // since we dont actually have a vehicle, or comminucations system determined
-    // just ask "m_vehicle" for readSensor
-    return false;
+    // do a lidar read first, we are doin it manually here for now
+    m_vehicle->readSensor(1);
+
+    // sensor 0 -> IMU, 1-> LIDAR
+    BB3D sensor_box = m_vehicle->getSensor(1).getBox();
+    
+    v3f sensor_position = sensor_box.getPos();
+    v3f sensor_direction = sensor_box.getLocalVecY();
+    cQuaternion lidar_quat = cQuaternion::fromAxisAngle( sensor_box.getLocalVecZ(), 0 );
+    Sensor_Data data = m_vehicle->getSensorData();
+
+    // clear previous read
+    m_immediate_obstacles.clear();
+
+    for( int i = 0; i < LIDAR_POINTS; i++ )
+    {
+        if( data.lidar[i] == 0.f ) continue;    // no read is 0 metres
+        lidar_quat.w = data.lidar_angle[i] / 2.f;
+        Point p = sensor_direction * data.lidar[i];
+        lidar_quat.rotateVector( p );
+        p += sensor_position;
+        m_immediate_obstacles.push_back( p );
+    }
+    // maybe return false if the quality of the sensor read is low
+    return true;
 }
 
 void NGC::deadReckonFunc()
@@ -457,8 +482,7 @@ void NGC::halt()
 
 void NGC::setControlOutput_rate( float speed, float turn_rate )
 {
-    // TODO get this value from m_vehicle
-    float track_width = 1.3f;   // metre
+    float track_width = m_vehicle->track;   // metre
 
     // a crude way of calculating speed difference between sides
     float diff = turn_rate * track_width / 2.f;
@@ -476,8 +500,7 @@ void NGC::setControlOutput_radius( float speed, float turn_radius )
         return;
     }
 
-    // TODO get this value from m_vehicle
-    float track_width = 1.3f;   // metre
+    float track_width = m_vehicle->track;   // metre
     
     // TODO if radius is smaller than the vehicles width/2 there must be reverse track movement
 

@@ -37,7 +37,7 @@ Env_Emulator::Env_Emulator( const Vehicle& inp_vehicle ):
         std::cerr<<"Error. Could not load course image from file!\n";
     }
     // set position of m_real_vehicle in course
-    m_real_vehicle.overridePos( Point(340*m_metre_per_pixel, 775*m_metre_per_pixel, 0.5f) );
+    m_real_vehicle.overridePos( Point(340*m_metre_per_pixel, (1080-775)*m_metre_per_pixel, 0.5f) );
 }
 
 Env_Emulator::~Env_Emulator()
@@ -139,6 +139,48 @@ void Env_Emulator::physThreadFunc()
     }
 }
 
+float Env_Emulator::shittyPixelMarch( BB3D i_box, v3f i_dir ) const
+{
+    // pixel marching setup, for direction sensor
+    unsigned int max_iteration = 1000;
+    unsigned int iteration = 0;
+    bool march_successful = false;
+    Point start_pos = i_box.getPos();
+    start_pos /= m_metre_per_pixel; // convert meters to pixel position
+    Point check_pos = start_pos; // position we will iterate upon
+    Point direction = i_dir * 0.005;
+
+
+    while( iteration < max_iteration )
+    {
+        // check if pixel is marked as "wall"
+        // TODO this is stupid, getimagecolor takes the image argument by copy to its function frame. change this to be a straight up "height" array
+        Color colour =  GetImageColor( m_image_course, (int)round(check_pos.x),
+                                           (int)round(check_pos.y) );
+        if( ColorIsEqual( colour, BLACK ) )
+        {
+            // found wall, return it
+            march_successful = true;
+            break;
+        }
+        // TODO what about floors? at least return when point goes below Z0
+
+        // TODO we may skip some pixels if we move by a unit vector, check if this is the case
+        // move to next iteration
+        check_pos += direction;
+        iteration++;
+    }
+
+    // returning found value
+    if( !march_successful )
+    {
+        // NOTE: maybe there was no obstacle? this isnt necessarly a failure
+        //std::cerr<<"Environment emulator: sensor did not hit obstacle\n";
+        return 0.f;
+    }
+    return ( (check_pos - start_pos)*m_metre_per_pixel ).mag();
+}
+
 bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) const
 {
     // determine sensor type
@@ -148,14 +190,11 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
     BB3D sensor_box = sensor->getBox();
     sensor_box += m_real_vehicle.getBox();
     
-    // pixel marching setup, for direction sensor
-    unsigned int max_iteration = 1000;
-    unsigned int iteration = 0;
-    bool march_successful = false;
-    Point start_pos = sensor_box.getPos();
-    start_pos /= m_metre_per_pixel; // convert meters to pixel position
-    Point check_pos = start_pos; // position we will iterate upon
-    Point direction = sensor_box.getAngEuler();
+    // for lidar case
+    float rad_increment = (2*PI)/LIDAR_POINTS;
+    v3f sensor_direction = sensor_box.getLocalVecY();
+    cQuaternion lidar_quat = cQuaternion::fromAxisAngle( sensor_box.getLocalVecZ(), rad_increment );
+
 
     switch( sensor_type )
     {
@@ -165,42 +204,19 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
             return false;
         // ---- Simple distance sensor ----
         case E_type_distance:
-
-            while( iteration < max_iteration )
-            {
-                // check if pixel is marked as "wall"
-                // TODO this is stupid, getimagecolor takes the image argument by copy to its function frame. change this to be a straight up "height" array
-                Color colour =  GetImageColor( m_image_course, (int)round(check_pos.x),
-                                                   (int)round(check_pos.y) );
-                if( ColorIsEqual( colour, BLACK ) )
-                {
-                    // found wall, return it
-                    march_successful = true;
-                    break;
-                }
-                // TODO what about floors? at least return when point goes below Z0
-
-                // TODO we may skip some pixels if we move by a unit vector, check if this is the case
-                // move to next iteration
-                check_pos += direction;
-            }
-
-            // returning found value
-            if( !march_successful )
-            {
-                // NOTE: maybe there was no obstacle? this isnt necessarly a failure
-                std::cerr<<"Environment emulator: sensor did not hit obstacle\n";
-                //data.distance = 1000.f;
-                return false;
-            }
-            data.distance = ( (check_pos - start_pos)*m_metre_per_pixel ).mag();
+            data.distance = shittyPixelMarch( sensor_box, sensor_box.getLocalVecY() );
             return true;
 
         // ---- LIDAR ----
         case E_type_LIDAR:
-            // TODO
-            std::cerr<<"ERROR: LIDAR type sensor is not implemented in environment emulator\n";
-            return false;
+            //std::cout<<"env emulator: reading lidar sensor\n";    // DEBUG
+            for( int i = 0; i < LIDAR_POINTS; i++ )
+            {
+                data.lidar[i] = shittyPixelMarch( sensor_box, sensor_direction );
+                data.lidar_angle[i] = rad_increment * i;
+                lidar_quat.rotateVector( sensor_direction );
+            }
+            return true;
 
         // ---- IMU ----
         case E_type_IMU:
@@ -224,3 +240,5 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
     }
 }
 
+BB3D Env_Emulator::getRealVehicleBox() const
+{ return m_real_vehicle.getBox(); }

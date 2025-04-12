@@ -77,6 +77,8 @@ int main()
 
         BeginMode3D( GUI::camera );  //--- mode 3D start
 
+        GUI::drawHMap();
+        GUI::drawLIDAR();
         GUI::drawAxisBillboards();
         GUI::drawVehicle();
         GUI::drawCrosshair();

@@ -47,6 +47,8 @@ class Vehicle
     v3f getAngVel() const;
     v3f getAngAcc() const;
 
+    Sensor_Data getSensorData() const;
+
     Sensor_Emulator getSensor( const unsigned short int number ) const;
     float readSensor( const unsigned short int number );
 

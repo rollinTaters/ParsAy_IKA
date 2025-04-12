@@ -65,6 +65,8 @@ class NGC
     std::vector<Point> getWPs() const;
     bool executeWPs();  // starts executing current waypoints
 
+    std::vector<Point> getImObPoints() const;   // immediate obstacles
+
   private:
 
     // ==== Data ====
@@ -122,21 +124,25 @@ class NGC
     // - using the LIDAR data mark obstacles on internal world map
     //  this adds them to the world map as permanent obstacles
     //  is used for mapping an area (aka SLAM)
+    // TODO
     bool markObstacles();
 
     // immediate obstacle mark function: ( NAVIGATION )
     // - using the LIDAR data mark obstacles on the "surroundings" map
     //  is used for collision avoidance
+    // NOTTODO ??
     bool markImmediateObstacles();
 
     // predict trajectory function: ( NAVIGATION )
     // - using vehicle steer actuator, drive actuator, and inertia, predicts next x number of positions in y amout of time
+    // TODO
     bool predictTrajectory();
 
     // create target waypoint function: ( GUIDANCE )
     // - look at the previous positions on internal world map,
     //  find a new position which is "in short range", "unexplored" and "reachable"
     //  set it as a target waypoint
+    // TODO
     bool createTargetWaypoint();
 
     // create "open space" waypoint function: ( GUIDANCE )

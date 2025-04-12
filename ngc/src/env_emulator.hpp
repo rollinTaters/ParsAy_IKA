@@ -59,10 +59,13 @@ class Env_Emulator
     // this populates the sensor data object with emulated sensor readings from the "real" vehicle
     bool getSensorData( Sensor_Emulator*, Sensor_Data& ) const; // returns false on read fail
 
+    BB3D getRealVehicleBox() const;
+
     private:
     // "real" map/course
     Image m_image_course;
-    const float m_metre_per_pixel = 0.005;  // 5mm per pixel
+    const float m_metre_per_pixel = 0.050;  // 50mm per pixel
+    float shittyPixelMarch( BB3D, v3f ) const;
 
     // physics simulation thread
     std::thread* m_phys_thread = nullptr;
