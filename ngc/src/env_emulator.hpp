@@ -35,7 +35,7 @@
 
 #pragma once
 #include <thread>
-#include "raylib.h" // course image
+#include "raylib.h"
 #include "vehicle.hpp"
 //#include "sensor_emulator.hpp"  // getSensorData needs to know what a sensor is
 
@@ -59,12 +59,18 @@ class Env_Emulator
     // this populates the sensor data object with emulated sensor readings from the "real" vehicle
     bool getSensorData( Sensor_Emulator*, Sensor_Data& ) const; // returns false on read fail
 
-    BB3D getRealVehicleBox() const;
+    void drawHMap() const;
+    bool setupModel();
+    bool unloadModel();
 
     private:
     // "real" map/course
-    Image m_image_course;
+    Texture2D m_hm_texture;
+    Mesh m_hm_mesh;
+    Model m_hm_model;
+    bool m_model_initialized = false;
     const float m_metre_per_pixel = 0.050;  // 50mm per pixel
+
     float shittyPixelMarch( BB3D, v3f ) const;
 
     // physics simulation thread

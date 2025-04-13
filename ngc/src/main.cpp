@@ -66,6 +66,9 @@ int main()
     // this will create a window and initialize gui stuff
     GUI::initGUI();
 
+    // after creating opengl context (initializing window) setup the model in env emulator
+    env_emulator.setupModel();
+
     // main draw loop
     while( !WindowShouldClose() )
     {
@@ -77,7 +80,7 @@ int main()
 
         BeginMode3D( GUI::camera );  //--- mode 3D start
 
-        GUI::drawHMap();
+        env_emulator.drawHMap();
         GUI::drawLIDAR();
         GUI::drawAxisBillboards();
         GUI::drawVehicle();
@@ -93,6 +96,7 @@ int main()
     }
 
     // this also closes the window
+    env_emulator.unloadModel();
     GUI::deInitGUI();
 #else   // HEADLESS MODE
     std::this_thread::sleep_for( std::chrono::seconds(10) );

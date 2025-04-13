@@ -30,19 +30,12 @@
 Env_Emulator::Env_Emulator( const Vehicle& inp_vehicle ):
     m_real_vehicle(inp_vehicle)
 {
-    // load the course image from the disk
-    m_image_course = LoadImage("gfx/course1.png");
-    if( !IsImageValid( m_image_course ) )
-    {
-        std::cerr<<"Error. Could not load course image from file!\n";
-    }
-    // set position of m_real_vehicle in course
-    m_real_vehicle.overridePos( Point(340*m_metre_per_pixel, (1080-775)*m_metre_per_pixel, 0.5f) );
 }
 
 Env_Emulator::~Env_Emulator()
 {
     stopPhysSim();
+    unloadModel();
 }
 
 bool Env_Emulator::startPhysSim()
@@ -141,6 +134,7 @@ void Env_Emulator::physThreadFunc()
 
 float Env_Emulator::shittyPixelMarch( BB3D i_box, v3f i_dir ) const
 {
+    /*
     // pixel marching setup, for direction sensor
     unsigned int max_iteration = 1000;
     unsigned int iteration = 0;
@@ -179,6 +173,8 @@ float Env_Emulator::shittyPixelMarch( BB3D i_box, v3f i_dir ) const
         return 0.f;
     }
     return ( (check_pos - start_pos)*m_metre_per_pixel ).mag();
+    */
+    return 0.f;
 }
 
 bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) const
@@ -240,5 +236,99 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
     }
 }
 
-BB3D Env_Emulator::getRealVehicleBox() const
-{ return m_real_vehicle.getBox(); }
+namespace GUI{
+    extern Vector3 taters2raylib( v3f );
+}
+
+bool Env_Emulator::setupModel()
+{
+    // ---- height map setup ----
+    // load the course image from the disk
+    Image im_height_map = LoadImage("./gfx/course1.png");
+    if( !IsImageValid( im_height_map ) )
+    {
+        std::cerr<<"Error. Could not load course image from file!\n";
+        m_model_initialized = false;
+        return false;
+    }
+    //im_height_map = GenImageCellular( 2000, 3000, 75 );
+    //ImageFlipVertical( &im_height_map );
+    //ImageFlipHorizontal( &im_height_map );
+    //ImageBlurGaussian( &im_height_map, 12 );
+    //ImageColorInvert( &im_height_map );
+    //ImageColorGrayscale( &im_height_map );
+
+    // set position of m_real_vehicle in course
+    m_real_vehicle.overridePos( Point(340*m_metre_per_pixel, (1080-775)*m_metre_per_pixel, 0.5f) );
+
+    float resize_factor = 0.2f;
+
+    // grab original mesh size
+    Vector3 mesh_size = {
+        m_metre_per_pixel*im_height_map.width,
+        2,
+        m_metre_per_pixel*im_height_map.height };
+
+    // resize image down
+    ImageResize( &im_height_map,
+            im_height_map.width*resize_factor,
+            im_height_map.height*resize_factor );
+
+    // generate height map
+    m_hm_mesh = GenMeshHeightmap( im_height_map, (mesh_size) );
+
+    // resize image to original, ( here be losses )
+    ImageResize( &im_height_map,
+            im_height_map.width/resize_factor,
+            im_height_map.height/resize_factor );
+
+    // invert color before loading texture, so its lighter color
+    ImageColorInvert( &im_height_map );
+    Image im_overlay = GenImageCellular( im_height_map.width, im_height_map.height, 20 );
+    Rectangle rect = {0,0,im_height_map.width,im_height_map.height};
+    ImageDraw( &im_height_map, im_overlay, rect, rect, Fade(WHITE, 0.5f) );
+
+    m_hm_texture = LoadTextureFromImage( im_height_map );
+    m_hm_model = LoadModelFromMesh( m_hm_mesh );
+    m_hm_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = m_hm_texture;
+    UnloadImage( im_height_map );
+
+    m_model_initialized = true;
+    return true;
+}
+
+bool Env_Emulator::unloadModel()
+{
+    if( m_model_initialized )
+    {
+        UnloadTexture( m_hm_texture );
+        UnloadModel( m_hm_model );
+        m_model_initialized = false;
+        return true;
+    }
+    return false;
+}
+
+void Env_Emulator::drawHMap() const
+{
+    if( !m_model_initialized ) return;
+
+    v3f real_vehicle_pos = m_real_vehicle.getBox().getPos();
+    real_vehicle_pos += v3f( 0, -1080*0.05, -0.25 ); // move map a bit
+    //real_vehicle_pos += v3f( -10, -10, 0 ); // map spawn point offset
+    //real_vehicle_pos = v3f(-5,0,0);  // DEBUG
+/*
+    DrawModelEx(
+            hm_model,   // model
+            taters2raylib(real_vehicle_pos),    // position
+            (Vector3){1,0,0},   // rotation axis, (taters2raylib axis)
+            (3.0f/2)*PI,   // rotation angle (taters2raylib angle)
+            (Vector3){1,1,1},    // scale
+            GREEN );    // tint
+*/
+    DrawModel(
+            m_hm_model,
+            GUI::taters2raylib(real_vehicle_pos*-1.f),
+            1.f,
+            DARKGREEN );
+}
