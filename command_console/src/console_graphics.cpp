@@ -63,11 +63,11 @@ namespace cg {
     float g_roll_val = 0.f;
     float g_heading_val = 0.f;
     
-    /*                    __
-    // \
-    \\_/ //
-    ''-.._.-''-.._.. -(||)(')
-    '''
+    /*                   __
+                        // \
+                        \\_/ //
+      ''-.._.-''-.._.. -(||)(')
+                         '''
     */
    
    // Debug gauge test 
