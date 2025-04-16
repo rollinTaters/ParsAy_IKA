@@ -22,47 +22,44 @@
     SOFTWARE.
 */
 #pragma once
-#include "SFML/Graphics.hpp"
+#include "raylib.h"
 #include <cmath>
 #include <iostream>
-#define PI 3.141592
 
-class Adi 
-{
-    public:
-        Adi(sf::Vector2f pos, float dia);
-        void updateRollVal_prop(const float);   // 0-1
-        void updatePitchVal_prop(const float);  // 0-1
-        void updateRollVal(const float);    // degree
-        void updatePitchVal(const float);   // degree
-        void render(sf::RenderTarget& target);
+class Adi {
+public:
+    Adi(Vector2 pos, float dia);
+    void updateRollVal_prop(const float);   // 0-1
+    void updatePitchVal_prop(const float);  // 0-1
+    void updateRollVal(const float);    // degree
+    void updatePitchVal(const float);   // degree
+    void render();
 
-    private:
-        // adi things
-        sf::Texture roll_markings; // roll markings
-        sf::Texture pitch_scale; // pitch scale
-        sf::Texture horizon; // horizon
-        sf::Texture horizon_outline;
-        
-        //sf::Sprite horizon_outline_sprite;
-        sf::Sprite roll_markings_sprite;
-        sf::Sprite pitch_scale_sprite;
-        sf::Sprite horizon_sprite;
+private:
+    // adi things
+    Texture2D roll_markings;
+    Texture2D pitch_scale;
+    Texture2D horizon;
+    Texture2D horizon_outline;
 
-        sf::CircleShape m_background;
+    Vector2 horizon_outline_pos;
+    Vector2 roll_markings_pos;
+    Vector2 pitch_scale_pos;
+    Vector2 horizon_pos;
+
+    Color background_color;
+
+    float m_dia;        // diameter in pixels
     
-        float m_dia;        // diameter in pixels
+    float m_max_roll_value;
+    float m_min_roll_value;
+    float m_roll_value;
 
-        float m_max_roll_value;
-        float m_min_roll_value;
-        float m_roll_value;
+    float m_max_pitch_value;
+    float m_min_pitch_value;
+    float m_pitch_value;
+    const float m_pitch_scale = 0.5f; //FIXME this needs tuning
 
-        float m_max_pitch_value;
-        float m_min_pitch_value;
-        float m_pitch_value;
-        const float m_pitch_scale = 0.5f; //FIXME this needs tuning
-
-        sf::Vector2f m_size;    // in pixels
-        sf::Vector2f m_pos;     // of top left corner    
-
+    Vector2 m_size;    // in pixels
+    Vector2 m_pos;     // of top left corner    
 };

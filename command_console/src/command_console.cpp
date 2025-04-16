@@ -22,116 +22,93 @@
 	SOFTWARE.
 */
 
-
 #include <iostream>
 #include "console_graphics.hpp"
 #include "../../common_code/src/comms_module.hpp"
-
-
-
-
+#include "raylib.h"
 
 int main()
 {
-    std::cout<<"Unmanned Land Vehicle Command Console v0.2\n";
-
+    std::cout << "Unmanned Land Vehicle Command Console v0.2\n";
+    
     // create communications module
-    CommsModule comms_module( CommsModule::udp, CommsModule::console_channel );
+    CommsModule comms_module(CommsModule::udp, CommsModule::console_channel);
     // declare dummy packets
     PacketBase raw_packet;
     Drive_Telemetry_Packet1 dtp1;
     Drive_Telemetry_Packet2 dtp2;
     NGC_Telemetry_Packet ngctp;
 
-
     // graphics initialization
-    sf::RenderWindow window( sf::VideoMode( 1000, 800 ), "Command Console" );
-    window.setFramerateLimit(60);
-    if( !init_graphics(&window) )
-    {
-        std::cerr<<"Failed to init graphics! Exiting.\n";
-        return -1;
-    }
-
+    const int screenWidth = 1000;
+    const int screenHeight = 800;
+    //InitWindow(screenWidth, screenHeight, "Command Console");
+    cg::InitWindowSafe(screenWidth,screenHeight,"Command Console");
+    cg::InitObjects();
     // main loop
-    while( window.isOpen() )
+    while (!WindowShouldClose())
     {
         // event processing
-        sf::Event event;
-        while( window.pollEvent(event) )
-        {
-            // request for closing
-            if( event.type == sf::Event::Closed )
-            {
-                // do we wanna do any actions before closing?
-                window.close();
-            }
-            // this handles resizing of window, shows more stuff if window is resized, (prevents stretching)
-            if( event.type == sf::Event::Resized )
-            {
-                window.setView( sf::View( sf::FloatRect( {0,0}, sf::Vector2f(window.getSize().x,window.getSize().y) ) ) );
-            }
-        }   // end of event processing
+        if (IsKeyPressed(KEY_ESCAPE)) {
+            // ESC to close the application
+            break;
+        }
 
         // clear window for next frame
-        window.clear( sf::Color(180,180,180) );
+        BeginDrawing();
+        ClearBackground(Color{180, 180, 180, 255});
 
-        //do seizure inducing stuff
-        //DEBUG_gauge_test();
-//
+        cg::DEBUG_gauge_test();
         // check incoming transmission packets
-        if( comms_module.packetAvailable() )
+        if (comms_module.packetAvailable())
         {
             // read packet
-            comms_module.readPacket( raw_packet );
+            comms_module.readPacket(raw_packet);
 
             // make sense of packet
-            switch( raw_packet.packet_type )
+            switch (raw_packet.packet_type)
             {
                 case drive_telemetry1:
                     dtp1 = raw_packet;
-                    gauge_temp.updateVal( dtp1.getMotor1Temp() );
-                    gauge_amp.updateVal( dtp1.getMotor1Amps() );
-                    // TODO update other gauges
+                    cg::gauge_temp->updateVal(dtp1.getMotor1Temp());
+                    cg::gauge_amp->updateVal(dtp1.getMotor1Amps());
                     break;
                 case drive_telemetry2:
                     dtp2 = raw_packet;
-                    gauge_amp2.updateVal( dtp2.getMotor2Amps() );
-                    gauge_temp2.updateVal( dtp2.getMotor2Temp() );
-                    // TODO update engine 2's gauges
+                    cg::gauge_amp2->updateVal(dtp2.getMotor2Amps());
+                    cg::gauge_temp2->updateVal(dtp2.getMotor2Temp());
                     break;
                 case ngc_telemetry:
                     ngctp = raw_packet;
-                    gauge_compass.updateVal( ngctp.getHeading() );
-                    gauge_adi.updateRollVal( ngctp.getRoll() );
-                    gauge_adi.updatePitchVal( ngctp.getPitch() );
-                    // TODO update adi, compas
+                    cg::gauge_compass->updateVal(ngctp.getHeading());
+                    cg::gauge_adi->updateRollVal(ngctp.getRoll());
+                    cg::gauge_adi->updatePitchVal(ngctp.getPitch());
                     break;
                 case undefined:
                     std::cerr << "Warning: Received undefined packet type" << std::endl;
                     break;
                 default:
-                    // Unknown packet type - log error and discard
                     std::cerr << "Error: Received unknown packet type: " << raw_packet.packet_type << std::endl;
-                    // debugging info here
                     std::cerr << "Packet data: " << raw_packet.data1 << ", " << raw_packet.data2 << ", " << raw_packet.data3 << std::endl;
                     break;
             };
         }
-        input.proccesInput();
-        // render gauges
-        gauge_adi.render(window);
-        gauge_amp2.render(window);
-        gauge_temp2.render(window);
-        gauge_amp.render(window);
-        gauge_temp.render(window);
-        gauge_compass.render(window);
-        // a call to render stuff
 
-        window.display();
+        // process input
+        cg::input->proccesInput();
+
+        // render gauges
+        cg::gauge_adi->render();
+        cg::gauge_amp2->render();
+        cg::gauge_temp2->render();
+        cg::gauge_amp->render();
+        cg::gauge_temp->render();
+        cg::gauge_compass->render();
+        
+        EndDrawing();
     }
 
-
-    std::cout<<"Exiting. Have a nice day\n";
+    CloseWindow();
+    std::cout << "Exiting. Have a nice day\n";
+    return 0;
 }
-

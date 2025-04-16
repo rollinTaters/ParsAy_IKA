@@ -24,14 +24,14 @@
 
 
 #pragma once
-#include "SFML/Graphics.hpp"
+
+#include "raylib.h"
 #include <cmath>
 #include <iostream>
-#define PI 3.141592
+#include <vector>
+#include <string>
 
-
-class Gauge
-{
+class Gauge {
 public:
     enum gauge_type {
         type_temperature,
@@ -40,48 +40,35 @@ public:
         type_compass
     };
 
-    Gauge(gauge_type type, sf::Vector2f pos, float dia);
+    Gauge(gauge_type type, Vector2 pos, float dia);
 
-    void updateVal(const float);  // input is value to be displayed
-    void updateProportionalVal(const float);  // input is from 0.f to 1.f
-    void render(sf::RenderTarget& target);
+    void updateVal(const float value); // input is value to be displayed
+    void updateProportionalVal(const float value); // input is from 0.f to 1.f
+    void render();
     void setupGaugeFrame();
     void setupNeedle();
 
 private:
     gauge_type m_type; // to store gauge type
 
-    // compass things
-    sf::Texture compass_bg; // compass background
-    sf::Texture compass_ticks_numbers; // compass ticks and numbers
-    sf::Sprite compass_bg_sprite;
-    sf::Sprite compass_ticks_numbers_sprite;
+    // Compass related
+    Texture2D compass_bg; // compass background
+    Texture2D compass_ticks_numbers; // compass ticks and numbers
+    Vector2 compass_bg_pos;
+    Vector2 compass_ticks_pos;
 
-    // ampere and temperature meter things 
-    sf::CircleShape m_gaugeFrame;    // gauge shape
-    
-    std::vector<sf::Vertex> m_ticks; // lines
-    std::vector<sf::Text> m_numbers; // numbers in gauge
-    sf::Font m_font;          // font type
-    
-    sf::Vector2f m_size;    // in pixels
-    sf::Vector2f m_pos;     // of top left corner
-	
-    sf::CircleShape m_center;        // center dot of gauge
-    sf::RectangleShape m_needle; // needle 
-	
-    sf::Text m_label; // temperature - amp 
-    std::string m_label_text;
+    // Ampere and temperature meter related
+    Vector2 m_pos; // Top left corner
+    float m_dia;   // Diameter in pixels
 
-    float m_dia;        // diameter in pixels
+    std::vector<Vector2> m_ticks; // Tick positions
+    std::vector<std::string> m_numbers; // Numbers in gauge
 
     float m_max_value;
     float m_min_value;
     float m_value;
 
-
-    // 0 degree is towards top, ex. -90 to 90 will be from left horizon to right horizon
-    float m_needle_min_degree;   // angle at which needle rests when min
+    float m_needle_min_degree; // Angle at which needle rests when min
     float m_needle_max_degree;
 
     float m_red_start_value;
@@ -90,4 +77,13 @@ private:
     float m_green_start_value;
     float m_green_end_value;
 
+    Vector2 m_center;   // Center of the gauge
+    Vector2 m_needle;   // Needle end position
+    Color m_needle_color;
+    Font m_font;
+    std::string m_label_text; // Label text (temperature/ampere/etc.)
+    Vector2 m_label_pos; // Label position
+    float m_label_font_size;
+    Color m_label_color;
 };
+

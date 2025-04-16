@@ -24,72 +24,81 @@
 
 
 #include "console_graphics.hpp"
+#include "raylib.h"
+#include <cmath>
+namespace cg {
+    static bool _initialized = false;   
+    void InitWindowSafe(int width, int height, const char* title) {
+        if (!_initialized) {
+            InitWindow(width, height, title);
+            SetTargetFPS(60);
+            _initialized = true;  
+        }
+    }
+    bool isInitialized() {
+        return _initialized;
+    }
+    Gauge* gauge_temp    = nullptr;
+    Gauge* gauge_amp     = nullptr;
+    Gauge* gauge_amp2    = nullptr;
+    Gauge* gauge_temp2   = nullptr;
+    Gauge* gauge_compass = nullptr;
+    Adi* gauge_adi     = nullptr;
+    UserInput* input         = nullptr;
 
-
-sf::RenderTarget* render_target = nullptr;;
-bool graphics_initialized = false;
-
-Gauge gauge_temp( Gauge::type_temperature, sf::Vector2f(300,50), 200 );
-Gauge gauge_amp( Gauge::type_amp, sf::Vector2f(600,50), 200 );
-Gauge gauge_amp2( Gauge::type_amp, sf::Vector2f(50,50), 200 );
-Gauge gauge_temp2( Gauge::type_temperature, sf::Vector2f(700,350), 200 );
-Adi gauge_adi( sf::Vector2f(500,300), 400 );
-Gauge gauge_compass ( Gauge::type_compass, sf::Vector2f(150,350),200);
-
-
-UserInput input;
-
-bool init_graphics( sf::RenderTarget* inp_rt )
-{
-    // TODO or not todo, that is the question
-
-    // maybe create gauges here?
-
-    render_target = inp_rt;
-    graphics_initialized = true;
-    return true;
+    void InitObjects() {
+        EnsureWindow();
+        gauge_temp = new Gauge(Gauge::type_temperature,    {300,50},   200.0f);
+        gauge_amp = new Gauge(Gauge::type_amp,     {600,50},  200.0f);
+        gauge_amp2 = new Gauge(Gauge::type_amp,    {50,50},  200.0f);
+        gauge_temp2 = new Gauge(Gauge::type_temperature,   {700,350},  200.0f);
+        gauge_compass = new Gauge(Gauge::type_compass, {150,370},  200.0f);
+        gauge_adi = new Adi({500,300},  400.0f);
+        input = new UserInput();
+    }
+    // -- DEBUG --
+    float g_amp_val = 0.f;
+    float g_temp_val = 0.f;
+    float g_pitch_val = 0.f;
+    float g_roll_val = 0.f;
+    float g_heading_val = 0.f;
+    
+    /*                    __
+    // \
+    \\_/ //
+    ''-.._.-''-.._.. -(||)(')
+    '''
+    */
+   
+   // Debug gauge test 
+   
+   void DEBUG_gauge_test()
+   {
+       // nudge value towards a random direction
+       g_amp_val      += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+       g_temp_val     += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+       g_pitch_val    += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+       g_roll_val     += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+       g_heading_val  += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+       
+       // clamp value to be between 0 and 1
+       g_amp_val     = std::max( 0.f, std::min( g_amp_val    , 1.f ));
+       g_temp_val    = std::max( 0.f, std::min( g_temp_val   , 1.f ));
+       g_pitch_val   = std::max( 0.f, std::min( g_pitch_val  , 1.f ));
+       g_roll_val    = std::max( 0.f, std::min( g_roll_val   , 1.f ));
+       g_heading_val = std::max( 0.f, std::min( g_heading_val, 1.f ));
+       
+       
+       
+       // update gauges
+       gauge_amp->updateProportionalVal( g_amp_val );
+       gauge_temp->updateProportionalVal( g_temp_val );
+       
+       gauge_adi->updateRollVal_prop( g_roll_val );
+       gauge_adi->updatePitchVal_prop( g_pitch_val );
+       
+       gauge_compass->updateProportionalVal( g_heading_val );
+    }
 }
-
-// -- DEBUG --
-float g_amp_val     = 0.f;
-float g_temp_val    = 0.f;
-/*                    __
-                     // \
-                     \\_/ //
-   ''-.._.-''-.._.. -(||)(')
-                     '''
-*/                     
-float g_pitch_val   = 0.f;
-float g_roll_val    = 0.f;
-float g_heading_val = 0.f;
-
-
-void DEBUG_gauge_test()
-{
-    // nudge value towards a random direction
-    g_amp_val      += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-    g_temp_val     += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-	g_pitch_val    += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-    g_roll_val     += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-    g_heading_val  += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-
-    // clamp value to be between 0 and 1
-    g_amp_val     = std::max( 0.f, std::min( g_amp_val    , 1.f ));
-    g_temp_val    = std::max( 0.f, std::min( g_temp_val   , 1.f ));
-	g_pitch_val   = std::max( 0.f, std::min( g_pitch_val  , 1.f ));
-    g_roll_val    = std::max( 0.f, std::min( g_roll_val   , 1.f ));
-    g_heading_val = std::max( 0.f, std::min( g_heading_val, 1.f ));
-
-
-
-    // update gauges
-    gauge_amp.updateProportionalVal( g_amp_val );
-    gauge_temp.updateProportionalVal( g_temp_val );
-
-	gauge_adi.updateRollVal_prop( g_roll_val );
-	gauge_adi.updatePitchVal_prop( g_pitch_val );
-
-	gauge_compass.updateProportionalVal( g_heading_val );
-}
+    
 // -- END OF DEBUG --
-
