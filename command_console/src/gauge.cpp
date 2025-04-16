@@ -95,7 +95,7 @@ Gauge::Gauge(gauge_type gt, Vector2 pos, float dia)
     setupNeedle();
     // Label position and style
     m_label_pos       = { m_pos.x + m_dia/2, m_pos.y + m_dia + 10 };
-    m_label_font_size = 14;
+    m_label_font_size = 20;
     m_label_color     = BLACK;
 }
 
@@ -157,7 +157,7 @@ void Gauge::render() {
     float needleAngle = m_needle_min_degree +
         (m_value - m_min_value) * (m_needle_max_degree - m_needle_min_degree) /
         (m_max_value - m_min_value);
-    Rectangle rec = { m_center.x, m_center.y - 1.5f, m_dia/2, 3 };
+    Rectangle rec = { m_center.x, m_center.y - 1.5f, m_dia/2 -20.f, 3 };
     DrawRectanglePro(rec, { 0, 1.5f }, needleAngle, m_needle_color);
 
     // Draw center dot
