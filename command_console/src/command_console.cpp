@@ -107,6 +107,14 @@ int main()
         
         EndDrawing();
     }
+    // a tiny cleaning
+    delete cg::gauge_temp;
+    delete cg::gauge_amp;
+    delete cg::gauge_amp2;
+    delete cg::gauge_temp2;
+    delete cg::gauge_compass;
+    delete cg::gauge_adi;
+    delete cg::input;
 
     CloseWindow();
     std::cout << "Exiting. Have a nice day\n";
