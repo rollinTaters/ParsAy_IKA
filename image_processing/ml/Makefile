@@ -12,17 +12,14 @@ CXXFLAGS := -Wall -Wextra -std=c++17
 LIBS := -L$(ONNXROOT)/lib `pkg-config --cflags --libs opencv4` -lQt6Core -lQt6Gui -lQt6Widgets -lonnxruntime -I$(ONNXROOT)/include
 
 
-# Default rule
 all: $(TARGET)
 
-# Compile and link
 $(TARGET): $(OBJS) | $(BIN_DIR) $(OBJ_DIR)
 	$(CXX) $(OBJS) -o $(TARGET) $(LIBS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
 	$(CXX) $(CXXFLAGS) $(LIBS) -c $< -o $@
 
-# If bin and obj dirs don't exist
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
@@ -41,7 +38,6 @@ test: $(TARGET)
 clean:
 	rm -rf $(BIN_DIR) $(OBJ_DIR)
 
-#////////////////////////////////////
 
 
 
