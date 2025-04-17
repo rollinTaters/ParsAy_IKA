@@ -57,8 +57,12 @@ int main()
         // clear window for next frame
         BeginDrawing();
         ClearBackground(Color{180, 180, 180, 255});
+        // press t for debug test
+        if(IsKeyDown(KEY_T)){
 
-        cg::DEBUG_gauge_test();
+            cg::DEBUG_gauge_test();
+        }
+        
         // check incoming transmission packets
         if (comms_module.packetAvailable())
         {

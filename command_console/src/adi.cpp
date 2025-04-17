@@ -25,9 +25,6 @@
 /// Attitude Director Indicator /// 
 
 #include "adi.hpp"
-#include <raylib.h>
-#include <iostream>
-#include <cmath>
 
 Adi::Adi(Vector2 pos, float dia) {
     m_dia = dia;
