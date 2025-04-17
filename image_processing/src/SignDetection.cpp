@@ -12,7 +12,8 @@ std::vector<cv::Rect> SignDetection::detectSigns(const cv::Mat &input) {
   for (const std::vector<cv::Point> &contour : contours) {
 	 cv::Rect rect = cv::boundingRect(contour);
 	 if (rect.width > 50 && rect.height > 50) {
-		signRects.push_back(rect);
+		//		signRects.push_back(rect);
+		int i = 0;
 	 }
   }
   

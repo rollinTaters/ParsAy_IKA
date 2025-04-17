@@ -33,7 +33,7 @@ run: $(TARGET)
 	./$(TARGET)
 
 test: $(TARGET)
-	./$(TARGET) test
+	./$(TARGET) test 
 
 
 # Clean
