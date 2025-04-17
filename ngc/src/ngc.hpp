@@ -44,6 +44,9 @@
 #include "../../common_code/src/utility.hpp"
 #include "SFML/Graphics/Image.hpp"
 
+// a little forward decleration, NOTE: remove the environment emulator for hardware tests
+class Env_Emulator;
+
 class NGC
 {
   public:
@@ -66,6 +69,13 @@ class NGC
     bool executeWPs();  // starts executing current waypoints
 
     std::vector<Point> getImObPoints() const;   // immediate obstacles
+
+    // Because we gotta run simulations
+    float hey_emulator_speed = 0;
+    float hey_emulator_rate = 0;
+
+    // maybe this should be a method of central command module
+    void directCommand( float speed, float rate );
 
   private:
 
@@ -152,7 +162,7 @@ class NGC
     bool createOpenSpaceWaypoint( Point& );
 
 
-    bool hitWP( Point );
+    int hitWP( Point );
 
     // navigation happens with a queue of waypoints, sub waypoints may need to be calculated for this queueueueu
 

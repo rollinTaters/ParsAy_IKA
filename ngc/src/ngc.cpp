@@ -149,6 +149,13 @@ bool NGC::executeWPs()
 
 std::vector<Point> NGC::getImObPoints() const { return m_immediate_obstacles; }
 
+void NGC::directCommand( float speed, float rate )
+{
+    // override execution status to stop guidance methods from inferring with manual user input
+    m_execute_waypoints = false;
+    setControlOutput_rate( speed, rate );
+}
+
 // == private: ==
 
 void NGC::mainThreadFunc()
@@ -183,8 +190,8 @@ void NGC::mainThreadFunc()
         if( !m_waypoints.empty() && m_execute_waypoints )
         {
             // TODO checking wp satisfaction
-            std::cout<<"NGC: executing...\n";
-            hitWP( m_waypoints.front() );
+            std::cout<<"NGC: executing... mode:";
+            std::cout<<hitWP( m_waypoints.front() )<<"\n";
         }else{
             m_execute_waypoints = false;
             halt();
@@ -364,11 +371,13 @@ bool NGC::createOpenSpaceWaypoint( Point& start_point )
     return true;
 }
 
-bool NGC::hitWP( Point wp )
+int NGC::hitWP( Point wp )
 {
+    int mode = -1;
+
     // TODO what is our target speed for the part of the course, get that from the CCM
-    float target_speed = 2; // m/s
-    float target_reverse_speed = -1.2;   // m/s
+    float target_speed = 1.2; // m/s
+    float target_reverse_speed = -0.50;   // m/s
     float point_turn_rate = 10 * (PI/180.f);    // rad/s
 
     float t_speed = 0;  // will be set accordingly
@@ -402,52 +411,69 @@ bool NGC::hitWP( Point wp )
     // 30 - 90 degrees -> do point turn, then straight line move
     // same shit is mirrored for reverse operations
 
-    constexpr float fwd_r_nt = no_turn_deg * (180/PI);
-    constexpr float fwd_l_nt = (2*PI) - (no_turn_deg * (180/PI));
-    constexpr float fwd_r_at = arc_turn_deg * (180/PI);
-    constexpr float fwd_l_at = (2*PI) - (arc_turn_deg * (180/PI));
+    constexpr float fwd_r_nt = no_turn_deg * (PI/180);
+    constexpr float fwd_l_nt = (2*PI) - (no_turn_deg * (PI/180));
+    constexpr float fwd_r_at = arc_turn_deg * (PI/180);
+    constexpr float fwd_l_at = (2*PI) - (arc_turn_deg * (PI/180));
     
     constexpr float bcw_r_nt = fwd_l_nt - PI;
     constexpr float bcw_l_nt = fwd_r_nt + PI;
     constexpr float bcw_r_at = fwd_l_at - PI;
     constexpr float bcw_l_at = fwd_r_at + PI;
 
+    /*// DEBUG 
+    std::cout<<"t_bearing: "<<t_bearing<<"\n"<<
+        "cones:\n"
+        "1-fwd r  no turn: "<< fwd_r_nt<<"\n"<<
+        "2-fwd r arc turn: "<< fwd_r_at<<"\n"<<
+        "3-  R point turn: "<< bcw_r_at<<"\n"<<
+        "4-bcw r arc turn: "<< bcw_r_nt<<"\n"<<
+        "5-bcw rl no turn: "<< bcw_l_nt<<"\n"<<
+        "6-bcw l arc turn: "<< bcw_l_at<<"\n"<<
+        "7-fwd l pnt turn: "<< fwd_l_at<<"\n"<<
+        "8-fwd l arc turn: "<< fwd_l_nt<<"\n";
+    */
+
     // find out in which cone we are
     if( t_bearing <= fwd_r_nt || t_bearing >= fwd_l_nt )
     {   // forward no turn
         setControlOutput_rate( target_speed, 0 );
-        return true;
+        return 1;
 
     }else if( t_bearing <= fwd_r_at )
     {   // forward right arc turn
         t_speed = target_speed;
+        mode = 2;
 
     }else if( t_bearing <= bcw_r_at )
     {   // Point turn right
         setControlOutput_rate( 0, -point_turn_rate );
-        return true;
+        return 3;
 
     }else if( t_bearing <= bcw_r_nt )
     {   // backward right arc turn
         t_speed = target_reverse_speed;
+        mode = 4;
 
     }else if( t_bearing <= bcw_l_nt )
     {   // backward no turn
         setControlOutput_rate( target_reverse_speed, 0 );
-        return true;
+        return 5;
 
     }else if( t_bearing <= bcw_l_at )
     {   // backward left arc turn
         t_speed = target_reverse_speed;
+        mode = 6;
 
     }else if( t_bearing <= fwd_l_at )
     {   // forward left point turn
         setControlOutput_rate( 0, point_turn_rate );
-        return true;
+        return 7;
 
     }else //if( t_bearing <= fwd_l_nt )
     {   // forward left arc turn
         t_speed = target_speed;
+        mode = 8;
     }
 
 
@@ -471,7 +497,7 @@ bool NGC::hitWP( Point wp )
 
     // send a "target speed" signal to drive motor controller program
     setControlOutput_radius( t_speed, t_radius );
-    return true;
+    return mode;
 }
 
 void NGC::halt()
@@ -489,6 +515,10 @@ void NGC::setControlOutput_rate( float speed, float turn_rate )
 
     motor_R.setSpeed( speed + diff );
     motor_L.setSpeed( speed - diff );
+
+    // because i am doin it the dirty way
+    hey_emulator_speed = speed;
+    hey_emulator_rate = turn_rate;
 }
 
 void NGC::setControlOutput_radius( float speed, float turn_radius )
@@ -520,5 +550,9 @@ void NGC::setControlOutput_radius( float speed, float turn_radius )
         motor_R.setSpeed( inner_coef * speed );
         motor_L.setSpeed( outer_coef * speed );
     }
+
+    // because i am doin it the dirty way
+    hey_emulator_speed = speed;
+    hey_emulator_rate = speed/turn_radius;
 }
 

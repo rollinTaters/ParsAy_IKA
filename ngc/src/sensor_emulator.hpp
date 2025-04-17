@@ -61,6 +61,7 @@ struct Sensor_Data
 
     // for IMU
     v3f acceleration;  // m/s^2
+    v3f velocity;      // m/s   (i dont know what imu actually provides)
     v3f angular_rate;  // radian/sec
     v3f magnetic_north;    // unit vector
     float barometric_pressure;      // Pa

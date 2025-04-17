@@ -58,11 +58,16 @@ int main()
 {
     std::cout<<"ULV NGC Emulator v0.2\n";
 
+    // introduce ngc to the env emulator, because I gave up on a better way to do this
+    env_emulator.setNGC( &ngc_system );
+
 
     env_emulator.startPhysSim();
     ngc_system.start();
 
 #ifdef DEBUG_GUI
+    SetTraceLogLevel( LOG_WARNING );    // also LOG_ERROR LOG_FATAL LOG_INFO LOG_NONE
+
     // this will create a window and initialize gui stuff
     GUI::initGUI();
 

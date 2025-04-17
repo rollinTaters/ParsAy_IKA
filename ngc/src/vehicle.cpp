@@ -107,8 +107,11 @@ void Vehicle::overridePos( const v3f pos )
     m_bb3d.setPos(pos);
 }
 
-void Vehicle::setNavigationState( const int time_step )
+void Vehicle::setNavigationState( const int time_step_milli )
 {
+    // convert time step from milliseconds to seconds
+    double time_step = time_step_milli/1000.f;
+
     // -- dead reckoning calculations --
     // this part ive yanked from the simulatePhys method.
     // this is using the eulers method for integration, we should switch to RungeKutta 4th order
@@ -132,9 +135,12 @@ void Vehicle::setNavigationState( const int time_step )
     // this line commented out because IMU outputs angular velocity???
     //m_angVel += m_angAcc * time_step;
 
-    /*// DEBUG
+    // DEBUG
+    m_vel = m_sensor_data.velocity; // DEBUG, does imu give this to us outright?? idk
+    /*
     std::cout<<"dead reckon time step: "<<time_step<<"\n";
     std::cout<<"IMU acce: "<<m_acc.x<<"x "<<m_acc.y<<"y "<<m_acc.z<<"z\n";
+    std::cout<<"IMU velo: "<<m_vel.x<<"x "<<m_vel.y<<"y "<<m_vel.z<<"z\n";
     std::cout<<"IMU rate: "<<m_angVel.x<<"x "<<m_angVel.y<<"y "<<m_angVel.z<<"z\n";
     */
 }

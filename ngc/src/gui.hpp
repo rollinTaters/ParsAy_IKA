@@ -42,6 +42,12 @@ namespace GUI
     double last_wp_update;
     double wp_update_rate;
 
+    bool hat_mode_ch;
+    float cmd_speed;
+    float cmd_rate;
+    float cmd_nom_speed;
+    float cmd_nom_rate;
+
     void initGUI()
     {
         // create a window for gui rendering
@@ -51,6 +57,10 @@ namespace GUI
         ch_gap = 0.05;
         ch_len = 0.15;
         ch_color = LIME;
+
+        hat_mode_ch = true;
+        cmd_nom_speed = 1.2;
+        cmd_nom_rate = 10* (PI/180);
 
         // camera setup
         camera = {0};
@@ -103,20 +113,40 @@ namespace GUI
         if( IsKeyDown( KEY_M ) )
             camera.position += Vector3Normalize((camera.position-camera.target)) * -0.2f;
 
+        // hat control mode
+        if( IsKeyPressed( KEY_T ) )
+            hat_mode_ch = !hat_mode_ch;
+
         constexpr float ch_speed = 0.1;
-        // moving crosshair
-        if( IsKeyDown( KEY_W ) )
-            crosshair += { 0, +ch_speed, 0};
-        if( IsKeyDown( KEY_S ) )
-            crosshair += { 0, -ch_speed, 0};
-        if( IsKeyDown( KEY_A ) )
-            crosshair += { -ch_speed, 0, 0};
-        if( IsKeyDown( KEY_D ) )
-            crosshair += { +ch_speed, 0, 0};
-        if( IsKeyDown( KEY_R ) )
-            crosshair += { 0, 0, +ch_speed};
-        if( IsKeyDown( KEY_F ) )
-            crosshair += { 0, 0, -ch_speed};
+        if( hat_mode_ch )
+        {
+            // moving crosshair
+            if( IsKeyDown( KEY_W ) )
+                crosshair += { 0, +ch_speed, 0};
+            if( IsKeyDown( KEY_S ) )
+                crosshair += { 0, -ch_speed, 0};
+            if( IsKeyDown( KEY_A ) )
+                crosshair += { -ch_speed, 0, 0};
+            if( IsKeyDown( KEY_D ) )
+                crosshair += { +ch_speed, 0, 0};
+            if( IsKeyDown( KEY_R ) )
+                crosshair += { 0, 0, +ch_speed};
+            if( IsKeyDown( KEY_F ) )
+                crosshair += { 0, 0, -ch_speed};
+        }else{
+            cmd_speed = 0;
+            cmd_rate = 0;
+            if( IsKeyDown( KEY_W ) )
+                cmd_speed = cmd_nom_speed;
+            if( IsKeyDown( KEY_S ) )
+                cmd_speed = -1*cmd_nom_speed;
+            if( IsKeyDown( KEY_A ) )
+                cmd_rate = cmd_nom_rate;
+            if( IsKeyDown( KEY_D ) )
+                cmd_rate = -1*cmd_nom_rate;
+
+            ngc_system.directCommand( cmd_speed, cmd_rate );
+        }
 
         // ngc commands
         if( IsKeyPressed( KEY_X ) )
@@ -223,7 +253,8 @@ namespace GUI
                 "N,M: zoom\n"
                 "W,A,S,D,R,F: crosshair move\n"
                 "X: execute waypoints\n"
-                "C: create waypoint",
+                "C: create waypoint"
+                "T: toggle hat mode",
                 (Vector2){10,600}, 20, 2, DARKGRAY );
         DrawTextEx(
                 font,
@@ -239,6 +270,45 @@ namespace GUI
             DrawTextEx( font, TextFormat("wp%d: %3.1fx %3.1fy %3.1fz", i, p.x, p.y, p.z),
                         (Vector2){160, 50+(16.f*i)}, 16, 1, DARKGRAY );
         }
+    
+        // position of vehicle in different frames
+        v3f real_pos = env_emulator.getRealVehicle().getBox().getPos();
+        v3f real_att = env_emulator.getRealVehicle().getBox().getAngEuler();
+        v3f internal_pos = simulated_vehicle.getBox().getPos();
+        v3f internal_vel = simulated_vehicle.getVel();
+        v3f internal_att = simulated_vehicle.getBox().getAngEuler();
+        DrawTextEx(
+            font,
+            TextFormat("Simulation Pos: %3.2fx  %3.2fy  %3.2fz",
+                real_pos.x, real_pos.y, real_pos.z),
+            (Vector2){350, 10}, 20, 2, BLACK );
+        DrawTextEx(
+            font,
+            TextFormat("  Internal Pos: %3.2fx  %3.2fy  %3.2fz",
+                internal_pos.x, internal_pos.y, internal_pos.z),
+            (Vector2){350, 30}, 20, 2, BLACK );
+        DrawTextEx(
+            font,
+            TextFormat("  Internal vel: %3.2fx  %3.2fy  %3.2fz",
+                internal_vel.x, internal_vel.y, internal_vel.z),
+            (Vector2){350, 50}, 20, 2, BLACK );
+        DrawTextEx(
+            font,
+            TextFormat("  Internal att: %3.2fyaw  %3.2fpitch  %3.2froll",
+                internal_att.x, internal_att.y, internal_att.z),
+            (Vector2){350, 70}, 20, 2, BLACK );
+        DrawTextEx(
+            font,
+            TextFormat("Simulation att: %3.2fyaw  %3.2fpitch  %3.2froll",
+                real_att.x, real_att.y, real_att.z),
+            (Vector2){350, 90}, 20, 2, BLACK );
+
+        // ngc system output
+        DrawTextEx(
+                font,
+                TextFormat("ngc target speed: %3.2fm/s   rate: %3.2frad/s",
+                    ngc_system.hey_emulator_speed, ngc_system.hey_emulator_rate),
+                (Vector2){350, 120}, 20, 2, BLACK );
     }
 
     void drawWPs()
@@ -252,7 +322,9 @@ namespace GUI
         for( Point p : ngc_wps )
         {
             //DrawPoint3D( taters2raylib(p), ORANGE );
-            Vector2 pos2d = GetWorldToScreen( taters2raylib(p-p_veh), camera );
+            Point p_wp = p-p_veh;
+            simulated_vehicle.getBox().getQuaternion().conjugate().rotateVector( p_wp );
+            Vector2 pos2d = GetWorldToScreen( taters2raylib(p_wp), camera );
             DrawCircle( pos2d.x, pos2d.y, 5.0, ORANGE );
             DrawTextEx( font, TextFormat("%d",wp_num),
                         pos2d, 20, 1, ORANGE );

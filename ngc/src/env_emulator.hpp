@@ -40,6 +40,7 @@
 //#include "sensor_emulator.hpp"  // getSensorData needs to know what a sensor is
 
 class Sensor_Emulator;  // getSensorData needs to know what a sensor is
+class NGC;  // we are gonna get the commanded speed and rate values from it
 
 class Env_Emulator
 {
@@ -52,6 +53,9 @@ class Env_Emulator
     // vehicle simulation
     bool startPhysSim();
     bool stopPhysSim();
+    
+    void setNGC( NGC * );
+    Vehicle getRealVehicle() const;
 
     // returns time elapsed since emulator start
     // SWITCH TO CHRONO sf::Time getTime() const;
@@ -80,6 +84,8 @@ class Env_Emulator
 
     // "real" vehicle, is copied from given vehicle on constructor method
     Vehicle m_real_vehicle;
+
+    NGC * m_ngc = nullptr;
 
     // simulation clock
     std::chrono::steady_clock m_clock;

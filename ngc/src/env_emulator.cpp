@@ -26,6 +26,7 @@
 #include <chrono>   // thread sleep steady_clock
 #include <iostream>     // cerr
 #include "env_emulator.hpp"
+#include "ngc.hpp"  // we gon get commanded speed and rate values
 
 Env_Emulator::Env_Emulator( const Vehicle& inp_vehicle ):
     m_real_vehicle(inp_vehicle)
@@ -73,6 +74,16 @@ bool Env_Emulator::stopPhysSim()
     return true;
 }
 
+void Env_Emulator::setNGC( NGC * inp )
+{
+    m_ngc = inp;
+}
+
+Vehicle Env_Emulator::getRealVehicle() const
+{
+    return m_real_vehicle;
+}
+
 /*
    SWITCH TO CHRONO
 sf::Time Env_Emulator::getTime() const
@@ -83,7 +94,8 @@ sf::Time Env_Emulator::getTime() const
 
 void Env_Emulator::physThreadFunc()
 {
-    unsigned int step_time = 1000/30.f;
+    unsigned int step_time_milli = 1000/30.f;
+    double step_time = step_time_milli/1000.f;
     while( m_run_phys_thread )
     {
         // ah shit, here we go again...
@@ -91,6 +103,13 @@ void Env_Emulator::physThreadFunc()
         // we calculate new iteration values
         // and set current values to new iterations values
         // we do not want to mix old and new iteration values
+
+        // A very lazy vehicle actuator simulation by hard setting vehicles velocity
+        if( m_ngc != nullptr )
+        {
+            m_real_vehicle.m_vel.y = m_ngc->hey_emulator_speed;
+            m_real_vehicle.m_angVel.z = m_ngc->hey_emulator_rate;
+        }
 
         // to avoid mixing
         float fwd_vel = m_real_vehicle.m_vel.y;
@@ -128,7 +147,8 @@ void Env_Emulator::physThreadFunc()
         m_acc += gravity;
         */
 
-        std::this_thread::sleep_for( std::chrono::milliseconds( step_time ) );
+        std::this_thread::sleep_for( std::chrono::milliseconds( step_time_milli ) );
+        // TODO we wont sleep for exacly step_time, determine the slept time and use that as the "step time"
     }
 }
 
@@ -217,7 +237,8 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
         // ---- IMU ----
         case E_type_IMU:
             data.acceleration = m_real_vehicle.getAcc();
-            data.angular_rate = m_real_vehicle.getAngAcc();
+            data.velocity = m_real_vehicle.getVel();
+            data.angular_rate = m_real_vehicle.getAngVel();
             // TODO data.magnetic_north;
             data.barometric_pressure = 101325;
             return true;
@@ -317,18 +338,24 @@ void Env_Emulator::drawHMap() const
     real_vehicle_pos += v3f( 0, -1080*0.05, -0.25 ); // move map a bit
     //real_vehicle_pos += v3f( -10, -10, 0 ); // map spawn point offset
     //real_vehicle_pos = v3f(-5,0,0);  // DEBUG
-/*
+
+    cQuaternion calibration_quat = cQuaternion::fromAxisAngle( {0,0,-1}, PI/2 );
+    cQuaternion quat = m_real_vehicle.getBox().getQuaternion();
+    quat = calibration_quat * quat;
+    v3f rot_axis = {quat.x, quat.y, quat.z};
+
     DrawModelEx(
-            hm_model,   // model
-            taters2raylib(real_vehicle_pos),    // position
-            (Vector3){1,0,0},   // rotation axis, (taters2raylib axis)
-            (3.0f/2)*PI,   // rotation angle (taters2raylib angle)
+            m_hm_model,   // model
+            GUI::taters2raylib( real_vehicle_pos *-1.f ),    // position
+            GUI::taters2raylib( rot_axis ),   // rotation axis
+            (quat.w *2)*(180/PI),   // rotation angle
             (Vector3){1,1,1},    // scale
-            GREEN );    // tint
-*/
+            DARKGREEN );    // tint
+    /*
     DrawModel(
             m_hm_model,
             GUI::taters2raylib(real_vehicle_pos*-1.f),
             1.f,
             DARKGREEN );
+            */
 }

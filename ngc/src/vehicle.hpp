@@ -57,7 +57,7 @@ class Vehicle
     friend Env_Emulator;
 
     // NOTE: this method is only to be called from NGC code
-    void setNavigationState( const int time_step ); // does dead reckoning using internal sensor data
+    void setNavigationState( const int time_step_milli ); // does dead reckoning using internal sensor data
     
     static constexpr float wheelbase = 1.3f;
     static constexpr float track = 1.0f;
