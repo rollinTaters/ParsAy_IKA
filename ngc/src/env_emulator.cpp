@@ -335,20 +335,28 @@ void Env_Emulator::drawHMap() const
     if( !m_model_initialized ) return;
 
     v3f real_vehicle_pos = m_real_vehicle.getBox().getPos();
-    real_vehicle_pos += v3f( 0, -1080*0.05, -0.25 ); // move map a bit
-    //real_vehicle_pos += v3f( -10, -10, 0 ); // map spawn point offset
-    //real_vehicle_pos = v3f(-5,0,0);  // DEBUG
+    v3f mesh_position;
+    v3f mesh_rot_compensation;
 
-    cQuaternion calibration_quat = cQuaternion::fromAxisAngle( {0,0,-1}, PI/2 );
+    cQuaternion calibration_quat = cQuaternion::fromAxisAngle( {0,0,1}, PI );
     cQuaternion quat = m_real_vehicle.getBox().getQuaternion();
-    quat = calibration_quat * quat;
-    v3f rot_axis = {quat.x, quat.y, quat.z};
+    cQuaternion mesh_quat = quat * calibration_quat;
+    v3f rot_axis = {mesh_quat.x, mesh_quat.y, mesh_quat.z};
+
+    v3f vehicle_start_pos = Point(340*m_metre_per_pixel, (1080-775)*m_metre_per_pixel, 0.5f);
+    //real_vehicle_pos += v3f( 0, -1080*0.05, -0.25 ); // move map a bit
+
+    // mesh rotates around its 0,0,0 point (top left of image that we loaded)
+    mesh_rot_compensation = real_vehicle_pos;
+    mesh_quat.conjugate().rotateVector( mesh_rot_compensation );
+
+    mesh_position = ( real_vehicle_pos - mesh_rot_compensation ) * -1.f;
 
     DrawModelEx(
             m_hm_model,   // model
-            GUI::taters2raylib( real_vehicle_pos *-1.f ),    // position
+            GUI::taters2raylib( mesh_position ),    // position
             GUI::taters2raylib( rot_axis ),   // rotation axis
-            (quat.w *2)*(180/PI),   // rotation angle
+            (mesh_quat.w *2)*(180/PI),   // rotation angle
             (Vector3){1,1,1},    // scale
             DARKGREEN );    // tint
     /*
