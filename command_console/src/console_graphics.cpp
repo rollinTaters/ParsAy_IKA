@@ -24,11 +24,9 @@
 
 
 #include "console_graphics.hpp"
-#include "raylib.h"
-#include <cmath>
 namespace cg {
     static bool _initialized = false;
-    Font m_font = LoadFont("./assets/fonts/arialbd.ttf");
+    Font m_font = LoadFont("./assets/fonts/arial.ttf");
     void InitWindowSafe(int width, int height, const char* title) {
         if (!_initialized) {
             InitWindow(width, height, title);
@@ -43,6 +41,9 @@ namespace cg {
         DrawTextEx(m_font, title, {pos.x, pos.y - 25}, 25, 1 ,RED);
         DrawRectangle(pos.x, pos.y , size.x, size.y, color);
     }
+
+
+
     Gauge* gauge_temp       = nullptr;
     Gauge* gauge_amp        = nullptr;
     Gauge* gauge_amp2       = nullptr;
@@ -53,6 +54,7 @@ namespace cg {
     Adi*   gauge_adi        = nullptr;
     UserInput* input        = nullptr;
     Gauge* gauge_battery    = nullptr;
+    Gauge* gauge_signal     = nullptr;
 
     void InitObjects() {
         EnsureWindow();
@@ -66,6 +68,7 @@ namespace cg {
         gauge_adi     = new Adi({150, 500},  300.0f);
         input         = new UserInput();
         gauge_battery = new Gauge(Gauge::type_battery, {30,10},100.0f);
+        gauge_signal = new Gauge(Gauge::type_signal,{170,60},100.0f);
     }
     // -- DEBUG --
     float g_amp_val = 0.f;
@@ -75,6 +78,7 @@ namespace cg {
     float g_heading_val = 0.f;
     float g_speed_val = 0.f;
     float g_battery_val = 0.f;
+    float g_signal_val = 0.f;
     /*                   __
                         // \
                         \\_/ //
@@ -93,7 +97,8 @@ namespace cg {
        g_roll_val     += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
        g_heading_val  += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
        g_speed_val    += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-       g_battery_val    += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+       g_battery_val  += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+       g_signal_val   += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
 
        // clamp value to be between 0 and 1
        g_amp_val     = std::max( 0.f, std::min( g_amp_val    , 1.f ));
@@ -102,7 +107,8 @@ namespace cg {
        g_roll_val    = std::max( 0.f, std::min( g_roll_val   , 1.f ));
        g_heading_val = std::max( 0.f, std::min( g_heading_val, 1.f ));
        g_speed_val   = std::max( 0.f, std::min( g_speed_val, 1.f ));
-       g_battery_val   = std::max( 0.f, std::min( g_battery_val, 1.f ));
+       g_battery_val = std::max( 0.f, std::min( g_battery_val, 1.f ));
+       g_signal_val = std::max( 0.f, std::min( g_signal_val, 1.f ));
        
        // update gauges
        gauge_amp->updateProportionalVal( g_amp_val );
@@ -112,6 +118,7 @@ namespace cg {
        gauge_adi->updatePitchVal_prop( g_pitch_val );
        gauge_speed->updateProportionalVal( g_speed_val );
        gauge_compass->updateProportionalVal( g_heading_val );
+       gauge_signal->updateProportionalVal( g_signal_val );
     }
 }
     

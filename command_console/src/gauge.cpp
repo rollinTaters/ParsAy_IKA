@@ -62,6 +62,10 @@ Gauge::Gauge(gauge_type gt, Vector2 pos, float dia)
             m_label_text = "Battery %: ";
             m_max_value = 100; m_min_value = 0; m_value = 100;
             break;
+        case type_signal:
+            m_label_text = "Signal Power: ";
+            m_max_value = 100; m_min_value = 0; m_value = 100;
+            break;
         default: 
             m_label_text = "value: ";
             m_max_value = 120; m_min_value = -10; m_value = 0;
@@ -138,7 +142,7 @@ void Gauge::render() {
         float pct = m_value / 100.0f;
         int currentPercent = int(pct * maxInnerW);
 
-        // çizimler
+        // drawnings
         DrawRectangle(m_pos.x,           m_pos.y,         m_dia,       m_dia/2,       BLACK);
         DrawRectangle(m_pos.x+margin,    m_pos.y+margin,  currentPercent, m_dia/2 - margin*2, WHITE);
         // draw battery value
@@ -148,6 +152,36 @@ void Gauge::render() {
         Vector2 lblPos = { m_pos.x + m_dia/2 - lblSize.x/2, m_label_pos.y - m_dia/2 };
         DrawTextEx(m_font, buf, lblPos, m_label_font_size, 1, m_label_color);
     }
+    else if (m_type == type_signal) {
+        int levels = 4; // Number of bars
+        int barWidth = m_dia / 10; 
+        int spacing = m_dia / 20;  
+        int maxBarHeight = m_dia / 2; 
+    
+        // Drawing bars
+        for (int i = 0; i < levels; i++) {
+            int barHeight = (m_dia / 8) + i * (maxBarHeight / levels); 
+            int xOffset = m_pos.x + i * (barWidth + spacing); 
+            int yOffset = m_pos.y - barHeight;
+    
+            // Determine the fill percentage for each bar
+            float fillRatio = (m_value - (i * 25)) / 25.0f; // Ratio for the current bar
+            fillRatio = (fillRatio > 1.0f) ? 1.0f : ((fillRatio < 0.0f) ? 0.0f : fillRatio); // Clamp between 0 and 1
+    
+            // Calculate filled and empty bar sections
+            int filledHeight = barHeight * fillRatio;
+            int emptyHeight = barHeight - filledHeight;
+    
+            // Draw filled and empty sections of the bar
+            DrawRectangle(xOffset, yOffset + emptyHeight, barWidth, filledHeight, GREEN);  // Filled part
+            DrawRectangle(xOffset, yOffset, barWidth, emptyHeight, LIGHTGRAY);            // Empty part
+        }
+    
+        // Display "Signal Power" text below the bars
+
+        DrawText(TextFormat("Signal Power: %.0f%%", m_value), m_pos.x, m_pos.y + maxBarHeight / 2, m_label_font_size, DARKGRAY);
+    }
+    
     else{
     // Draw gauge frame
     DrawCircleLines((int)m_center.x, (int)m_center.y, m_dia/2, BLACK);

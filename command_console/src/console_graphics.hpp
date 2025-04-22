@@ -55,13 +55,16 @@
    #include "adi.hpp"
    #include "user_input.hpp"
    #include <cassert>
+   #include <cmath>
    
    namespace cg {
    
 	   void InitWindowSafe(int width, int height, const char* title);
    
 	   void InitObjects();
+
 	   void createPanel(Vector2 pos, Vector2 size , Color color, const char* title);
+
 	   extern Gauge*    gauge_temp;
 	   extern Gauge*    gauge_amp;
 	   extern Gauge*    gauge_amp2;
@@ -71,10 +74,14 @@
 	   extern Gauge*    gauge_speed;
 	   extern Gauge*    gauge_tachometer;
 	   extern UserInput*    input;
-	   extern Gauge* gauge_battery;
+	   extern Gauge* gauge_battery;	
+	   extern Gauge* gauge_signal;
+
 	   bool isInitialized();
+
+
 	   inline void EnsureWindow() {
-		   assert(isInitialized() && "cg::InitWindowSafe() çağrılmadan önce nesne oluşturulamaz!");
+		   assert(isInitialized() && "Can't call cg::InitWindowSafe() before creating objects!");
 	   }
 	   // Debug test
 	   void DEBUG_gauge_test();

@@ -40,7 +40,8 @@ public:
         type_compass,
         type_speedometer,
         type_tachometer,
-        type_battery
+        type_battery,
+        type_signal
     };
 
     Gauge(gauge_type type, Vector2 pos, float dia);

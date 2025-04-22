@@ -26,7 +26,6 @@
 #include "console_graphics.hpp"
 #include "../../common_code/src/comms_module.hpp"
 #include "raylib.h"
-
 int main()
 {
     std::cout << "Unmanned Land Vehicle Command Console v0.2\n";
@@ -45,6 +44,7 @@ int main()
 
     cg::InitWindowSafe(screenWidth,screenHeight,"Command Console");
     cg::InitObjects();
+
     // main loop
     while (!WindowShouldClose())
     {
@@ -52,8 +52,7 @@ int main()
         if (IsKeyPressed(KEY_ESCAPE)) {
             // ESC to close the application
             break;
-        }
-
+        }            
         // clear window for next frame
         BeginDrawing();
         ClearBackground(Color{180, 180, 180, 255});
@@ -112,6 +111,7 @@ int main()
         cg::gauge_tachometer->render();
         cg::gauge_compass->render();
         cg::gauge_battery->render();
+        cg::gauge_signal->render();
         EndDrawing();
     }
     // a tiny cleaning
@@ -123,8 +123,11 @@ int main()
     delete cg::gauge_adi;
     delete cg::gauge_speed;
     delete cg::input;
+    delete cg::gauge_signal;
 
     CloseWindow();
     std::cout << "Exiting. Have a nice day\n";
     return 0;
 }
+
+
