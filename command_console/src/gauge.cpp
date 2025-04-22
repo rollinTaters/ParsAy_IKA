@@ -29,32 +29,40 @@ Gauge::Gauge(gauge_type gt, Vector2 pos, float dia)
     : m_type(gt), m_pos(pos), m_dia(dia)
 {
   
-
+    m_font = LoadFont("./assets/fonts/arial.ttf");
     switch (gt) {
         case type_compass:
             m_max_value = 360; m_min_value = 0; m_value = 0;
             // Load compass textures
-            compass_bg = LoadTexture("assets/compass/compass_bg.png");
-            compass_ticks_numbers = LoadTexture("assets/compass/compass_ticks_numbers.png");
+            compass_bg = LoadTexture("assets/compass/compass_bg_200.png");
+            compass_ticks_numbers = LoadTexture("assets/compass/compass_ticks_numbers_200.png");
             // Center positions
             compass_bg_pos = { m_pos.x + m_dia/2, m_pos.y + m_dia/2 };
             compass_ticks_pos = compass_bg_pos;
             return; 
 
         case type_temperature:
-            m_font = LoadFont("./assets/fonts/arial.ttf");
             m_label_text = "temp C: ";
             m_max_value = 120; m_min_value = -5; m_value = -5;
             break;
 
         case type_amp:
-            m_font = LoadFont("./assets/fonts/arial.ttf");
             m_label_text = "current A: ";
             m_max_value = 40; m_min_value = 0; m_value = 0;
             break;
-
+        case type_speedometer:
+            m_label_text = "km/h: ";
+            m_max_value = 40; m_min_value = 0; m_value = 0;
+            break;
+        case type_tachometer:
+            m_label_text = "RPM: ";
+            m_max_value = 40; m_min_value = 0; m_value = 0;
+            break;
+        case type_battery:
+            m_label_text = "Battery %: ";
+            m_max_value = 100; m_min_value = 0; m_value = 100;
+            break;
         default: 
-            m_font = LoadFont("./assets/fonts/arial.ttf");
             m_label_text = "value: ";
             m_max_value = 120; m_min_value = -10; m_value = 0;
             break;
@@ -81,8 +89,10 @@ Gauge::Gauge(gauge_type gt, Vector2 pos, float dia)
             if (gt == type_temperature) {
                 float v = i * (m_max_value - m_min_value) / 20.0f + m_min_value;
                 lbl = TextFormat("%g", v);
-            } else if (gt == type_amp) {
+            } else if (gt == type_amp || gt == type_tachometer) {
                 lbl = TextFormat("%d", i * 2);
+            } else if (gt == type_speedometer){
+                lbl = TextFormat("%d", i * 2 );
             } else {
                 lbl = TextFormat("%d", i * 10);
             }
@@ -91,11 +101,14 @@ Gauge::Gauge(gauge_type gt, Vector2 pos, float dia)
     }
 
     // Setup frame and needle
-    setupGaugeFrame();
-    setupNeedle();
+        // Needle color
+    m_needle_color = RED;
+        // Center of gauge for drawing
+    m_center = { m_pos.x + m_dia/2, m_pos.y + m_dia/2 };
+
     // Label position and style
     m_label_pos       = { m_pos.x + m_dia/2, m_pos.y + m_dia + 10 };
-    m_label_font_size = 20;
+    m_label_font_size = 15;
     m_label_color     = BLACK;
 }
 
@@ -107,15 +120,6 @@ void Gauge::updateProportionalVal(const float value) {
     m_value = value * (m_max_value - m_min_value) + m_min_value;
 }
 
-void Gauge::setupGaugeFrame() {
-    // Center of gauge for drawing
-    m_center = { m_pos.x + m_dia/2, m_pos.y + m_dia/2 };
-}
-
-void Gauge::setupNeedle() {
-    // Needle color
-    m_needle_color = RED;
-}
 
 void Gauge::render() {
     if (m_type == type_compass) {
@@ -127,6 +131,22 @@ void Gauge::render() {
         DrawTexturePro(compass_bg, src, dst, { m_dia/2, m_dia/2 }, 0.0f, WHITE);
         DrawTexturePro(compass_ticks_numbers, src, dst, { m_dia/2, m_dia/2 }, m_value, WHITE);
         return;
+    }
+    else if(m_type == type_battery) {
+        const int margin = 5;
+        int maxInnerW = m_dia - margin*2;
+        float pct = m_value / 100.0f;
+        int currentPercent = int(pct * maxInnerW);
+
+        // çizimler
+        DrawRectangle(m_pos.x,           m_pos.y,         m_dia,       m_dia/2,       BLACK);
+        DrawRectangle(m_pos.x+margin,    m_pos.y+margin,  currentPercent, m_dia/2 - margin*2, WHITE);
+        // draw battery value
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%s%.2f", m_label_text.c_str(), m_value);
+        Vector2 lblSize = MeasureTextEx(m_font, buf, m_label_font_size, 1);
+        Vector2 lblPos = { m_pos.x + m_dia/2 - lblSize.x/2, m_label_pos.y - m_dia/2 };
+        DrawTextEx(m_font, buf, lblPos, m_label_font_size, 1, m_label_color);
     }
     else{
     // Draw gauge frame
