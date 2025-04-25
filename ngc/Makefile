@@ -47,7 +47,7 @@ $(LINUX_NGC_DEBUG_GUI_OBJECTS): obj/debug_gui_%.o: src/%.cpp src/%.hpp
 
 clean:
 	rm -f *.o obj/*.o ngc ../common_code/obj/*.o
-	make ngc
+	make 
 
 clear:
 	rm -f *.o obj/*.o ngc ../common_code/obj/*.o
