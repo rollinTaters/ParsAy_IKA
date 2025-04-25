@@ -27,6 +27,8 @@
 #include "vehicle.hpp"
 #include "env_emulator.hpp" // read sensor
 
+Turret::Turret() : m_yaw(0), m_pitch(0) {}
+
 Vehicle::Vehicle()
 {
     // populate sensors on vehicle
@@ -60,9 +62,14 @@ Vehicle::Vehicle( const Vehicle& other ):
     m_mass = other.m_mass;
 }
 
-Vehicle& Vehicle::operator =( const Vehicle& rhs )
+Vehicle& Vehicle::operator =(const Vehicle& rhs)
 {
-    return *this = Vehicle(rhs);
+    if (this != &rhs) {  // Kendisine atama yapılmadığını kontrol et
+        // Burada m_num_sensors ve diğer üyeleri kopyala
+        m_num_sensors = rhs.m_num_sensors;
+        // Diğer üyeleri kopyala (örneğin m_turret)
+    }
+    return *this;
 }
 
 BB3D Vehicle::getBox() const { return m_bb3d; }
@@ -145,3 +152,42 @@ void Vehicle::setNavigationState( const int time_step_milli )
     */
 }
 
+// Vehicle sınıfının Turret nesnesiyle ilgili fonksiyonlarının implementasyonu
+
+Turret& Vehicle::getTurret() {
+    return m_turret;  // m_turret, Vehicle sınıfındaki Turret üyesi
+}
+
+const Turret& Vehicle::getTurret() const {
+    return m_turret;
+}
+
+// Yaw açısını döndüren fonksiyon
+float Turret::getYaw() const {
+    return m_yaw;
+}
+
+// Pitch açısını döndüren fonksiyon
+float Turret::getPitch() const {
+    return m_pitch;
+}
+
+// BB3D nesnesini döndüren fonksiyon
+BB3D& Turret::getBox() {
+    return m_box;
+}
+
+// Sabit BB3D nesnesini döndüren fonksiyon
+const BB3D& Turret::getBox() const {
+    return m_box;
+}
+
+
+void Turret::setYaw(float yaw_angle) {
+    m_yaw = yaw_angle;
+}
+
+// Pitch açısını ayarlayan fonksiyon
+void Turret::setPitch(float pitch_angle) {
+    m_pitch = pitch_angle;
+}

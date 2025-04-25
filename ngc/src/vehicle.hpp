@@ -32,6 +32,28 @@
 
 class Env_Emulator; // we be friends, them and I
 
+class Turret
+{
+  public:
+      Turret();
+
+      void setYaw(float yaw_angle);
+      void setPitch(float pitch_angle);
+
+      float getYaw() const;
+      float getPitch() const;
+
+      BB3D& getBox();
+      const BB3D& getBox() const;
+
+      float getRotationDeg() const { return m_yaw; }
+
+  private:
+      BB3D m_box;
+      float m_yaw = 0.f;
+      float m_pitch = 0.f;
+};
+
 // in the final product this class may evolve into "VehicleManager"
 class Vehicle
 {
@@ -46,6 +68,12 @@ class Vehicle
     v3f getAcc() const;
     v3f getAngVel() const;
     v3f getAngAcc() const;
+
+    // Returns a reference to the turret (modifiable)
+    Turret& getTurret();
+
+    // Returns a const reference to the turret (read-only)
+    const Turret& getTurret() const;
 
     Sensor_Data getSensorData() const;
 
@@ -70,7 +98,7 @@ class Vehicle
     // +X:pitch up, +Y:roll right, +Z:yaw left      (radian)
 
     // sensors on vehicle
-    const unsigned short int m_num_sensors = 6;
+    unsigned short int m_num_sensors = 6;
     Sensor_Emulator m_sensor[6];
     Sensor_Data m_sensor_data;  // a packet containing data for all sensors
 
@@ -87,6 +115,9 @@ class Vehicle
     float m_mass = 10;          // vehicle mass (kg)
     //v3f m_moment_of_inertia;
     //v3f m_center_of_mass;
+
+    // Turret component attached to the vehicle
+    Turret m_turret;
 
 };
 

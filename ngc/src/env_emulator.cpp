@@ -27,6 +27,11 @@
 #include <iostream>     // cerr
 #include "env_emulator.hpp"
 #include "ngc.hpp"  // we gon get commanded speed and rate values
+#include "raylib.h"
+
+Vector3 toVector3(const v3f& v) {
+    return Vector3{ v.x, v.y, v.z };
+}
 
 Env_Emulator::Env_Emulator( const Vehicle& inp_vehicle ):
     m_real_vehicle(inp_vehicle)
@@ -199,6 +204,7 @@ float Env_Emulator::shittyPixelMarch( BB3D i_box, v3f i_dir ) const
 
 bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) const
 {
+    if (!sensor) return false;
     // determine sensor type
     Sensor_Type sensor_type = sensor->getType();
 
@@ -211,6 +217,19 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
     v3f sensor_direction = sensor_box.getLocalVecY();
     cQuaternion lidar_quat = cQuaternion::fromAxisAngle( sensor_box.getLocalVecZ(), rad_increment );
 
+    // --- Copy base vehicle info ---
+    //data.position = m_real_vehicle.getPosition();
+    //data.rotation = m_real_vehicle.getRotation();
+
+    // --- NEW: Turret data ---
+    const Turret& turret = m_real_vehicle.getTurret();
+    data.turret_angle_deg = turret.getRotationDeg();
+
+    BB3D turret_box = turret.getBox();
+    turret_box += m_real_vehicle.getBox();
+
+    data.camera_position = toVector3(turret_box.getPos());
+    data.camera_direction = toVector3(turret_box.getLocalVecY());
 
     switch( sensor_type )
     {
@@ -358,4 +377,9 @@ void Env_Emulator::drawHMap() const
             1.f,
             DARKGREEN );
             */
+}
+
+void Env_Emulator::setVehicle(const Vehicle& vehicle)
+{
+    m_real_vehicle = vehicle;
 }

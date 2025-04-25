@@ -67,6 +67,8 @@ class Env_Emulator
     bool setupModel();
     bool unloadModel();
 
+    void setVehicle(const Vehicle& vehicle);
+
     private:
     // "real" map/course
     Texture2D m_hm_texture;

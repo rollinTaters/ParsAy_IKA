@@ -33,6 +33,7 @@
 
 #pragma once
 #include "../../common_code/src/utility.hpp"
+#include "raylib.h"
 
 #define LIDAR_POINTS 50
 
@@ -53,6 +54,7 @@ struct Sensor_Data
     
     // for distance sensor
     float distance;
+
 
     // for lidar sensor
     float lidar[LIDAR_POINTS];  // metre
@@ -81,6 +83,11 @@ struct Sensor_Data
     //float electric_current_motor2;
     //float electric_current_electronics;
     //float electric_current_turret??;
+
+
+    float turret_angle_deg = 0.0f;  // Current turret angle (deg)
+    Vector3 camera_direction;       // Camera forward direction vector
+    Vector3 camera_position;        // Camera position in world coordinates
 };
 
 class Sensor_Emulator
