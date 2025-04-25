@@ -26,7 +26,6 @@
 #include "console_graphics.hpp"
 #include "../../common_code/src/comms_module.hpp"
 #include "raylib.h"
-
 int main()
 {
     std::cout << "Unmanned Land Vehicle Command Console v0.2\n";
@@ -42,9 +41,10 @@ int main()
     // graphics initialization
     const int screenWidth = 1000;
     const int screenHeight = 800;
-    //InitWindow(screenWidth, screenHeight, "Command Console");
+
     cg::InitWindowSafe(screenWidth,screenHeight,"Command Console");
     cg::InitObjects();
+
     // main loop
     while (!WindowShouldClose())
     {
@@ -52,13 +52,16 @@ int main()
         if (IsKeyPressed(KEY_ESCAPE)) {
             // ESC to close the application
             break;
-        }
-
+        }            
         // clear window for next frame
         BeginDrawing();
         ClearBackground(Color{180, 180, 180, 255});
+        // press t for debug test
+        if(IsKeyDown(KEY_T)){
 
-        cg::DEBUG_gauge_test();
+            cg::DEBUG_gauge_test();
+        }
+        
         // check incoming transmission packets
         if (comms_module.packetAvailable())
         {
@@ -68,6 +71,7 @@ int main()
             // make sense of packet
             switch (raw_packet.packet_type)
             {
+                // TODO add other type of gauges
                 case drive_telemetry1:
                     dtp1 = raw_packet;
                     cg::gauge_temp->updateVal(dtp1.getMotor1Temp());
@@ -96,15 +100,18 @@ int main()
 
         // process input
         cg::input->proccesInput();
-
         // render gauges
         cg::gauge_adi->render();
+        cg::createPanel({550,50},{400,450},DARKGRAY,"Motor Panel");
         cg::gauge_amp2->render();
         cg::gauge_temp2->render();
         cg::gauge_amp->render();
         cg::gauge_temp->render();
+        cg::gauge_speed->render();
+        cg::gauge_tachometer->render();
         cg::gauge_compass->render();
-        
+        cg::gauge_battery->render();
+        cg::gauge_signal->render();
         EndDrawing();
     }
     // a tiny cleaning
@@ -114,9 +121,13 @@ int main()
     delete cg::gauge_temp2;
     delete cg::gauge_compass;
     delete cg::gauge_adi;
+    delete cg::gauge_speed;
     delete cg::input;
+    delete cg::gauge_signal;
 
     CloseWindow();
     std::cout << "Exiting. Have a nice day\n";
     return 0;
 }
+
+

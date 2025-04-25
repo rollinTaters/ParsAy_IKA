@@ -37,7 +37,11 @@ public:
         type_temperature,
         type_amp,
         type_adi,
-        type_compass
+        type_compass,
+        type_speedometer,
+        type_tachometer,
+        type_battery,
+        type_signal
     };
 
     Gauge(gauge_type type, Vector2 pos, float dia);
@@ -45,8 +49,6 @@ public:
     void updateVal(const float value); // input is value to be displayed
     void updateProportionalVal(const float value); // input is from 0.f to 1.f
     void render();
-    void setupGaugeFrame();
-    void setupNeedle();
 
 private:
     gauge_type m_type; // to store gauge type
