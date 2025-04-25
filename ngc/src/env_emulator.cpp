@@ -28,6 +28,7 @@
 #include "env_emulator.hpp"
 #include "ngc.hpp"  // we gon get commanded speed and rate values
 #include "raylib.h"
+#include "raymath.h"    // matrix
 
 Vector3 toVector3(const v3f& v) {
     return Vector3{ v.x, v.y, v.z };
@@ -344,33 +345,33 @@ bool Env_Emulator::unloadModel()
     return false;
 }
 
-void Env_Emulator::drawHMap() const
+void Env_Emulator::drawHMap() 
 {
     if( !m_model_initialized ) return;
 
-    v3f real_vehicle_pos = m_real_vehicle.getBox().getPos();
-    real_vehicle_pos += v3f( 0, -1080*0.05, -0.25 ); // move map a bit
-    //real_vehicle_pos += v3f( -10, -10, 0 ); // map spawn point offset
-    //real_vehicle_pos = v3f(-5,0,0);  // DEBUG
+    // map start position offset
+    //Vector3 map_offset = GUI::taters2raylib( Point(340*m_metre_per_pixel, (1080-775)*m_metre_per_pixel, 0.5f) );
+    Vector3 map_offset = GUI::taters2raylib( Point( 0, -1080*m_metre_per_pixel, -0.25 ) );
 
-    cQuaternion calibration_quat = cQuaternion::fromAxisAngle( {0,0,-1}, PI/2 );
-    cQuaternion quat = m_real_vehicle.getBox().getQuaternion();
-    quat = calibration_quat * quat;
-    v3f rot_axis = {quat.x, quat.y, quat.z};
+    // get quaternions and positions, convert them to raylib axis conventions
+    cQuaternion veh_quat = m_real_vehicle.getBox().getQuaternion();
+    Vector3 veh_quat_axis = GUI::taters2raylib( { veh_quat.x, veh_quat.y, veh_quat.z } );
+    Vector3 veh_pos = GUI::taters2raylib( m_real_vehicle.getBox().getPos() );
+    veh_pos += map_offset;
 
-    DrawModelEx(
-            m_hm_model,   // model
-            GUI::taters2raylib( real_vehicle_pos *-1.f ),    // position
-            GUI::taters2raylib( rot_axis ),   // rotation axis
-            (quat.w *2)*(180/PI),   // rotation angle
-            (Vector3){1,1,1},    // scale
-            DARKGREEN );    // tint
-    /*
-    DrawModel(
-            m_hm_model,
-            GUI::taters2raylib(real_vehicle_pos*-1.f),
-            1.f,
-            DARKGREEN );
-            */
+    // convert quaternions and vectors to raylib units
+    Quaternion vehicle_rotation = { veh_quat_axis.x, veh_quat_axis.y, veh_quat_axis.z, -veh_quat.w };
+    Vector3 vehicle_position = { veh_pos.x, veh_pos.y, veh_pos.z };
+
+    Matrix rotation_matrix = QuaternionToMatrix( vehicle_rotation );
+
+    Matrix translation_matrix = MatrixTranslate( -vehicle_position.x, -vehicle_position.y, -vehicle_position.z );
+
+    Matrix world_transform = MatrixMultiply( translation_matrix, rotation_matrix );
+
+    m_hm_model.transform = world_transform;
+
+    DrawModel( m_hm_model, (Vector3){0,0,0}, 1.f, DARKGREEN );
+
 }
 
