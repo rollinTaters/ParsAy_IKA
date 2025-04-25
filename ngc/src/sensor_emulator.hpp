@@ -33,7 +33,6 @@
 
 #pragma once
 #include "../../common_code/src/utility.hpp"
-#include "raylib.h"
 
 #define LIDAR_POINTS 50
 
@@ -43,7 +42,8 @@ enum Sensor_Type{
     E_type_LIDAR,
     E_type_IMU,
     E_type_temperature,
-    E_type_current
+    E_type_current,
+    E_type_turret_encoder
 };
 
 struct Sensor_Data
@@ -85,9 +85,9 @@ struct Sensor_Data
     //float electric_current_turret??;
 
 
-    float turret_angle_deg = 0.0f;  // Current turret angle (deg)
-    Vector3 camera_direction;       // Camera forward direction vector
-    Vector3 camera_position;        // Camera position in world coordinates
+    // turret encoder sensor populates these two angles
+    float turret_pitch = 0.0f;  // Current turret angle (radian)
+    float turret_yaw = 0.0f;    // Current turret angle (radian)
 };
 
 class Sensor_Emulator

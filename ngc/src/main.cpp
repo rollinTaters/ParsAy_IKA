@@ -39,8 +39,6 @@
 #include "env_emulator.hpp"
 #include "sensor_emulator.hpp"
 #include "ngc.hpp"
-#include <ostream>
-#include "raylib.h"
 
 #ifdef DEBUG_GUI
 #include "gui.hpp"  // raylib joins here
@@ -67,30 +65,6 @@ int main()
 {
     std::cout<<"ULV NGC Emulator v0.2\n";
 
-    Vehicle test_vehicle;
-    test_vehicle.getTurret().setYaw(45.0f);  // 45 dereceye ayarlıyoruz
-
-    Env_Emulator emulator(test_vehicle);
-    Sensor_Emulator test_sensor;
-    Sensor_Data test_data;
-
-    emulator.setVehicle(test_vehicle);  // Bu fonksiyon tanımlı değilse ekleyeceğiz
-
-    if (emulator.getSensorData(&test_sensor, test_data)) {
-        std::cout << "TEST | Turret Yaw (deg): " << test_data.turret_angle_deg << std::endl;
-        std::cout << "TEST | Camera Position: "
-          << test_data.camera_position.x << ", "
-          << test_data.camera_position.y << ", "
-          << test_data.camera_position.z << "\n";
-
-        std::cout << "TEST | Camera Direction: "
-                  << test_data.camera_direction.x << ", "
-                  << test_data.camera_direction.y << ", "
-                  << test_data.camera_direction.z << "\n";
-            
-    } else {
-        std::cout << "TEST | Sensor data could not be retrieved." << std::endl;
-    }
 
     // introduce ngc to the env emulator, because I gave up on a better way to do this
     env_emulator.setNGC( &ngc_system );

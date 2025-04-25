@@ -39,6 +39,7 @@ Vehicle::Vehicle()
     m_sensor[4] = Sensor_Emulator( E_type_distance, v3f( 0.00, 0,0), v3f(0,0,  0) );
     m_sensor[5] = Sensor_Emulator( E_type_distance, v3f( 0.10, 0,0), v3f(0,0, 20) );
     m_sensor[6] = Sensor_Emulator( E_type_distance, v3f( 0.20, 0,0), v3f(0,0, 50) );
+    m_sensor[7] = Sensor_Emulator( E_type_turret_encoder, v3f(0,0,0), v3f(0,0,0) );
 
     m_vel = v3f( 0,0,0 );
     m_acc = v3f( 0,0,0 );
@@ -48,8 +49,7 @@ Vehicle::Vehicle()
     m_bb3d.setAng(0,0,0);
 }
 
-Vehicle::Vehicle( const Vehicle& other ):
-    m_num_sensors(other.m_num_sensors)
+Vehicle::Vehicle( const Vehicle& other )
 {
     for( int i = 0; i < m_num_sensors; i++ )
     {
@@ -62,15 +62,17 @@ Vehicle::Vehicle( const Vehicle& other ):
     m_mass = other.m_mass;
 }
 
+/*
 Vehicle& Vehicle::operator =(const Vehicle& rhs)
 {
     if (this != &rhs) {  // Kendisine atama yapılmadığını kontrol et
-        // Burada m_num_sensors ve diğer üyeleri kopyala
-        m_num_sensors = rhs.m_num_sensors;
+        // TODO Burada m_num_sensors ve diğer üyeleri kopyala
+        // DONT. this is constexpr. this is hardcoded. m_num_sensors = rhs.m_num_sensors;
         // Diğer üyeleri kopyala (örneğin m_turret)
     }
     return *this;
 }
+*/
 
 BB3D Vehicle::getBox() const { return m_bb3d; }
 
@@ -181,7 +183,6 @@ BB3D& Turret::getBox() {
 const BB3D& Turret::getBox() const {
     return m_box;
 }
-
 
 void Turret::setYaw(float yaw_angle) {
     m_yaw = yaw_angle;

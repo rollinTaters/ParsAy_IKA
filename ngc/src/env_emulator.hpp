@@ -44,7 +44,7 @@ class NGC;  // we are gonna get the commanded speed and rate values from it
 
 class Env_Emulator
 {
-    public:
+  public:
     Env_Emulator( const Vehicle& );
     ~Env_Emulator();
     Env_Emulator( const Env_Emulator& )  = delete;
@@ -67,9 +67,7 @@ class Env_Emulator
     bool setupModel();
     bool unloadModel();
 
-    void setVehicle(const Vehicle& vehicle);
-
-    private:
+  private:
     // "real" map/course
     Texture2D m_hm_texture;
     Mesh m_hm_mesh;

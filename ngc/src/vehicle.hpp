@@ -35,23 +35,43 @@ class Env_Emulator; // we be friends, them and I
 class Turret
 {
   public:
-      Turret();
+    Turret();
 
-      void setYaw(float yaw_angle);
-      void setPitch(float pitch_angle);
+    void setYaw(float yaw_angle);
+    void setPitch(float pitch_angle);
 
-      float getYaw() const;
-      float getPitch() const;
+    float getYaw() const;
+    float getPitch() const;
 
-      BB3D& getBox();
-      const BB3D& getBox() const;
+    BB3D& getBox();
+    const BB3D& getBox() const;
 
-      float getRotationDeg() const { return m_yaw; }
+    // XXX we have a method to getYaw and getPitch. What is this??
+    float getRotationDeg() const { return m_yaw; }
 
   private:
-      BB3D m_box;
-      float m_yaw = 0.f;
-      float m_pitch = 0.f;
+    // TODO
+    // 3d bounding box has position and rotation information
+    // these values are relative to the vehicle and follows our coordinate system conventions
+    // (see utility.hpp)
+    // you could use this to define camera and laser marker position and oriantations
+    // BB3D getCameraBB() <-- example, this includes both the relative position and angles (quaternio)
+    // BB3D getLaserBB()
+    // or:
+    // Vector3 getCameraVector() <-- example, returns the unit vector of camera direction
+    // Vector3 getLaserVector()
+
+    // start with implementing camera first, then ill ask you to add the laser
+    // we should work with the mechanical design team and get the geometric dimensions and
+    // axis positions from them.
+
+    // TODO define what this is. is it the base of the turret?
+    // is it the bounding box of the whole turret assembly?
+    // is it the first movable part that does the yaw movement, if so, where is the part for pitch
+    BB3D m_box;
+
+    float m_yaw = 0.f;      // radians, 0 is dead ahead, positive towards port
+    float m_pitch = 0.f;    // radians, 0 is dead ahead, positive towards up
 };
 
 // in the final product this class may evolve into "VehicleManager"
@@ -60,7 +80,7 @@ class Vehicle
   public:
     Vehicle();  // constructor
     Vehicle( const Vehicle& );
-    Vehicle& operator =( const Vehicle& );
+    // TODO Vehicle& operator =( const Vehicle& );
 
     BB3D getBox() const;    // returns 3d bounding box of vehicle
     v3f getPos() const;
@@ -98,7 +118,7 @@ class Vehicle
     // +X:pitch up, +Y:roll right, +Z:yaw left      (radian)
 
     // sensors on vehicle
-    unsigned short int m_num_sensors = 6;
+    static constexpr unsigned short int m_num_sensors = 8;
     Sensor_Emulator m_sensor[6];
     Sensor_Data m_sensor_data;  // a packet containing data for all sensors
 

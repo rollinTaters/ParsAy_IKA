@@ -204,7 +204,9 @@ float Env_Emulator::shittyPixelMarch( BB3D i_box, v3f i_dir ) const
 
 bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) const
 {
+    // nullptr sensor protection
     if (!sensor) return false;
+
     // determine sensor type
     Sensor_Type sensor_type = sensor->getType();
 
@@ -216,20 +218,6 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
     float rad_increment = (2*PI)/LIDAR_POINTS;
     v3f sensor_direction = sensor_box.getLocalVecY();
     cQuaternion lidar_quat = cQuaternion::fromAxisAngle( sensor_box.getLocalVecZ(), rad_increment );
-
-    // --- Copy base vehicle info ---
-    //data.position = m_real_vehicle.getPosition();
-    //data.rotation = m_real_vehicle.getRotation();
-
-    // --- NEW: Turret data ---
-    const Turret& turret = m_real_vehicle.getTurret();
-    data.turret_angle_deg = turret.getRotationDeg();
-
-    BB3D turret_box = turret.getBox();
-    turret_box += m_real_vehicle.getBox();
-
-    data.camera_position = toVector3(turret_box.getPos());
-    data.camera_direction = toVector3(turret_box.getLocalVecY());
 
     switch( sensor_type )
     {
@@ -273,6 +261,13 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
             // TODO
             data.electric_current = 0;
             return false;
+        
+        // ---- Turret Encoders ----
+        case E_type_turret_encoder:
+            data.turret_pitch = m_real_vehicle.getTurret().getPitch();
+            data.turret_yaw = m_real_vehicle.getTurret().getYaw();
+            return true;
+
     }
 }
 
@@ -379,7 +374,3 @@ void Env_Emulator::drawHMap() const
             */
 }
 
-void Env_Emulator::setVehicle(const Vehicle& vehicle)
-{
-    m_real_vehicle = vehicle;
-}
