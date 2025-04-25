@@ -23,10 +23,9 @@
 */
 /// User Inputs ///
 #pragma once
-#include "SFML/Graphics.hpp"
+#include <raylib.h>
 #include <cmath>
 #include <iostream>
-#define PI 3.141592
 
 class UserInput
 {

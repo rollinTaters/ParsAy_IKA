@@ -28,27 +28,22 @@ UserInput::UserInput()
 
 }
 
-void UserInput::switchDriveMode(DriveMode newMode)
-{
+void UserInput::switchDriveMode(DriveMode newMode){
     m_drive_mode = newMode;
 }
 
-void UserInput::proccesInput()
-{
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
-    {
+void UserInput::proccesInput(){
+    if(IsKeyDown(KEY_UP)){
         std::cout << "Accelerate n go forward" << std::endl;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-    {
+    if(IsKeyDown(KEY_DOWN)){
         std::cout << "Go backward" << std::endl;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-    {
+    if(IsKeyDown(KEY_RIGHT)){
         std::cout << "Turn right" << std::endl;
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-    {
+    if(IsKeyDown(KEY_LEFT)){
         std::cout << "Turn left" << std::endl;
     }
+
 }

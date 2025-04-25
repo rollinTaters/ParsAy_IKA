@@ -48,20 +48,30 @@
 
    */
 
-#pragma once
-#include "SFML/Graphics.hpp"
-#include "gauge.hpp"
-#include "adi.hpp"
-#include "user_input.hpp"
+   #pragma once
 
-extern Gauge gauge_temp;
-extern Gauge gauge_amp;
-extern Adi gauge_adi;
-extern Gauge gauge_compass;
-extern Gauge gauge_amp2;
-extern Gauge gauge_temp2;
-extern UserInput input;
-bool init_graphics( sf::RenderTarget* );
-
-void DEBUG_gauge_test();
-
+   #include "raylib.h"
+   #include "gauge.hpp"
+   #include "adi.hpp"
+   #include "user_input.hpp"
+   #include <cassert>
+   
+   namespace cg {
+   
+	   void InitWindowSafe(int width, int height, const char* title);
+   
+	   void InitObjects();
+	   extern Gauge*    gauge_temp;
+	   extern Gauge*    gauge_amp;
+	   extern Gauge*    gauge_amp2;
+	   extern Gauge*    gauge_temp2;
+	   extern Gauge*    gauge_compass;
+	   extern Adi*    gauge_adi;
+	   extern UserInput*    input;
+	   bool isInitialized();
+	   inline void EnsureWindow() {
+		   assert(isInitialized() && "cg::InitWindowSafe() çağrılmadan önce nesne oluşturulamaz!");
+	   }
+	   // Debug test
+	   void DEBUG_gauge_test();
+   }
