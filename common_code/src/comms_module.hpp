@@ -40,12 +40,54 @@
 #include "SFML/Network.hpp"
 #endif
 
+#include <sys/stat.h>   // checking status of pipe files
+#include <unistd.h>
+#include <fstream>  // read/write pipe files
+
+
 #ifdef ARDUINO_NANO
 #include "SPI.hpp"
 #define MISO_PIN xx
 #define MOSI_PIN xx
 #define CS_PIN xx
 #endif
+
+class CommsModule_pipe
+{
+  public:
+    enum PipeName
+    {
+        pipe_ngc,
+        pipe_ip,
+        pipe_turret
+    };
+
+
+    CommsModule_pipe( PipeName rx, PipeName tx );
+    ~CommsModule_pipe();
+
+    bool sendPacket( PacketBase pb );
+    bool sendPacket( PacketBase pb, PipeName );
+    bool readPacket( PacketBase& pb );
+    // TODO packet available, maybe use last modified time?
+
+  private:
+    int checkFifoPipe( PipeName );
+    int createFifoPipe( PipeName );
+
+    PipeName m_rx_pipe;
+    PipeName m_tx_pipe;
+
+    std::fstream m_pipe;
+
+    static constexpr char* pipe_files[] = {
+        "/tmp/pipe0",
+        "/tmp/pipe1",
+        "/tmp/pipe2"
+    };
+
+
+};
 
 class CommsModule
 {
@@ -95,3 +137,5 @@ class CommsModule
 #endif
 
 };
+
+
