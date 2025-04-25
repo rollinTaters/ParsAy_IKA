@@ -5,7 +5,7 @@ raylib_dir := ./../raylib-5.5_linux_amd64
 #SFML_libs_static := -DSFML_STATIC -MMD -MP -static-libstdc++ -static-libgcc -lsfml-main -lsfml-audio-s -lsfml-graphics-s -lsfml-window-s -lsfml-system-s -lsfml-network-s  -lopengl32 -lfreetype -lwinmm -lgdi32 -lopenal32 -lFLAC -lvorbisenc -lvorbis -logg -lws2_32
 
 # ==== Navigation Guidance and Control objects ====
-NGC_OBJECTS := main.o vehicle.o ngc.o sensor_emulator.o env_emulator.o
+NGC_OBJECTS := main.o vehicle.o ngc.o sensor_emulator.o env_emulator.o traction_motor.o
 COMMON_OBJECTS := utility.o comms_module.o
 
 LINUX_NGC_RELEASE_OBJECTS = $(addprefix obj/linux_, $(NGC_OBJECTS))
@@ -27,14 +27,14 @@ LINUX_COMPILER := g++
 BUILD_VER := 0.2
 RELEASE_PATH := release_builds/v$(BUILD_VER)
 
-.PHONY: clean clear release gui src/main.hpp
+.PHONY: clean clear release gui headless src/main.hpp
 
 # ==== Unmanned Land Vehicle Linux Debug build ====
-ngc: $(LINUX_NGC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS)
-	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) $(LINUX_NGC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS) -o ngc $(LINUX_DEBUG_LDFLAGS)
-
 gui: $(LINUX_NGC_DEBUG_GUI_OBJECTS) $(LINUX_COMMON_OBJECTS)
 	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) -DDEBUG_GUI $(LINUX_NGC_DEBUG_GUI_OBJECTS) $(LINUX_COMMON_OBJECTS) -o ngc $(LINUX_DEBUG_LDFLAGS)
+
+#headless: $(LINUX_NGC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS)
+	#$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) $(LINUX_NGC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS) -o ngc $(LINUX_DEBUG_LDFLAGS)
 
 $(LINUX_COMMON_OBJECTS): ../common_code/obj/linux_%.o: ../common_code/src/%.cpp ../common_code/src/%.hpp
 	make -C ../common_code
@@ -43,7 +43,7 @@ $(LINUX_NGC_DEBUG_O3_OBJECTS): obj/debug_o3_%.o: src/%.cpp src/%.hpp
 	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) -c $< -o $@ $(LINUX_DEBUG_LDFLAGS)
 
 $(LINUX_NGC_DEBUG_GUI_OBJECTS): obj/debug_gui_%.o: src/%.cpp src/%.hpp
-	$(LINUX_COMPILER) $(DEBUG_FLAGS_O0) -DDEBUG_GUI -c $< -o $@ $(LINUX_DEBUG_LDFLAGS)
+	$(LINUX_COMPILER) $(DEBUG_FLAGS_O0) -Wno-missing-field-initializers -DDEBUG_GUI -c $< -o $@ $(LINUX_DEBUG_LDFLAGS)
 
 clean:
 	rm -f *.o obj/*.o ngc ../common_code/obj/*.o

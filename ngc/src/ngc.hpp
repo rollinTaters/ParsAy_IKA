@@ -37,11 +37,15 @@
 
 #include <thread>
 #include <vector>
-#include <queue>
+#include <vector>
 #include "vehicle.hpp"
+#include "traction_motor.hpp"
 #include "../../common_code/src/comms_module.hpp"
 #include "../../common_code/src/utility.hpp"
 #include "SFML/Graphics/Image.hpp"
+
+// a little forward decleration, NOTE: remove the environment emulator for hardware tests
+class Env_Emulator;
 
 class NGC
 {
@@ -60,7 +64,18 @@ class NGC
     bool stopDeadReckoning();
 
     bool addWP( Point );    // add new waypoint to the queues end
+    bool addWP( Point, int );   // add it after given slot
+    std::vector<Point> getWPs() const;
     bool executeWPs();  // starts executing current waypoints
+
+    std::vector<Point> getImObPoints() const;   // immediate obstacles
+
+    // Because we gotta run simulations
+    float hey_emulator_speed = 0;
+    float hey_emulator_rate = 0;
+
+    // maybe this should be a method of central command module
+    void directCommand( float speed, float rate );
 
   private:
 
@@ -74,7 +89,7 @@ class NGC
 
 
     // waypoints
-    std::queue<Point> m_waypoints;
+    std::vector<Point> m_waypoints;
     bool m_execute_waypoints = false;
 
     // time keeping and clocks
@@ -84,6 +99,8 @@ class NGC
 
     // controlled vehicle
     Vehicle* m_vehicle = nullptr;
+    TractionMotor motor_R;
+    TractionMotor motor_L;
 
     // immediate surrounding obstacles
     // this will most likely be current sensor readings
@@ -117,21 +134,25 @@ class NGC
     // - using the LIDAR data mark obstacles on internal world map
     //  this adds them to the world map as permanent obstacles
     //  is used for mapping an area (aka SLAM)
+    // TODO
     bool markObstacles();
 
     // immediate obstacle mark function: ( NAVIGATION )
     // - using the LIDAR data mark obstacles on the "surroundings" map
     //  is used for collision avoidance
+    // NOTTODO ??
     bool markImmediateObstacles();
 
     // predict trajectory function: ( NAVIGATION )
     // - using vehicle steer actuator, drive actuator, and inertia, predicts next x number of positions in y amout of time
+    // TODO
     bool predictTrajectory();
 
     // create target waypoint function: ( GUIDANCE )
     // - look at the previous positions on internal world map,
     //  find a new position which is "in short range", "unexplored" and "reachable"
     //  set it as a target waypoint
+    // TODO
     bool createTargetWaypoint();
 
     // create "open space" waypoint function: ( GUIDANCE )
@@ -140,7 +161,8 @@ class NGC
     // - takes an input position and finds a new position which is furthest away from any obstacles, but closest to input pos
     bool createOpenSpaceWaypoint( Point& );
 
-    // TODO add CONTROL type methods
+
+    int hitWP( Point );
 
     // navigation happens with a queue of waypoints, sub waypoints may need to be calculated for this queueueueu
 
@@ -155,8 +177,10 @@ class NGC
     // (mode 4) wp is apex of turn, calculate turn arc using prev and next wp, these points may be used as sub-waypoints
     // (mode 5) wp is arc center of turn, rest is same as mode4
 
-    bool hitWP( Point );
-    bool halt();
+    // == Control Methods ==
+    void halt();
+    void setControlOutput_rate( float, float );
+    void setControlOutput_radius( float, float );
     
 };
 
