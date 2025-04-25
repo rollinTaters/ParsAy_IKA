@@ -63,7 +63,7 @@ class Env_Emulator
     // this populates the sensor data object with emulated sensor readings from the "real" vehicle
     bool getSensorData( Sensor_Emulator*, Sensor_Data& ) const; // returns false on read fail
 
-    void drawHMap() const;
+    void drawHMap();
     bool setupModel();
     bool unloadModel();
 
