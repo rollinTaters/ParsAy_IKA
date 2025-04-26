@@ -35,15 +35,22 @@
 
 */
 #include <iostream>
-
+#include "vehicle.hpp"
 #include "env_emulator.hpp"
 #include "sensor_emulator.hpp"
 #include "ngc.hpp"
 
 #ifdef DEBUG_GUI
-#include "raylib.h"
-#include "raymath.h"
+#include "gui.hpp"  // raylib joins here
 #endif
+
+std::ostream& operator<<(std::ostream& os, const Vector3& v) {
+    os << "Vector3(" << v.x << ", " << v.y << ", " << v.z << ")";
+    return os;
+}
+
+
+
 
 // this is the vehicle we are managing/controlling
 Vehicle simulated_vehicle;
@@ -51,68 +58,67 @@ Vehicle simulated_vehicle;
 // our global environment emulator, if you included env_emulator.hpp, you know about its existance
 Env_Emulator env_emulator( simulated_vehicle );
 
+// our navigation guidance and control system
+NGC ngc_system( &simulated_vehicle );
+
 int main()
 {
     std::cout<<"ULV NGC Emulator v0.2\n";
 
-    // our navigation guidance and control system
-    NGC ngc_system( &simulated_vehicle );
+
+    // introduce ngc to the env emulator, because I gave up on a better way to do this
+    env_emulator.setNGC( &ngc_system );
+
 
     env_emulator.startPhysSim();
     ngc_system.start();
 
 #ifdef DEBUG_GUI
-    std::cout<<"\n==\t==\nWE BE IN DEBUG_GUI\n==\t==\n";
-    // create a window for gui rendering
-    InitWindow( 1000,800, "NGC DEBUG GUI" );
+    SetTraceLogLevel( LOG_WARNING );    // also LOG_ERROR LOG_FATAL LOG_INFO LOG_NONE
 
-    // camera setup
-    Camera3D camera = {0};
-    camera.position = (Vector3){ 0.f, 10.f, 10.f };
-    camera.target = (Vector3){ 0.f, 0.f, 0.f };
-    camera.up = (Vector3){ 0.f, 1.f, 0.f };
-    camera.fovy = 45.f;
-    camera.projection = CAMERA_PERSPECTIVE;
+    // this will create a window and initialize gui stuff
+    GUI::initGUI();
 
-    SetTargetFPS(60);
+    // after creating opengl context (initializing window) setup the model in env emulator
+    env_emulator.setupModel();
 
     // main draw loop
     while( !WindowShouldClose() )
     {
-        // moving camera around
-        if( IsKeyDown( KEY_H ) )
-            camera.position = Vector3RotateByAxisAngle( camera.position, (Vector3){0,1,0},  2*DEG2RAD );
-        if( IsKeyDown( KEY_L ) )
-            camera.position = Vector3RotateByAxisAngle( camera.position, (Vector3){0,1,0}, -2*DEG2RAD );
-        if( IsKeyDown( KEY_J ) )
-            camera.position = Vector3RotateByAxisAngle( camera.position, (Vector3){1,0,0},  2*DEG2RAD );
-        if( IsKeyDown( KEY_K ) )
-            camera.position = Vector3RotateByAxisAngle( camera.position, (Vector3){1,0,0}, -2*DEG2RAD );
+        // this will mainly move camera around
+        GUI::checkUserInput();
 
         BeginDrawing();
         ClearBackground( RAYWHITE );
 
-        BeginMode3D( camera );  //--- mode 3D start
+        BeginMode3D( GUI::camera );  //--- mode 3D start
 
-        // slices, spacing
-        DrawGrid(10, 2);
+        env_emulator.drawHMap();
+        GUI::drawLIDAR();
+        GUI::drawAxisBillboards();
+        GUI::drawVehicle();
+        GUI::drawCrosshair();
 
-        // position, radius_top, radius_bottom, height, sides, color
-        DrawCylinder( (Vector3){2,0,0}, 2, 2, 3, 5, SKYBLUE );
-        DrawCylinderWires( (Vector3){2,0,0}, 2, 2, 3, 5, DARKBLUE );
+        EndMode3D();  //------------- mode 3D end
 
         DrawFPS( 10, 10 );
-        EndMode3D();  //------------- mode 3D end
+        GUI::drawWPs();
+        GUI::drawOverlay();
 
         EndDrawing();
     }
 
-    // de-initialization of window and opengl context
-    CloseWindow();
-
+    // this also closes the window
+    env_emulator.unloadModel();
+    GUI::deInitGUI();
+#else   // HEADLESS MODE
+    std::this_thread::sleep_for( std::chrono::seconds(10) );
 #endif  // DEBUG_GUI
 
-    //std::this_thread::sleep_for( std::chrono::seconds(10) );
-
     std::cout<<"Exiting. Have a nice day\n";
+
+
+
+
+
 }

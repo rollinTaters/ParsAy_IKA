@@ -1,0 +1,9 @@
+CompileFlags:
+  Add:
+    - "-I/usr/include/opencv4"
+    - "-I/usr/include"
+    - "-L/usr/lib"
+    - "-lopencv_core"
+    - "-lopencv_highgui"
+    - "-lopencv_imgcodecs"
+	 - "-I/home/ucenik/Workplace/Projects/teknofest/ParsAy_IKA/image_processing/ml/3rdparties/onnxruntime-linux-x64-1.21.0/include"

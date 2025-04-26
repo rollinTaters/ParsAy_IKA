@@ -34,13 +34,16 @@
 #pragma once
 #include "../../common_code/src/utility.hpp"
 
+#define LIDAR_POINTS 50
+
 enum Sensor_Type{
     E_type_undefined,
     E_type_distance,
     E_type_LIDAR,
     E_type_IMU,
     E_type_temperature,
-    E_type_current
+    E_type_current,
+    E_type_turret_encoder
 };
 
 struct Sensor_Data
@@ -52,8 +55,15 @@ struct Sensor_Data
     // for distance sensor
     float distance;
 
+
+    // for lidar sensor
+    float lidar[LIDAR_POINTS];  // metre
+    float lidar_angle[LIDAR_POINTS];    // radian
+    //float lidar_quality[LIDAR_POINTS];
+
     // for IMU
     v3f acceleration;  // m/s^2
+    v3f velocity;      // m/s   (i dont know what imu actually provides)
     v3f angular_rate;  // radian/sec
     v3f magnetic_north;    // unit vector
     float barometric_pressure;      // Pa
@@ -73,6 +83,11 @@ struct Sensor_Data
     //float electric_current_motor2;
     //float electric_current_electronics;
     //float electric_current_turret??;
+
+
+    // turret encoder sensor populates these two angles
+    float turret_pitch = 0.0f;  // Current turret angle (radian)
+    float turret_yaw = 0.0f;    // Current turret angle (radian)
 };
 
 class Sensor_Emulator

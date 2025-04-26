@@ -7,6 +7,6 @@ class Preprocessing {
  public:
   static cv::Mat toGray(const cv::Mat &input);
   static cv::Mat applyGaussianBlur(const cv::Mat &input);
-  static cv::Mat detectEdges(const cv::Mat &input);
+  static cv::Mat detectCircles(const cv::Mat &input);
   static cv::Mat applyAll(const cv::Mat &input);
 };
