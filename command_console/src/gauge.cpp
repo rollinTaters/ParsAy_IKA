@@ -179,7 +179,7 @@ void Gauge::render() {
     
         // Display "Signal Power" text below the bars
 
-        DrawText(TextFormat("Signal Power: %.0f%%", m_value), m_pos.x, m_pos.y + maxBarHeight / 2, m_label_font_size, DARKGRAY);
+        DrawTextEx(m_font,TextFormat("Signal Power: %.0f%%", m_value), {m_pos.x, m_pos.y + maxBarHeight / 2 - 15}, m_label_font_size, 1, BLACK);
     }
     
     else{

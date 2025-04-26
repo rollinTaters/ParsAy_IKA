@@ -31,8 +31,9 @@ class UserInput
 {
     enum DriveMode
     {
-        Manuel,
-        Autonomous
+        manuel,
+        semi_autonomous,
+        autonomous
     };
     public:
         UserInput();
