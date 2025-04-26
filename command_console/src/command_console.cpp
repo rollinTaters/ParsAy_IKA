@@ -1,7 +1,7 @@
 /*
 	MIT License
 
-	Copyright (c) 2025 rollinTaters
+	Copyright (c) 2025 rollinTaters, guvenchemy
 
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,7 @@ int main()
     Drive_Telemetry_Packet1 dtp1;
     Drive_Telemetry_Packet2 dtp2;
     NGC_Telemetry_Packet ngctp;
+    Drive_Command_Packet dcp;
 
     // graphics initialization
     const int screenWidth = 1000;
@@ -87,6 +88,10 @@ int main()
                     cg::gauge_compass->updateVal(ngctp.getHeading());
                     cg::gauge_adi->updateRollVal(ngctp.getRoll());
                     cg::gauge_adi->updatePitchVal(ngctp.getPitch());
+                    break;
+                case drive_command:
+                    dcp = raw_packet;
+                    cg::gauge_speed->updateVal(dcp.getSpeed());
                     break;
                 case undefined:
                     std::cerr << "Warning: Received undefined packet type" << std::endl;

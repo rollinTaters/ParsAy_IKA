@@ -33,6 +33,13 @@ enum PacketType{
 // data sent to the drive module
 struct Drive_Command_Packet : public PacketBase
 {
+    Drive_Command_Packet(){ packet_type = drive_command; data1 = 0; data2 = 0;}
+    Drive_Command_Packet( PacketBase& pb )
+    {
+        packet_type = pb.packet_type;
+        data1 = pb.data1;
+        data2 = pb.data2;
+    }
     std::uint16_t getSpeed(){ return data1; }
     std::uint16_t getSteer(){ return data2; }
 
