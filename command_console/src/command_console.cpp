@@ -25,6 +25,7 @@
 #include <iostream>
 #include "console_graphics.hpp"
 #include "../../common_code/src/comms_module.hpp"
+#include "../../common_code/src/VideoFeed.hpp"
 #include "raylib.h"
 int main()
 {
@@ -32,12 +33,14 @@ int main()
     
     // create communications module
     CommsModule comms_module(CommsModule::udp, CommsModule::console_channel);
+    VideoFeed streamer(800, 800);
     // declare dummy packets
     PacketBase raw_packet;
     Drive_Telemetry_Packet1 dtp1;
     Drive_Telemetry_Packet2 dtp2;
     NGC_Telemetry_Packet ngctp;
     Drive_Command_Packet dcp;
+    Video_Data_Packet vdp;
 
     // graphics initialization
     const int screenWidth = 1000;
@@ -93,6 +96,15 @@ int main()
                     dcp = raw_packet;
                     cg::gauge_speed->updateVal(dcp.getSpeed());
                     break;
+                case video_data:
+                    vdp = raw_packet;
+                    Image frame = streamer.newFrame();
+                    Texture2D texFrame = LoadTextureFromImage(frame);
+                    //frame, pos x, pos y, tint
+                    DrawTexture(texFrame, 0,0, WHITE);
+                    UnloadImage(frame);
+                    UnloadTexture(texFrame);
+                    break;
                 case undefined:
                     std::cerr << "Warning: Received undefined packet type" << std::endl;
                     break;
@@ -120,15 +132,7 @@ int main()
         EndDrawing();
     }
     // a tiny cleaning
-    delete cg::gauge_temp;
-    delete cg::gauge_amp;
-    delete cg::gauge_amp2;
-    delete cg::gauge_temp2;
-    delete cg::gauge_compass;
-    delete cg::gauge_adi;
-    delete cg::gauge_speed;
-    delete cg::input;
-    delete cg::gauge_signal;
+    cg::deleteObjects();
 
     CloseWindow();
     std::cout << "Exiting. Have a nice day\n";

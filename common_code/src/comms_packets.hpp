@@ -1,6 +1,6 @@
 
 #include <cstdint>
-
+#include <array>
 // Base for all packet types, this is the data that is actually being sent
 // other packet types only employ custom methods to read/decode this data
 struct PacketBase
@@ -19,6 +19,7 @@ enum PacketType{
     turret,
     ngc_command,
     ngc_telemetry,
+    video_data,
 
     request1,
     request2,
@@ -129,6 +130,29 @@ struct NGC_Telemetry_Packet : public PacketBase
     void setRoll   ( std::uint16_t inp ){ data3 = inp; }
 };
 
+struct Video_Data_Packet : public PacketBase
+{
+    std::array<std::uint8_t, 25> payload;
+    Video_Data_Packet(){ packet_type = video_data;  data1 = 0; data2 = 0; data3 = 0; payload.fill(0); }
+    Video_Data_Packet( PacketBase& pb )
+    {
+        packet_type = pb.packet_type;
+        data1 = pb.data1;        // frame id
+        data2 = pb.data2 & 0xFF; // chunk id ( check out what bitwise and bit masking is )
+        // data3 = (pb.data2 >> 8) & 0xFF; // total chunks ( optional )
+        payload.fill(0); 
+    }
+    std::uint16_t getFrameID() const { return data1;}
+    std::uint16_t getChunkID() const { return data2;}
+    //std::uint16_t getTotalChunks() const { return data3;} // optional
+    const std::array<std::uint8_t, 25>& getPayload() const { return payload; } 
+
+    void setFrameID(std::uint16_t id) { data1 = id; }
+    void setChunkID(std::uint8_t id) { data2 = id; }
+    //void setTotalChunks(std::uint8_t chunks) { data3 = chunks; } // optional
+    void setPayload(const std::array<std::uint8_t, 25>& data) { payload = data; }
+
+};
 
 
 
