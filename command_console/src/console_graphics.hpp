@@ -85,4 +85,5 @@
 	   }
 	   // Debug test
 	   void DEBUG_gauge_test();
+	   void deleteObjects();
    }

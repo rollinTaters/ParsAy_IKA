@@ -70,6 +70,18 @@ namespace cg {
         gauge_battery = new Gauge(Gauge::type_battery, {30,10},100.0f);
         gauge_signal = new Gauge(Gauge::type_signal,{170,60},100.0f);
     }
+    void deleteObjects(){
+        delete gauge_temp;
+        delete gauge_amp;
+        delete gauge_amp2;
+        delete gauge_temp2;
+        delete gauge_compass;
+        delete gauge_adi;
+        delete gauge_speed;
+        delete input;
+        delete gauge_signal;
+    }
+
     // -- DEBUG --
     float g_amp_val = 0.f;
     float g_temp_val = 0.f;

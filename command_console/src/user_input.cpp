@@ -33,17 +33,18 @@ void UserInput::switchDriveMode(DriveMode newMode){
 }
 
 void UserInput::proccesInput(){
-    if(IsKeyDown(KEY_UP)){
-        std::cout << "Accelerate n go forward" << std::endl;
+    if (IsGamepadAvailable(0)) {
+        if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_UP)) { // Yukarı
+            std::cout << "Go forward" << std::endl;
+        }
+        if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN)) { // Aşağı
+            std::cout << "Go backward" << std::endl;
+        }
+        if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) { // Sağ
+            std::cout << "Turn right" << std::endl;
+        }
+        if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) { // Sol
+            std::cout << "Turn left" << std::endl;
+        }
     }
-    if(IsKeyDown(KEY_DOWN)){
-        std::cout << "Go backward" << std::endl;
-    }
-    if(IsKeyDown(KEY_RIGHT)){
-        std::cout << "Turn right" << std::endl;
-    }
-    if(IsKeyDown(KEY_LEFT)){
-        std::cout << "Turn left" << std::endl;
-    }
-
 }
