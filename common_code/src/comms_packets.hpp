@@ -1,4 +1,4 @@
-
+#pragma once
 #include <cstdint>
 #include <array>
 // Base for all packet types, this is the data that is actually being sent

@@ -96,7 +96,7 @@ int main()
                     dcp = raw_packet;
                     cg::gauge_speed->updateVal(dcp.getSpeed());
                     break;
-                case video_data:
+                case video_data:{
                     vdp = raw_packet;
                     Image frame = streamer.newFrame();
                     Texture2D texFrame = LoadTextureFromImage(frame);
@@ -105,6 +105,7 @@ int main()
                     UnloadImage(frame);
                     UnloadTexture(texFrame);
                     break;
+                }
                 case undefined:
                     std::cerr << "Warning: Received undefined packet type" << std::endl;
                     break;
@@ -112,7 +113,7 @@ int main()
                     std::cerr << "Error: Received unknown packet type: " << raw_packet.packet_type << std::endl;
                     std::cerr << "Packet data: " << raw_packet.data1 << ", " << raw_packet.data2 << ", " << raw_packet.data3 << std::endl;
                     break;
-            };
+            }
         }
 
         // process input
