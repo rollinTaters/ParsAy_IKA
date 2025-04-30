@@ -27,7 +27,16 @@
 #include "vehicle.hpp"
 #include "env_emulator.hpp" // read sensor
 
-Turret::Turret() : m_yaw(0), m_pitch(0) {}
+Turret::Turret()
+    : m_yaw(0.0f), m_pitch(0.0f)
+{
+    // Position and size init is up to mechanical design, but here is a basic example:
+    m_box.setPos({0.f, 0.f, 0.f});
+    m_box.setAng({0.f, 0.f, m_yaw}); 
+
+    m_cameraBox.setPos({0.f, 0.0f, 0.f}); 
+    m_cameraBox.setAng({m_pitch, 0.f, 0.f}); 
+}
 
 Vehicle::Vehicle()
 {
@@ -69,6 +78,32 @@ Vehicle& Vehicle::operator =(const Vehicle& rhs)
         // TODO Burada m_num_sensors ve diğer üyeleri kopyala
         // DONT. this is constexpr. this is hardcoded. m_num_sensors = rhs.m_num_sensors;
         // Diğer üyeleri kopyala (örneğin m_turret)
+    }
+    return *this;
+}
+*/
+//arranged according to the directive
+/* BUT THERE ARE STILL PROBLEMMM
+Vehicle& Vehicle::operator=(const Vehicle& rhs)
+{
+    if (this != &rhs) 
+    {
+        // copy the sensors 
+        for (int i = 0; i < m_num_sensors; i++)
+        {
+            m_sensor[i] = rhs.m_sensor[i];
+        }
+
+        // copy other members
+        m_bb3d = rhs.m_bb3d;
+        m_vel = rhs.m_vel;
+        m_acc = rhs.m_acc;
+        m_turn_radius = rhs.m_turn_radius;
+        m_mass = rhs.m_mass;
+        m_turret = rhs.m_turret; // <<<<<< 
+        m_angVel = rhs.m_angVel;
+        m_angAcc = rhs.m_angAcc;
+        m_sensor_data = rhs.m_sensor_data;
     }
     return *this;
 }
@@ -186,9 +221,25 @@ const BB3D& Turret::getBox() const {
 
 void Turret::setYaw(float yaw_angle) {
     m_yaw = yaw_angle;
+    m_box.setAng({0, 0, yaw_angle});
 }
 
 // Pitch açısını ayarlayan fonksiyon
 void Turret::setPitch(float pitch_angle) {
     m_pitch = pitch_angle;
+    m_cameraBox.setAng({pitch_angle, 0, 0});  // pitch is around X
 }
+
+// Final camera bounding box, including both yaw and pitch
+BB3D Turret::getCameraBB() const {
+    return m_box + m_cameraBox;  // operator+ defined in utility.hpp
+}
+
+
+
+// Forward direction of camera in global coordinates
+Vector3 Turret::getCameraVector() const {
+    Point dir = getCameraBB().getLocalVecY().unit();
+    return { (float)dir.x, (float)dir.y, (float)dir.z };
+}
+

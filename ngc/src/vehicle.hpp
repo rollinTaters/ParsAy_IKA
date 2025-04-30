@@ -25,7 +25,7 @@
 
 
 #pragma once
-
+#include "raylib.h"
 #include "../../common_code/src/utility.hpp"
 #include "sensor_emulator.hpp"
 
@@ -47,7 +47,10 @@ class Turret
     const BB3D& getBox() const;
 
     // XXX we have a method to getYaw and getPitch. What is this??
-    float getRotationDeg() const { return m_yaw; }
+    //okey than I removed it
+    //float getRotationDeg() const { return m_yaw; }
+    BB3D getCameraBB() const;
+    Vector3 getCameraVector() const;
 
   private:
     // TODO
@@ -60,7 +63,6 @@ class Turret
     // or:
     // Vector3 getCameraVector() <-- example, returns the unit vector of camera direction
     // Vector3 getLaserVector()
-
     // start with implementing camera first, then ill ask you to add the laser
     // we should work with the mechanical design team and get the geometric dimensions and
     // axis positions from them.
@@ -68,7 +70,9 @@ class Turret
     // TODO define what this is. is it the base of the turret?
     // is it the bounding box of the whole turret assembly?
     // is it the first movable part that does the yaw movement, if so, where is the part for pitch
-    BB3D m_box;
+    BB3D m_box;  //IT IS FOR JUST YAW 
+    //ADDED PİTCH  PART 
+    BB3D m_cameraBox;  // IT IS FOR PITCH
 
     float m_yaw = 0.f;      // radians, 0 is dead ahead, positive towards port
     float m_pitch = 0.f;    // radians, 0 is dead ahead, positive towards up

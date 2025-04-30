@@ -148,6 +148,24 @@ namespace GUI
             ngc_system.directCommand( cmd_speed, cmd_rate );
         }
 
+        // turret control (yaw & pitch)
+    {
+        Turret& turret = simulated_vehicle.getTurret();  // vehicle.hpp'de getTurret fonksiyonu olmalı
+
+        float deltaYaw = 0.01f;
+        float deltaPitch = 0.01f;
+
+        if (IsKeyDown(KEY_LEFT))  // ←
+            turret.setYaw(turret.getYaw() + deltaYaw);
+        if (IsKeyDown(KEY_RIGHT)) // →
+            turret.setYaw(turret.getYaw() - deltaYaw);
+
+        if (IsKeyDown(KEY_UP))    // ↑
+            turret.setPitch(turret.getPitch() + deltaPitch);
+        if (IsKeyDown(KEY_DOWN))  // ↓
+            turret.setPitch(turret.getPitch() - deltaPitch);
+    }
+
         // ngc commands
         if( IsKeyPressed( KEY_X ) )
             ::ngc_system.executeWPs();
@@ -202,6 +220,20 @@ namespace GUI
                         wheel_dia/2, wheel_dia/2, 20, DARKGRAY );
         // body
         DrawCubeV( taters2raylib((Vector3){0,0,0.20f}), taters2raylib((Vector3){1.15f, 1.65f, 0.50f}), GREEN ); 
+
+        // turret base (yaw)
+        BB3D yaw_box = simulated_vehicle.getTurret().getBox();
+        DrawCubeV(taters2raylib(yaw_box.getPos()), taters2raylib(yaw_box.getSize()), BLUE);
+        
+        // turret camera (pitch)
+        BB3D cam_box = simulated_vehicle.getTurret().getCameraBB();
+        DrawCubeV(taters2raylib(cam_box.getPos()), taters2raylib(cam_box.getSize()), SKYBLUE);
+        
+        // camera direction line
+        Vector3 cam_pos = taters2raylib(cam_box.getPos());
+        Vector3 cam_dir = taters2raylib(simulated_vehicle.getTurret().getCameraVector());
+        DrawLine3D(cam_pos, Vector3Add(cam_pos, Vector3Scale(cam_dir, 1.0f)), YELLOW);
+
     }
 
     void drawCrosshair()
@@ -254,8 +286,10 @@ namespace GUI
                 "W,A,S,D,R,F: crosshair move\n"
                 "X: execute waypoints\n"
                 "C: create waypoint"
-                "T: toggle hat mode",
-                (Vector2){10,600}, 20, 2, DARKGRAY );
+                "T: toggle hat mode\n"
+                "Left/Right: turret yaw\n"
+                "Up/Down: turret pitch\n",
+                (Vector2){10,600}, 20, 2, BLACK ); //cannot seeing changed with black
         DrawTextEx(
                 font,
                 TextFormat("crosshair: %3.2fx %3.2fy %3.2fz", crosshair.x, crosshair.y, crosshair.z),

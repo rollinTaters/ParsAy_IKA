@@ -30,9 +30,6 @@
    - drive actuators
      models current linear speed, accel, inertia
    - emulates potential errors (wheel slip, random disturbances)
-
-
-
 */
 #include <iostream>
 #include "vehicle.hpp"
@@ -49,9 +46,6 @@ std::ostream& operator<<(std::ostream& os, const Vector3& v) {
     return os;
 }
 
-
-
-
 // this is the vehicle we are managing/controlling
 Vehicle simulated_vehicle;
 
@@ -65,11 +59,8 @@ int main()
 {
     std::cout<<"ULV NGC Emulator v0.2\n";
 
-
     // introduce ngc to the env emulator, because I gave up on a better way to do this
     env_emulator.setNGC( &ngc_system );
-
-
     env_emulator.startPhysSim();
     ngc_system.start();
 
@@ -116,9 +107,4 @@ int main()
 #endif  // DEBUG_GUI
 
     std::cout<<"Exiting. Have a nice day\n";
-
-
-
-
-
 }
