@@ -149,7 +149,6 @@ namespace GUI
         }
 
         // turret control (yaw & pitch)
-    {
         Turret& turret = simulated_vehicle.getTurret();  // vehicle.hpp'de getTurret fonksiyonu olmalı
 
         float deltaYaw = 0.01f;
@@ -164,7 +163,6 @@ namespace GUI
             turret.setPitch(turret.getPitch() + deltaPitch);
         if (IsKeyDown(KEY_DOWN))  // ↓
             turret.setPitch(turret.getPitch() - deltaPitch);
-    }
 
         // ngc commands
         if( IsKeyPressed( KEY_X ) )
@@ -222,13 +220,17 @@ namespace GUI
         DrawCubeV( taters2raylib((Vector3){0,0,0.20f}), taters2raylib((Vector3){1.15f, 1.65f, 0.50f}), GREEN ); 
 
         // turret base (yaw)
-        BB3D yaw_box = simulated_vehicle.getTurret().getBox();
+        BB3D yaw_box = simulated_vehicle.getTurret().getYawBox();
         DrawCubeV(taters2raylib(yaw_box.getPos()), taters2raylib(yaw_box.getSize()), BLUE);
+
+        // turret pitch platform (pitch)
+        BB3D pitch_box = simulated_vehicle.getTurret().getPitchBox();
+        DrawCubeV(taters2raylib(pitch_box.getPos()), taters2raylib(pitch_box.getSize()), BLUE);
         
-        // turret camera (pitch)
-        BB3D cam_box = simulated_vehicle.getTurret().getCameraBB();
+        // turret general purpose camera
+        BB3D cam_box = simulated_vehicle.getTurret().getCameraWideBox();
         DrawCubeV(taters2raylib(cam_box.getPos()), taters2raylib(cam_box.getSize()), SKYBLUE);
-        
+       
         // camera direction line
         Vector3 cam_pos = taters2raylib(cam_box.getPos());
         Vector3 cam_dir = taters2raylib(simulated_vehicle.getTurret().getCameraVector());
@@ -285,7 +287,7 @@ namespace GUI
                 "N,M: zoom\n"
                 "W,A,S,D,R,F: crosshair move\n"
                 "X: execute waypoints\n"
-                "C: create waypoint"
+                "C: create waypoint\n"
                 "T: toggle hat mode\n"
                 "Left/Right: turret yaw\n"
                 "Up/Down: turret pitch\n",

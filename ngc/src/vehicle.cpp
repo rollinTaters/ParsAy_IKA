@@ -31,11 +31,25 @@ Turret::Turret()
     : m_yaw(0.0f), m_pitch(0.0f)
 {
     // Position and size init is up to mechanical design, but here is a basic example:
-    m_box.setPos({0.f, 0.f, 0.f});
-    m_box.setAng({0.f, 0.f, m_yaw}); 
+    m_yaw_box.setPos({0.f, 0.f, 0.5f});  // position relative to vehicle
+    m_yaw_box.setSize( 0.200f, 0.150f, 0.220f );
+    m_yaw_box.setAng({0.f, 0.f, m_yaw}); 
 
-    m_cameraBox.setPos({0.f, 0.0f, 0.f}); 
-    m_cameraBox.setAng({m_pitch, 0.f, 0.f}); 
+    m_pitch_box.setPos({0.2f, 0.0f, 0.f});   // relative to yaw box
+    m_pitch_box.setSize( 0.200f, 0.050f, 0.020f );
+    m_pitch_box.setAng({m_pitch, 0.f, 0.f}); 
+
+    m_camera_wide_box.setPos ( 0.023f, 0.008f, 0.005f );
+    m_camera_wide_box.setSize( 0.010f, 0.020f, 0.010f );
+    m_camera_wide_box.setAng ( 0.000f, 0.000f, 0.000f );
+
+    m_camera_narrow_box.setPos ( 0.000f, 0.000f, 0.000f );
+    m_camera_narrow_box.setSize( 0.000f, 0.000f, 0.000f );
+    m_camera_narrow_box.setAng ( 0.000f, 0.000f, 0.000f );
+
+    m_laser_box.setPos ( 0.000f, 0.000f, 0.000f );;
+    m_laser_box.setSize( 0.000f, 0.000f, 0.000f );;
+    m_laser_box.setAng ( 0.000f, 0.000f, 0.000f );;
 }
 
 Vehicle::Vehicle()
@@ -199,6 +213,17 @@ const Turret& Vehicle::getTurret() const {
     return m_turret;
 }
 
+void Turret::setYaw(float yaw_angle) {
+    m_yaw = yaw_angle;
+    m_yaw_box.setAng({0, 0, yaw_angle});
+}
+
+// Pitch açısını ayarlayan fonksiyon
+void Turret::setPitch(float pitch_angle) {
+    m_pitch = pitch_angle;
+    m_pitch_box.setAng({pitch_angle, 0, 0});  // pitch is around X
+}
+
 // Yaw açısını döndüren fonksiyon
 float Turret::getYaw() const {
     return m_yaw;
@@ -209,37 +234,26 @@ float Turret::getPitch() const {
     return m_pitch;
 }
 
-// BB3D nesnesini döndüren fonksiyon
-BB3D& Turret::getBox() {
-    return m_box;
+BB3D Turret::getYawBox() const {
+    return m_yaw_box;
 }
 
-// Sabit BB3D nesnesini döndüren fonksiyon
-const BB3D& Turret::getBox() const {
-    return m_box;
-}
-
-void Turret::setYaw(float yaw_angle) {
-    m_yaw = yaw_angle;
-    m_box.setAng({0, 0, yaw_angle});
-}
-
-// Pitch açısını ayarlayan fonksiyon
-void Turret::setPitch(float pitch_angle) {
-    m_pitch = pitch_angle;
-    m_cameraBox.setAng({pitch_angle, 0, 0});  // pitch is around X
+BB3D Turret::getPitchBox() const {
+    return m_yaw_box + m_pitch_box;
 }
 
 // Final camera bounding box, including both yaw and pitch
-BB3D Turret::getCameraBB() const {
-    return m_box + m_cameraBox;  // operator+ defined in utility.hpp
+BB3D Turret::getCameraWideBox() const {
+    return m_yaw_box + m_pitch_box + m_camera_wide_box;  // operator+ defined in utility.hpp
 }
 
-
+BB3D Turret::getCameraNarrowBox() const {
+    return m_yaw_box + m_pitch_box + m_camera_narrow_box;  // operator+ defined in utility.hpp
+}
 
 // Forward direction of camera in global coordinates
 Vector3 Turret::getCameraVector() const {
-    Point dir = getCameraBB().getLocalVecY().unit();
+    Point dir = getCameraNarrowBox().getLocalVecY().unit();
     return { (float)dir.x, (float)dir.y, (float)dir.z };
 }
 

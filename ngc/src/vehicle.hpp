@@ -43,14 +43,12 @@ class Turret
     float getYaw() const;
     float getPitch() const;
 
-    BB3D& getBox();
-    const BB3D& getBox() const;
+    BB3D getYawBox() const;
+    BB3D getPitchBox() const;
 
-    // XXX we have a method to getYaw and getPitch. What is this??
-    //okey than I removed it
-    //float getRotationDeg() const { return m_yaw; }
-    BB3D getCameraBB() const;
-    Vector3 getCameraVector() const;
+    BB3D getCameraWideBox() const;
+    BB3D getCameraNarrowBox() const;
+    Vector3 getCameraVector() const;    // both cameras have the same vector in an ideal world.
 
   private:
     // TODO
@@ -67,12 +65,11 @@ class Turret
     // we should work with the mechanical design team and get the geometric dimensions and
     // axis positions from them.
 
-    // TODO define what this is. is it the base of the turret?
-    // is it the bounding box of the whole turret assembly?
-    // is it the first movable part that does the yaw movement, if so, where is the part for pitch
-    BB3D m_box;  //IT IS FOR JUST YAW 
-    //ADDED PİTCH  PART 
-    BB3D m_cameraBox;  // IT IS FOR PITCH
+    BB3D m_yaw_box;  // rotates around yaw axis, is on top of vehicle chasis
+    BB3D m_pitch_box;   // rotates around pitch axis, is on top of m_yaw_box
+    BB3D m_camera_wide_box;   // BB of general purpose camera, is on top of m_pitch_box
+    BB3D m_camera_narrow_box;   // narrow field of view camera, used for fine adjustment of turret aim
+    BB3D m_laser_box;
 
     float m_yaw = 0.f;      // radians, 0 is dead ahead, positive towards port
     float m_pitch = 0.f;    // radians, 0 is dead ahead, positive towards up
