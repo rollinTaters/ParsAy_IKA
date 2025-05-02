@@ -23,6 +23,8 @@
 */
 /// User Inputs ///
 #pragma once
+
+// FIXME you do not use any of these header files in this hpp file. So you do not need them. keep your code clean.
 #include <raylib.h>
 #include <cmath>
 #include <iostream>
@@ -38,7 +40,7 @@ class UserInput
     public:
         UserInput();
         void switchDriveMode(DriveMode newMode);
-        void proccesInput();
+        void processInput();
     private:
         DriveMode m_drive_mode;
 

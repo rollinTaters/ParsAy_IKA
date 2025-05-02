@@ -23,6 +23,9 @@
 */
 #include "user_input.hpp"
 
+// FIXME now you need that raylib.h file included here (IsGamepadButtonDown)
+// FIXME also iostream. (std::cout)
+
 UserInput::UserInput()
 {
 
@@ -32,7 +35,10 @@ void UserInput::switchDriveMode(DriveMode newMode){
     m_drive_mode = newMode;
 }
 
-void UserInput::proccesInput(){
+void UserInput::processInput(){
+
+    // TODO make a comm_packet and send necessary commands to the ngc
+
     if (IsGamepadAvailable(0)) {
         if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_UP)) { // Yukarı
             std::cout << "Go forward" << std::endl;

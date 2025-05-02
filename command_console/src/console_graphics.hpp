@@ -26,24 +26,25 @@
 /*
    This is where we display data from the vehicle and issue control commands
 
-   - vehicle attitude indicator
+   - DONE - vehicle attitude indicator
 
-   - vehicle control mode (manual, auto-drive, fully-auto)
+   - TODO vehicle control mode (manual, auto-drive, fully-auto)
 
-   - camera feeds
+   - TODO camera feeds
 
-   - turret attitude
-   - weapon control (target aquisition status, big red fire button)
+   - TODO turret attitude
+   - TODO weapon control (target aquisition status, big red fire button)
 
-   - motor loading
-   - component temperatures
-   - land speed
-   - direction of travel
+   - MAYBE LATER - motor loading
+   - TODO component temperatures
+   - DONE - motor temperatures
+   - DONE - land speed
+   - DONE - direction of travel
 
-   - overhead map
-   - waypoints display
+   - TODO - overhead map
+   - TODO - waypoints display
 
-   - immediate obstacle display
+   - WILL BE MIGRATED FROM NGC GUI - immediate obstacle display
 
 
    */

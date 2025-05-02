@@ -27,6 +27,8 @@
 #include "../../common_code/src/comms_module.hpp"
 #include "../../common_code/src/VideoFeed.hpp"
 #include "raylib.h"
+
+
 int main()
 {
     std::cout << "Unmanned Land Vehicle Command Console v0.2\n";
@@ -81,22 +83,26 @@ int main()
                     cg::gauge_temp->updateVal(dtp1.getMotor1Temp());
                     cg::gauge_amp->updateVal(dtp1.getMotor1Amps());
                     break;
+
                 case drive_telemetry2:
                     dtp2 = raw_packet;
                     cg::gauge_amp2->updateVal(dtp2.getMotor2Amps());
                     cg::gauge_temp2->updateVal(dtp2.getMotor2Temp());
                     break;
+
                 case ngc_telemetry:
                     ngctp = raw_packet;
                     cg::gauge_compass->updateVal(ngctp.getHeading());
                     cg::gauge_adi->updateRollVal(ngctp.getRoll());
                     cg::gauge_adi->updatePitchVal(ngctp.getPitch());
                     break;
+
                 case drive_command:
                     dcp = raw_packet;
                     cg::gauge_speed->updateVal(dcp.getSpeed());
                     break;
-                case video_data:{
+
+                case video_data:
                     vdp = raw_packet;
                     Image frame = streamer.newFrame();
                     Texture2D texFrame = LoadTextureFromImage(frame);
@@ -105,10 +111,11 @@ int main()
                     UnloadImage(frame);
                     UnloadTexture(texFrame);
                     break;
-                }
+                
                 case undefined:
                     std::cerr << "Warning: Received undefined packet type" << std::endl;
                     break;
+
                 default:
                     std::cerr << "Error: Received unknown packet type: " << raw_packet.packet_type << std::endl;
                     std::cerr << "Packet data: " << raw_packet.data1 << ", " << raw_packet.data2 << ", " << raw_packet.data3 << std::endl;
@@ -117,7 +124,7 @@ int main()
         }
 
         // process input
-        cg::input->proccesInput();
+        cg::input->processInput();
         // render gauges
         cg::gauge_adi->render();
         cg::createPanel({550,50},{400,450},DARKGRAY,"Motor Panel");
