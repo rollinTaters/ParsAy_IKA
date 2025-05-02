@@ -38,6 +38,7 @@ Sensor_Emulator::Sensor_Emulator( Sensor_Type type,
 {
     m_bb3d.setPos( inp_pos );
     m_bb3d.setAng( inp_angle );
+    m_bb3d.setSize( 0.010f, 0.010f, 0.010f );
 }
 
 Sensor_Emulator::Sensor_Emulator( Sensor_Type type, const BB3D inp_bb3d )

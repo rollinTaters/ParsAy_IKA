@@ -112,6 +112,7 @@ class Vehicle
     static constexpr float track = 1.0f;
     static constexpr float wheel_dia = 0.5f;
     static constexpr float wheel_width = 0.25f;
+    static constexpr unsigned short int m_num_sensors = 8;
 
   private:
     // unless otherwise specified, all 3d vectors are:
@@ -119,8 +120,7 @@ class Vehicle
     // +X:pitch up, +Y:roll right, +Z:yaw left      (radian)
 
     // sensors on vehicle
-    static constexpr unsigned short int m_num_sensors = 8;
-    Sensor_Emulator m_sensor[6];
+    Sensor_Emulator m_sensor[ m_num_sensors ];
     Sensor_Data m_sensor_data;  // a packet containing data for all sensors
 
     // vehicle geometrical properties, (see utility.hpp)

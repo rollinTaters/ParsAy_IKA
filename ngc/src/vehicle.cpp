@@ -89,7 +89,6 @@ Vehicle::Vehicle( const Vehicle& other )
 Vehicle& Vehicle::operator =(const Vehicle& rhs)
 {
     if (this != &rhs) {  // Kendisine atama yapılmadığını kontrol et
-        // TODO Burada m_num_sensors ve diğer üyeleri kopyala
         // DONT. this is constexpr. this is hardcoded. m_num_sensors = rhs.m_num_sensors;
         // Diğer üyeleri kopyala (örneğin m_turret)
     }
@@ -239,21 +238,21 @@ BB3D Turret::getYawBox() const {
 }
 
 BB3D Turret::getPitchBox() const {
-    return m_yaw_box + m_pitch_box;
+    return m_pitch_box.onTop( m_yaw_box );
 }
 
 // Final camera bounding box, including both yaw and pitch
 BB3D Turret::getCameraWideBox() const {
-    return m_yaw_box + m_pitch_box + m_camera_wide_box;  // operator+ defined in utility.hpp
+    return m_camera_wide_box.onTop( m_pitch_box.onTop( m_yaw_box ) );
 }
 
 BB3D Turret::getCameraNarrowBox() const {
-    return m_yaw_box + m_pitch_box + m_camera_narrow_box;  // operator+ defined in utility.hpp
+    return m_camera_narrow_box.onTop( m_pitch_box.onTop( m_yaw_box ) );
 }
 
 // Forward direction of camera in global coordinates
 Vector3 Turret::getCameraVector() const {
-    Point dir = getCameraNarrowBox().getLocalVecY().unit();
+    Point dir = getCameraNarrowBox().getLocalVecY();
     return { (float)dir.x, (float)dir.y, (float)dir.z };
 }
 
