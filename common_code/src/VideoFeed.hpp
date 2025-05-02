@@ -1,17 +1,18 @@
 #pragma once
-#include <raylib.h>
 #include "comms_packets.hpp"
 #include <vector>
 #include <cstdint>
-#include <cstring> 
-#include <cstdlib>
+//#include <cstring> 
+//#include <cstdlib>
+
+
 class VideoFeed
 {
     public:
         VideoFeed(uint16_t frameWidth, uint16_t frameHight);
 
         //transmit data
-        void setFrame(const Image& img);
+        void setFrame( void* image_data, int image_width, int image_height );
         void splitIntoPackets();
         const std::vector<Video_Data_Packet>& getOutgoingPackets() const;
         uint16_t getCurrentFrameID() const;
@@ -28,8 +29,8 @@ class VideoFeed
         uint16_t m_frameID;
 
         //transmit
-        std::vector<uint8_t> outgoingFrameBytes;
-        std::vector<Video_Data_Packet> outgoingPackets;
+        std::vector<uint8_t> m_outgoingFrameBytes;
+        std::vector<Video_Data_Packet> m_outgoingPackets;
 
         //recieve
         struct FrameBuffer{
@@ -37,6 +38,6 @@ class VideoFeed
             std::vector<bool> chunksRecieved;
         };
 
-        uint16_t incomingFrameID;
-        FrameBuffer incomingFrame;
+        uint16_t m_incomingFrameID;
+        FrameBuffer m_incomingFrame;
 };

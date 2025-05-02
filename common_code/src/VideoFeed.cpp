@@ -4,29 +4,29 @@ VideoFeed::VideoFeed(uint16_t frameWidth, uint16_t frameHight){
     m_height = frameHight;
     m_width = frameWidth;
     m_frameID = 0;
-    incomingFrameID = 0;
+    m_incomingFrameID = 0;
 }
 
 
 //transmit data
 
-void VideoFeed::setFrame(const Image& img)
+void VideoFeed::setFrame( void* image_data, int image_width, int image_height )
 {
-    outgoingFrameBytes.clear();
+    m_outgoingFrameBytes.clear();
     int bytesPerPixel = 3; //RGB
-    int totalSize = img.width * img.height * bytesPerPixel;
+    int totalSize = image_width * image_height * bytesPerPixel;
     //resizing vector to totalSize
-    outgoingFrameBytes.resize(totalSize);
-    std::memcpy(outgoingFrameBytes.data(),img.data, totalSize);
+    m_outgoingFrameBytes.resize(totalSize);
+    std::memcpy(m_outgoingFrameBytes.data(), image_data, totalSize);
     
     m_frameID++;
 }
 
 void VideoFeed::splitIntoPackets()
 {
-    outgoingPackets.clear();
+    m_outgoingPackets.clear();
     const size_t payloadSize = 25;
-    size_t totalChunks = ( outgoingFrameBytes.size() + payloadSize - 1 ) / payloadSize; //
+    size_t totalChunks = ( m_outgoingFrameBytes.size() + payloadSize - 1 ) / payloadSize; //
 
     for(size_t chunkID = 0; chunkID < totalChunks; chunkID++)
     {
@@ -37,17 +37,17 @@ void VideoFeed::splitIntoPackets()
         std::array<uint8_t, 25> payload{};
 
         size_t offset = chunkID * payloadSize;
-        size_t copySize = std::min(payloadSize,outgoingFrameBytes.size() - offset);
+        size_t copySize = std::min(payloadSize,m_outgoingFrameBytes.size() - offset);
 
-        std::memcpy(payload.data(), incomingFrame.data.data(), payloadSize);
+        std::memcpy(payload.data(), m_incomingFrame.data.data(), payloadSize);
         vdp.setPayload(payload);
-        outgoingPackets.push_back(vdp);
+        m_outgoingPackets.push_back(vdp);
     }
 }
 
 const std::vector<Video_Data_Packet>& VideoFeed::getOutgoingPackets() const
 { 
-    return outgoingPackets; 
+    return m_outgoingPackets; 
 }
 
 
@@ -68,27 +68,27 @@ void VideoFeed::receivePacket(const Video_Data_Packet& vdp)
     uint16_t packetFrameID = vdp.getFrameID();
     uint16_t chunkID = vdp.getChunkID();
     //if there is new frames then remove the old one
-    if (packetFrameID != incomingFrameID)
+    if (packetFrameID != m_incomingFrameID)
     {
-        incomingFrameID = packetFrameID;
-        incomingFrame.data.clear();
-        incomingFrame.chunksRecieved.clear();
+        m_incomingFrameID = packetFrameID;
+        m_incomingFrame.data.clear();
+        m_incomingFrame.chunksRecieved.clear();
 
         int bytesPerPixel = 3;
         size_t totalSize = m_width * m_height * bytesPerPixel;
 
-        incomingFrame.data.resize(totalSize, 0);
-        incomingFrame.chunksRecieved.resize(totalSize + 24 / 25, false);
+        m_incomingFrame.data.resize(totalSize, 0);
+        m_incomingFrame.chunksRecieved.resize(totalSize + 24 / 25, false);
 
     }
     size_t offset = chunkID * 25;
     auto& payload = vdp.getPayload();
 
-    size_t copySize = std::min<size_t>(25, incomingFrame.data.size() - offset);
-    std::memcpy(incomingFrame.data.data() + offset, payload.data(), copySize);
+    size_t copySize = std::min<size_t>(25, m_incomingFrame.data.size() - offset);
+    std::memcpy(m_incomingFrame.data.data() + offset, payload.data(), copySize);
 
-    if(chunkID < incomingFrame.chunksRecieved.size()){
-        incomingFrame.chunksRecieved[chunkID] = true;
+    if(chunkID < m_incomingFrame.chunksRecieved.size()){
+        m_incomingFrame.chunksRecieved[chunkID] = true;
     }
 
     
@@ -96,7 +96,7 @@ void VideoFeed::receivePacket(const Video_Data_Packet& vdp)
 
 bool VideoFeed::isFrameReady() const
 {
-    for (bool recieved : incomingFrame.chunksRecieved){
+    for (bool recieved : m_incomingFrame.chunksRecieved){
         if (!recieved){
             return false;
         }
@@ -114,8 +114,8 @@ Image VideoFeed::newFrame()
         .mipmaps = 1,
         .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8,
     };
-    reFrame.data = malloc(incomingFrame.data.size());
-    std::memcpy(reFrame.data, incomingFrame.data.data(), incomingFrame.data.size());
+    reFrame.data = malloc(m_incomingFrame.data.size());
+    std::memcpy(reFrame.data, m_incomingFrame.data.data(), m_incomingFrame.data.size());
 
     return reFrame;
 }
