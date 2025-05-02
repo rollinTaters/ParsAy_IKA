@@ -28,14 +28,12 @@
 Gauge::Gauge(gauge_type gt, Vector2 pos, float dia)
     : m_type(gt), m_pos(pos), m_dia(dia)
 {
-  
+
     m_font = LoadFont("./assets/fonts/arial.ttf");
+  
     switch (gt) {
         case type_compass:
             m_max_value = 360; m_min_value = 0; m_value = 0;
-            // Load compass textures
-            compass_bg = LoadTexture("assets/compass/compass_bg_200.png");
-            compass_ticks_numbers = LoadTexture("assets/compass/compass_ticks_numbers_200.png");
             // Center positions
             compass_bg_pos = { m_pos.x + m_dia/2, m_pos.y + m_dia/2 };
             compass_ticks_pos = compass_bg_pos;
@@ -114,6 +112,16 @@ Gauge::Gauge(gauge_type gt, Vector2 pos, float dia)
     m_label_pos       = { m_pos.x + m_dia/2, m_pos.y + m_dia + 10 };
     m_label_font_size = 15;
     m_label_color     = BLACK;
+}
+
+void Gauge::init()
+{
+    if( m_type == type_compass )
+    {
+        // Load compass textures
+        compass_bg = LoadTexture("assets/compass/compass_bg_200.png");
+        compass_ticks_numbers = LoadTexture("assets/compass/compass_ticks_numbers_200.png");
+    }
 }
 
 void Gauge::updateVal(const float value) {

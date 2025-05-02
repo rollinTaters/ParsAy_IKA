@@ -37,7 +37,10 @@ Adi::Adi(Vector2 pos, float dia) {
     m_pitch_value = 0;
     m_max_pitch_value = 100;
     m_min_pitch_value = -100;
+}
 
+void Adi::init()
+{
     // Texture 
     roll_markings = LoadTexture("./assets/attitude_director_indicator/roll_markings_.png");
     if (roll_markings.id == 0) {

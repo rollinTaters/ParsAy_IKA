@@ -41,7 +41,7 @@ int main()
     video_frame.width = 800;
     video_frame.height = 800;
     video_frame.mipmaps = 1;
-    video_frame.format = PIXEL_FORMAT_UNCOMPRESSED_R8G8B8;
+    video_frame.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8;
     Texture2D video_texFrame;
 
     // declare dummy packets
@@ -57,7 +57,6 @@ int main()
     const int screenHeight = 800;
 
     cg::InitWindowSafe(screenWidth,screenHeight,"Command Console");
-    cg::InitObjects();
 
 
     // main loop
@@ -89,26 +88,26 @@ int main()
                 // TODO add other type of gauges
                 case drive_telemetry1:
                     dtp1 = raw_packet;
-                    cg::gauge_temp->updateVal(dtp1.getMotor1Temp());
-                    cg::gauge_amp->updateVal(dtp1.getMotor1Amps());
+                    cg::gauge_temp.updateVal(dtp1.getMotor1Temp());
+                    cg::gauge_amp.updateVal(dtp1.getMotor1Amps());
                     break;
 
                 case drive_telemetry2:
                     dtp2 = raw_packet;
-                    cg::gauge_amp2->updateVal(dtp2.getMotor2Amps());
-                    cg::gauge_temp2->updateVal(dtp2.getMotor2Temp());
+                    cg::gauge_amp2.updateVal(dtp2.getMotor2Amps());
+                    cg::gauge_temp2.updateVal(dtp2.getMotor2Temp());
                     break;
 
                 case ngc_telemetry:
                     ngctp = raw_packet;
-                    cg::gauge_compass->updateVal(ngctp.getHeading());
-                    cg::gauge_adi->updateRollVal(ngctp.getRoll());
-                    cg::gauge_adi->updatePitchVal(ngctp.getPitch());
+                    cg::gauge_compass.updateVal(ngctp.getHeading());
+                    cg::gauge_adi.updateRollVal(ngctp.getRoll());
+                    cg::gauge_adi.updatePitchVal(ngctp.getPitch());
                     break;
 
                 case drive_command:
                     dcp = raw_packet;
-                    cg::gauge_speed->updateVal(dcp.getSpeed());
+                    cg::gauge_speed.updateVal(dcp.getSpeed());
                     break;
 
                 case video_data:
@@ -134,23 +133,11 @@ int main()
         }
 
         // process input
-        cg::input->processInput();
+        cg::input.processInput();
         // render gauges
-        cg::gauge_adi->render();
-        cg::createPanel({550,50},{400,450},DARKGRAY,"Motor Panel");
-        cg::gauge_amp2->render();
-        cg::gauge_temp2->render();
-        cg::gauge_amp->render();
-        cg::gauge_temp->render();
-        cg::gauge_speed->render();
-        cg::gauge_tachometer->render();
-        cg::gauge_compass->render();
-        cg::gauge_battery->render();
-        cg::gauge_signal->render();
+        cg::renderGauges();
         EndDrawing();
     }
-    // a tiny cleaning
-    cg::deleteObjects();
 
     CloseWindow();
     std::cout << "Exiting. Have a nice day\n";

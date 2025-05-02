@@ -29,6 +29,7 @@
 class Adi {
 public:
     Adi(Vector2 pos, float dia);
+    void init();    // loads textures, call when opengl context is ready
     void updateRollVal_prop(const float);   // 0-1
     void updatePitchVal_prop(const float);  // 0-1
     void updateRollVal(const float);    // degree

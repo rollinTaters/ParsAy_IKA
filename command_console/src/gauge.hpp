@@ -46,6 +46,8 @@ public:
 
     Gauge(gauge_type type, Vector2 pos, float dia);
 
+    void init();    // loads textures, call when opengl context is ready
+
     void updateVal(const float value); // input is value to be displayed
     void updateProportionalVal(const float value); // input is from 0.f to 1.f
     void render();

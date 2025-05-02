@@ -25,61 +25,56 @@
 
 #include "console_graphics.hpp"
 namespace cg {
+
     static bool _initialized = false;
-    Font m_font = LoadFont("./assets/fonts/arial.ttf");
+    
+    Font arial_font = LoadFont("./assets/fonts/arial.ttf");
+
     void InitWindowSafe(int width, int height, const char* title) {
-        if (!_initialized) {
-            InitWindow(width, height, title);
-            SetTargetFPS(60);
-            _initialized = true;  
-        }
+        if (_initialized) return;
+        InitWindow(width, height, title);
+        SetTargetFPS(60);
+        _initialized = true;  
+        gauge_compass.init();
+        gauge_adi.init();
     }
+
     bool isInitialized() {
         return _initialized;
     }
+
     void createPanel(Vector2 pos, Vector2 size , Color color , const char* title){
-        DrawTextEx(m_font, title, {pos.x, pos.y - 25}, 25, 1 ,RED);
+        DrawTextEx(arial_font, title, {pos.x, pos.y - 25}, 25, 1 ,RED);
         DrawRectangle(pos.x, pos.y , size.x, size.y, color);
     }
 
 
 
-    Gauge* gauge_temp       = nullptr;
-    Gauge* gauge_amp        = nullptr;
-    Gauge* gauge_amp2       = nullptr;
-    Gauge* gauge_temp2      = nullptr;
-    Gauge* gauge_compass    = nullptr;
-    Gauge* gauge_speed      = nullptr;
-    Gauge* gauge_tachometer = nullptr;
-    Adi*   gauge_adi        = nullptr;
-    UserInput* input        = nullptr;
-    Gauge* gauge_battery    = nullptr;
-    Gauge* gauge_signal     = nullptr;
+    Gauge gauge_temp      (Gauge::type_temperature, {565, 65}, 180.0f);
+    Gauge gauge_amp       (Gauge::type_amp,         {760, 65}, 180.0f);
+    Gauge gauge_amp2      (Gauge::type_amp,         {760,284}, 180.0f);
+    Gauge gauge_temp2     (Gauge::type_temperature, {565,284}, 180.0f);
+    Gauge gauge_speed     (Gauge::type_speedometer, {250, 85}, 200.0f);
+    Gauge gauge_compass   (Gauge::type_compass,     {400,650}, 200.0f);
+    Gauge gauge_tachometer(Gauge::type_tachometer,  { 50, 85}, 200.0f);
+    Gauge gauge_battery   (Gauge::type_battery,     { 30, 10}, 100.0f);
+    Gauge gauge_signal    (Gauge::type_signal,      {170, 60}, 100.0f);
+    Adi   gauge_adi       ({150, 500},  300.0f);
+    UserInput input;
 
-    void InitObjects() {
-        EnsureWindow();
-        gauge_temp    = new Gauge(Gauge::type_temperature, {565,65},   180.0f);
-        gauge_amp     = new Gauge(Gauge::type_amp,         {760,65},   180.0f);
-        gauge_amp2    = new Gauge(Gauge::type_amp,         {760,284},    180.0f);
-        gauge_temp2   = new Gauge(Gauge::type_temperature, {565,284},  180.0f);
-        gauge_speed   = new Gauge(Gauge::type_speedometer, {250,85},   200.0f);
-        gauge_compass = new Gauge(Gauge::type_compass,     {400,650},  200.0f);
-        gauge_tachometer = new Gauge(Gauge::type_tachometer, {50,85}, 200.0f);
-        gauge_adi     = new Adi({150, 500},  300.0f);
-        input         = new UserInput();
-        gauge_battery = new Gauge(Gauge::type_battery, {30,10},100.0f);
-        gauge_signal = new Gauge(Gauge::type_signal,{170,60},100.0f);
-    }
-    void deleteObjects(){
-        delete gauge_temp;
-        delete gauge_amp;
-        delete gauge_amp2;
-        delete gauge_temp2;
-        delete gauge_compass;
-        delete gauge_adi;
-        delete gauge_speed;
-        delete input;
-        delete gauge_signal;
+    void renderGauges()
+    {
+        gauge_adi.render();
+        createPanel({550,50},{400,450},DARKGRAY,"Motor Panel");
+        gauge_amp2.render();
+        gauge_temp2.render();
+        gauge_amp.render();
+        gauge_temp.render();
+        gauge_speed.render();
+        gauge_tachometer.render();
+        gauge_compass.render();
+        gauge_battery.render();
+        gauge_signal.render();
     }
 
     // -- DEBUG --
@@ -98,10 +93,8 @@ namespace cg {
                          '''
     */
    
-   // Debug gauge test 
-   
-   void DEBUG_gauge_test()
-   {
+    void DEBUG_gauge_test()
+    {
        // nudge value towards a random direction
        g_amp_val      += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
        g_temp_val     += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
@@ -123,15 +116,15 @@ namespace cg {
        g_signal_val = std::max( 0.f, std::min( g_signal_val, 1.f ));
        
        // update gauges
-       gauge_amp->updateProportionalVal( g_amp_val );
-       gauge_temp->updateProportionalVal( g_temp_val );
-       gauge_battery->updateProportionalVal( g_battery_val );
-       gauge_adi->updateRollVal_prop( g_roll_val );
-       gauge_adi->updatePitchVal_prop( g_pitch_val );
-       gauge_speed->updateProportionalVal( g_speed_val );
-       gauge_compass->updateProportionalVal( g_heading_val );
-       gauge_signal->updateProportionalVal( g_signal_val );
+       gauge_amp.updateProportionalVal( g_amp_val );
+       gauge_temp.updateProportionalVal( g_temp_val );
+       gauge_battery.updateProportionalVal( g_battery_val );
+       gauge_adi.updateRollVal_prop( g_roll_val );
+       gauge_adi.updatePitchVal_prop( g_pitch_val );
+       gauge_speed.updateProportionalVal( g_speed_val );
+       gauge_compass.updateProportionalVal( g_heading_val );
+       gauge_signal.updateProportionalVal( g_signal_val );
     }
+    // -- END OF DEBUG --
 }
     
-// -- END OF DEBUG --
