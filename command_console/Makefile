@@ -7,7 +7,7 @@ SFML_libs := -lsfml-system -lsfml-network
 
 # ==== command console objects ====
 CC_OBJECTS := command_console.o console_graphics.o gauge.o adi.o user_input.o
-COMMON_OBJECTS := utility.o comms_module.o VideoFeed.o
+COMMON_OBJECTS := utility.o comms_module.o video_feed.o
 
 LINUX_CC_RELEASE_OBJECTS = $(addprefix obj/linux_, $(CC_OBJECTS))
 LINUX_COMMON_OBJECTS = $(addprefix ../common_code/obj/linux_, $(COMMON_OBJECTS))

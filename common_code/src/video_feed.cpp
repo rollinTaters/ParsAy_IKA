@@ -1,4 +1,6 @@
-#include "VideoFeed.hpp"
+#include "video_feed.hpp"
+#include <cstdlib>
+#include <cstring> 
 
 VideoFeed::VideoFeed(uint16_t frameWidth, uint16_t frameHight){
     m_height = frameHight;
@@ -105,17 +107,22 @@ bool VideoFeed::isFrameReady() const
     // check chunks 
 }
 
-Image VideoFeed::newFrame()
+void VideoFeed::newFrame( void* &ptr )
 {
+    // WARNING: following code plays with fire.
+
     //reconstruct the Frame 
+    /*
     Image reFrame = {
         .width = m_width,
         .height = m_height,
         .mipmaps = 1,
         .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8,
     };
-    reFrame.data = malloc(m_incomingFrame.data.size());
-    std::memcpy(reFrame.data, m_incomingFrame.data.data(), m_incomingFrame.data.size());
+    */
 
-    return reFrame;
+    // because memory leaks are bad
+    std::free( ptr );
+    ptr = malloc(m_incomingFrame.data.size());
+    std::memcpy(ptr, m_incomingFrame.data.data(), m_incomingFrame.data.size());
 }

@@ -5,7 +5,7 @@ SFML_libs := -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-system -lsfml-net
 #SFML_libs_static := -DSFML_STATIC -MMD -MP -static-libstdc++ -static-libgcc -lsfml-main -lsfml-audio-s -lsfml-graphics-s -lsfml-window-s -lsfml-system-s -lsfml-network-s  -lopengl32 -lfreetype -lwinmm -lgdi32 -lopenal32 -lFLAC -lvorbisenc -lvorbis -logg -lws2_32
 
 # ==== Common Code objects ====
-COMMON_OBJECTS := utility.o comms_module.o VideoFeed.o
+COMMON_OBJECTS := utility.o comms_module.o video_feed.o
 
 LINUX_COMMON_OBJECTS = $(addprefix obj/linux_, $(COMMON_OBJECTS))
 WIN_COMMON_OBJECTS = $(addprefix obj/win_, $(COMMON_OBJECTS))

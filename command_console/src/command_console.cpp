@@ -25,7 +25,7 @@
 #include <iostream>
 #include "console_graphics.hpp"
 #include "../../common_code/src/comms_module.hpp"
-#include "../../common_code/src/VideoFeed.hpp"
+#include "../../common_code/src/video_feed.hpp"
 #include "raylib.h"
 
 
@@ -36,6 +36,14 @@ int main()
     // create communications module
     CommsModule comms_module(CommsModule::udp, CommsModule::console_channel);
     VideoFeed streamer(800, 800);
+
+    Image video_frame;
+    video_frame.width = 800;
+    video_frame.height = 800;
+    video_frame.mipmaps = 1;
+    video_frame.format = PIXEL_FORMAT_UNCOMPRESSED_R8G8B8;
+    Texture2D video_texFrame;
+
     // declare dummy packets
     PacketBase raw_packet;
     Drive_Telemetry_Packet1 dtp1;
@@ -50,6 +58,7 @@ int main()
 
     cg::InitWindowSafe(screenWidth,screenHeight,"Command Console");
     cg::InitObjects();
+
 
     // main loop
     while (!WindowShouldClose())
@@ -104,12 +113,13 @@ int main()
 
                 case video_data:
                     vdp = raw_packet;
-                    Image frame = streamer.newFrame();
-                    Texture2D texFrame = LoadTextureFromImage(frame);
+                    streamer.newFrame( video_frame.data );
+                    // NOTE: loading an image (in RAM) to a texture (in VRAM) is expensive
+                    video_texFrame = LoadTextureFromImage(video_frame);
                     //frame, pos x, pos y, tint
-                    DrawTexture(texFrame, 0,0, WHITE);
-                    UnloadImage(frame);
-                    UnloadTexture(texFrame);
+                    DrawTexture(video_texFrame, 0,0, WHITE);
+                    UnloadImage(video_frame);
+                    UnloadTexture(video_texFrame);
                     break;
                 
                 case undefined:

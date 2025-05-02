@@ -2,8 +2,6 @@
 #include "comms_packets.hpp"
 #include <vector>
 #include <cstdint>
-//#include <cstring> 
-//#include <cstdlib>
 
 
 class VideoFeed
@@ -20,7 +18,7 @@ class VideoFeed
         //recieve data
         void receivePacket(const Video_Data_Packet& packet);
         bool isFrameReady() const;
-        Image newFrame();
+        void newFrame( void* &ptr );
 
     private:
         // common 
