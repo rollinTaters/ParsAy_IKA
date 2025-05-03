@@ -42,7 +42,7 @@ Adi::Adi(Vector2 pos, float dia) {
 void Adi::init()
 {
     // Texture 
-    roll_markings = LoadTexture("./assets/attitude_director_indicator/roll_markings_.png");
+    roll_markings = LoadTexture("./assets/attitude_director_indicator/rm.png");
     if (roll_markings.id == 0) {
         std::cerr << "Error: adi class could not load Roll markings texture!" << std::endl;
     }

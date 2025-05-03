@@ -109,7 +109,7 @@ Gauge::Gauge(gauge_type gt, Vector2 pos, float dia)
     m_center = { m_pos.x + m_dia/2, m_pos.y + m_dia/2 };
 
     // Label position and style
-    m_label_pos       = { m_pos.x + m_dia/2, m_pos.y + m_dia + 10 };
+    m_label_pos       = { (m_pos.x + m_dia/2 ) - 40 , m_pos.y + m_dia + 10 };
     m_label_font_size = 15;
     m_label_color     = BLACK;
 }
@@ -157,7 +157,7 @@ void Gauge::render() {
         char buf[32];
         snprintf(buf, sizeof(buf), "%s%.2f", m_label_text.c_str(), m_value);
         Vector2 lblSize = MeasureTextEx(m_font, buf, m_label_font_size, 1);
-        Vector2 lblPos = { m_pos.x + m_dia/2 - lblSize.x/2, m_label_pos.y - m_dia/2 };
+        Vector2 lblPos = { m_pos.x - lblSize.x/2, m_label_pos.y - m_dia/2 };
         DrawTextEx(m_font, buf, lblPos, m_label_font_size, 1, m_label_color);
     }
     else if (m_type == type_signal) {
@@ -230,7 +230,7 @@ void Gauge::render() {
     snprintf(buf, sizeof(buf), "%s%.2f", m_label_text.c_str(), m_value);
     Vector2 lblSize = MeasureTextEx(m_font, buf, m_label_font_size, 1);
     Vector2 lblPos = { m_pos.x + m_dia/2 - lblSize.x/2, m_label_pos.y };
-    DrawTextEx(m_font, buf, lblPos, m_label_font_size, 1, m_label_color);
+    DrawTextEx(m_font, buf, m_label_pos, m_label_font_size, 1, m_label_color);
     }
 }
 
