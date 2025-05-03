@@ -30,6 +30,7 @@
 */
 
 // FORCE DEFINE LOCALHOST FOR TESTING
+#pragma once
 #define LOCALHOST
 
 #include "comms_packets.hpp"
