@@ -140,6 +140,9 @@ struct BB3D
     v3f getLocalVecY() const;
     v3f getLocalVecZ() const;
 
+    // assumes that this object has its csys defined relative to the input BB3D and returns a copy of this BB3D object, that has its position and angles made relative to the global csys
+    BB3D onTop( BB3D ) const;
+
   private:
     // unless otherwise specified, all 3d vectors are:
     // +X:starboard, +Y:bow, +Z:above, (or width, len, height) (metre)

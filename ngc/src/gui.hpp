@@ -250,9 +250,23 @@ namespace GUI
         // body
         DrawCubeV( taters2raylib((Vector3){0,0,0.20f}), taters2raylib((Vector3){1.15f, 1.65f, 0.50f}), GREEN ); 
 
+        // some sensors
+        for( auto i = 0; i < simulated_vehicle.m_num_sensors; i++ )
+        {
+            BB3D box = simulated_vehicle.getSensor(i).getBox();
+            DrawCubeV(
+                    taters2raylib( box.getPos() ),
+                    taters2raylib( box.getSize() ),
+                    RED );
+            DrawLine3D(
+                    taters2raylib( box.getPos() ),
+                    taters2raylib( box.getPos() + box.getLocalVecY() ),
+                    RED );
+        }
+
         // turret base (yaw)
         BB3D yaw_box = simulated_vehicle.getTurret().getYawBox();
-        DrawCubeV(taters2raylib(yaw_box.getPos()), taters2raylib(yaw_box.getSize()), BLUE);
+        DrawCubeV(taters2raylib(yaw_box.getPos()), taters2raylib(yaw_box.getSize()), DARKBLUE);
 
         // turret pitch platform (pitch)
         BB3D pitch_box = simulated_vehicle.getTurret().getPitchBox();

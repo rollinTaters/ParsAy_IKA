@@ -426,6 +426,29 @@ v3f BB3D::getLocalVecZ() const
     return ret;
 }
 
+BB3D BB3D::onTop( BB3D base ) const
+{
+    // make a copy to modify and return
+    BB3D copy = BB3D(*this);
+
+    // -- translations --
+    // move this by this objects position amount (which is defined relative to base)
+    // on base objects local csys vectors
+    base.translateLocal( m_pos );
+    copy.m_pos = base.m_pos;
+
+    // FIXME this shit be broken
+    // -- rotations --
+    v3f q_vec = { m_quat.x, m_quat.y, m_quat.z };
+    base.m_quat.rotateVector( q_vec );
+    copy.m_quat.x = q_vec.x;
+    copy.m_quat.y = q_vec.y;
+    copy.m_quat.z = q_vec.z;
+    copy.m_quat = base.m_quat * copy.m_quat;
+
+    return copy;
+}
+
 
 // adds positions and angles, uses left operands size
 BB3D operator +( BB3D left, BB3D right )
