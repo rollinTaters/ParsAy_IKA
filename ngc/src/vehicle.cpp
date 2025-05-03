@@ -257,3 +257,11 @@ Vector3 Turret::getCameraVector() const {
     return { (float)dir.x, (float)dir.y, (float)dir.z };
 }
 
+Vector3 Vehicle::getCameraVector() const {
+    return m_turret.getCameraVector();  // ← Bu senin Turret::getCameraVector()
+}
+
+Vector3 Vehicle::getCameraPosition() const {
+    Point pos = m_turret.getCameraNarrowBox().getPos();
+    return { (float)pos.x, (float)pos.y, (float)pos.z };
+}

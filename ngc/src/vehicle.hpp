@@ -93,6 +93,10 @@ class Vehicle
     // Returns a reference to the turret (modifiable)
     Turret& getTurret();
 
+    Vector3 getCameraPosition() const;
+    Vector3 getCameraVector() const;
+
+
     // Returns a const reference to the turret (read-only)
     const Turret& getTurret() const;
 

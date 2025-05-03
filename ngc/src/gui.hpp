@@ -1,4 +1,5 @@
-
+RenderTexture2D turretViewRT;
+Camera3D turretCam;
 #include "raylib.h"
 #include "raymath.h"
 
@@ -7,8 +8,13 @@ extern NGC ngc_system;
 extern Vehicle simulated_vehicle;
 extern Env_Emulator env_emulator;
 
+
 namespace GUI
 {
+
+    Vehicle* getVehicle() {
+        return &simulated_vehicle;
+    }
 
     Vector3 taters2raylib( Vector3 inp )
     { return Vector3RotateByAxisAngle( inp, (Vector3){1,0,0}, 3*PI/2.f ); }
@@ -83,7 +89,25 @@ namespace GUI
         ngc_wps = ngc_system.getWPs();
         last_wp_update = GetTime();
         wp_update_rate = 1; // seconds
+
+        turretViewRT = LoadRenderTexture(200, 200);
+        turretCam = camera;  // Aynı ayarları kullanabiliriz
+
     }
+
+    // gui.cpp
+    void UpdateAndDrawEverything() 
+    {
+        // RenderTexture2D kamerandan görüntü al
+        Image img = LoadImageFromTexture(turretViewRT.texture); // BURADA RAM'e çekiyoruz
+
+        // Image processing fonksiyonuna gönder
+        //ProcessImage(img);
+
+        // RAM'den sildik (memory leak olmasın)
+        UnloadImage(img);
+    }
+
 
     void deInitGUI()
     {
@@ -147,6 +171,13 @@ namespace GUI
 
             ngc_system.directCommand( cmd_speed, cmd_rate );
         }
+        Vehicle* v = GUI::getVehicle();
+        Vector3 turret_pos = v->getCameraPosition();      // vehicle.cpp'de BB3D pozisyonu
+        Vector3 turret_dir = v->getCameraVector();        // yön vektörü
+
+        turretCam.position = turret_pos;
+        turretCam.target = Vector3Add(turret_pos, Vector3Scale(turret_dir, 10.0f));
+
 
         // turret control (yaw & pitch)
         Turret& turret = simulated_vehicle.getTurret();  // vehicle.hpp'de getTurret fonksiyonu olmalı

@@ -80,6 +80,16 @@ int main()
         GUI::checkUserInput();
 
         BeginDrawing();
+        BeginTextureMode(turretViewRT);
+        ClearBackground(SKYBLUE);
+
+        BeginMode3D(turretCam);
+        env_emulator.drawHMap();
+        GUI::drawVehicle();
+        EndMode3D();
+
+        EndTextureMode();
+
         ClearBackground( RAYWHITE );
 
         BeginMode3D( GUI::camera );  //--- mode 3D start
@@ -95,6 +105,10 @@ int main()
         DrawFPS( 10, 10 );
         GUI::drawWPs();
         GUI::drawOverlay();
+
+        DrawText("Turret View:", 600, 10, 10, DARKGRAY);
+        DrawTextureRec(turretViewRT.texture, (Rectangle){0, 0, 200, -200}, (Vector2){600, 30}, WHITE);
+        GUI::UpdateAndDrawEverything();
 
         EndDrawing();
     }
