@@ -22,15 +22,15 @@
     SOFTWARE.
 */
 #include "user_input.hpp"
+#include <raylib.h>
+#include <iostream>
+#include "../../common_code/src/comms_module.hpp"
 
-// FIXME now you need that raylib.h file included here (IsGamepadButtonDown)
-// FIXME also iostream. (std::cout)
 
 UserInput::UserInput()
 {
-
+   
 }
-
 void UserInput::switchDriveMode(DriveMode newMode){
     m_drive_mode = newMode;
 }
@@ -38,19 +38,65 @@ void UserInput::switchDriveMode(DriveMode newMode){
 void UserInput::processInput(){
 
     // TODO make a comm_packet and send necessary commands to the ngc
-
-    if (IsGamepadAvailable(0)) {
-        if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_UP)) { // Yukarı
-            std::cout << "Go forward" << std::endl;
+    static CommsModule comms_module(CommsModule::udp, CommsModule::console_channel);
+    Drive_Command_Packet dcp;
+    static float speed = 0.0f;  
+    const float speed_increment = 0.05f; 
+    const float max_speed = 20.0f; 
+    const float min_speed = 0.0f;
+    if (IsGamepadAvailable(0)) 
+    {
+        float leftX = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X);
+        float leftY = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y); 
+        
+        // Small joystick movements are ignored to ensure stable controls
+        if (leftX > 0.1f) { // Creating deadzone because we don't want our little vehicle to shake
+            std::cout << "Move right" << std::endl;
+            dcp.setSteer(leftX); 
+        } else if (leftX < -0.1f) {
+            std::cout << "Move left" << std::endl;   
+            dcp.setSteer(leftX); 
         }
-        if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN)) { // Aşağı
-            std::cout << "Go backward" << std::endl;
-        }
-        if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) { // Sağ
-            std::cout << "Turn right" << std::endl;
-        }
-        if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)) { // Sol
-            std::cout << "Turn left" << std::endl;
+        if (leftY > 0.1f) {
+            std::cout << "Move forward" << std::endl;  
+            dcp.setSpeed(leftY);  
+        } else if (leftY < -0.1f) {
+            std::cout << "Move backward" << std::endl; 
+            dcp.setSpeed(leftY); 
         }
     }
+    else
+    {
+        // Handle speed increase when UP key is pressed
+        if (IsKeyDown(KEY_UP)) {
+            speed += speed_increment;  // Increase speed
+            if (speed > max_speed) speed = max_speed;  // Cap speed to max value
+            std::cout << "Speed increasing: " << speed << std::endl;
+        }
+        else if (IsKeyDown(KEY_DOWN)) {
+            speed -= speed_increment;  // Decrease speed
+            if (speed < -max_speed) speed = -max_speed; // Cap speed to max negative value
+            std::cout << "Speed decreasing: " << speed << std::endl;
+        } else {
+            if (speed < min_speed)
+                speed = min_speed;
+            else
+                speed -= speed_increment; 
+        }
+        // Update the command packet's speed
+        dcp.setSpeed(speed); 
+        // Handle steering with LEFT/RIGHT keys
+        if (IsKeyDown(KEY_RIGHT)) {
+            dcp.setSteer(1.0f);
+            std::cout << "Turn right" << std::endl;
+        } else if (IsKeyDown(KEY_LEFT)) {
+            dcp.setSteer(-1.0f);
+            std::cout << "Turn left" << std::endl;
+        } else {
+            dcp.setSteer(0.0f);
+        }
+    }
+    // is this how i send packets??
+
+    comms_module.sendPacket(dcp, CommsModule::console_channel);
 }

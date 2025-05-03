@@ -53,8 +53,8 @@ int main()
     Video_Data_Packet vdp;
 
     // graphics initialization
-    const int screenWidth = 1000;
-    const int screenHeight = 800;
+    const int screenWidth = 1900;
+    const int screenHeight = 900;
 
     cg::InitWindowSafe(screenWidth,screenHeight,"Command Console");
 
@@ -116,7 +116,7 @@ int main()
                     // NOTE: loading an image (in RAM) to a texture (in VRAM) is expensive
                     video_texFrame = LoadTextureFromImage(video_frame);
                     //frame, pos x, pos y, tint
-                    DrawTexture(video_texFrame, 0,0, WHITE);
+                    DrawTexture(video_texFrame, 960,50, WHITE);
                     UnloadImage(video_frame);
                     UnloadTexture(video_texFrame);
                     break;
