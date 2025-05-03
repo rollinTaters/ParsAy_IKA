@@ -47,13 +47,13 @@ CommsModule::~CommsModule()
 */
 }
 
-bool CommsModule::sendPacket( PacketBase p, Channel c )
+bool CommsModule::sendPacket( CommsPacket p, Channel c )
 {
 #ifdef LOCALHOST
     // send the packet
     if( m_udp.send(
                 &p,
-                sizeof(PacketBase),
+                sizeof(CommsPacket),
                 sf::IpAddress::LocalHost,
                 c )
             == sf::Socket::Status::Done )
@@ -65,7 +65,7 @@ bool CommsModule::sendPacket( PacketBase p, Channel c )
 }
 
 
-bool CommsModule::sendRequest( PacketType req )
+bool CommsModule::sendRequest( CommsPacket::PacketType req )
 {
     return false;
 }
@@ -81,7 +81,7 @@ bool CommsModule::packetAvailable()
     return false;
 }
 
-bool CommsModule::readPacket( PacketBase& p )
+bool CommsModule::readPacket( CommsPacket& p )
 {
 #ifdef LOCALHOST
     std::size_t received;
@@ -90,7 +90,7 @@ bool CommsModule::readPacket( PacketBase& p )
 
     if( m_udp.receive(
                 &p,
-                sizeof(PacketBase),
+                sizeof(CommsPacket),
                 received,
                 sender,
                 port )

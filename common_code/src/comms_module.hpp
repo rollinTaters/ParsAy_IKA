@@ -72,13 +72,13 @@ class CommsModule
     CommsModule( Type, Channel );
     ~CommsModule();
 
-    bool sendPacket( PacketBase, Channel );
+    bool sendPacket( CommsPacket, Channel );
 
-    bool sendRequest( PacketType );
+    bool sendRequest( CommsPacket::PacketType );
 
     bool packetAvailable();
 
-    bool readPacket( PacketBase& );
+    bool readPacket( CommsPacket& );
 
   private:
 

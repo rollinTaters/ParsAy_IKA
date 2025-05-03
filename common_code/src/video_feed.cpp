@@ -32,7 +32,7 @@ void VideoFeed::splitIntoPackets()
 
     for(size_t chunkID = 0; chunkID < totalChunks; chunkID++)
     {
-        Video_Data_Packet vdp;
+        CommsPacket vdp( CommsPacket::video_packet );
         vdp.setChunkID(chunkID);
         vdp.setFrameID(m_frameID);
 
@@ -47,7 +47,7 @@ void VideoFeed::splitIntoPackets()
     }
 }
 
-const std::vector<Video_Data_Packet>& VideoFeed::getOutgoingPackets() const
+const std::vector<CommsPacket>& VideoFeed::getOutgoingPackets() const
 { 
     return m_outgoingPackets; 
 }
@@ -64,8 +64,11 @@ uint16_t VideoFeed::getCurrentFrameID() const
 //
 
 
-void VideoFeed::receivePacket(const Video_Data_Packet& vdp)
+void VideoFeed::receivePacket(const CommsPacket& vdp)
 {
+    // check if given packet is indeed a video packet
+    if( vdp.packet_type != CommsPacket::video_packet ) return;
+
     //get packet
     uint16_t packetFrameID = vdp.getFrameID();
     uint16_t chunkID = vdp.getChunkID();
@@ -84,7 +87,7 @@ void VideoFeed::receivePacket(const Video_Data_Packet& vdp)
 
     }
     size_t offset = chunkID * 25;
-    auto& payload = vdp.getPayload();
+    auto payload = vdp.getPayload();
 
     size_t copySize = std::min<size_t>(25, m_incomingFrame.data.size() - offset);
     std::memcpy(m_incomingFrame.data.data() + offset, payload.data(), copySize);

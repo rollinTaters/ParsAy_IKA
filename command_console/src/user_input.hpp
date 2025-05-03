@@ -23,6 +23,7 @@
 */
 /// User Inputs ///
 #pragma once
+#include "../../common_code/src/comms_module.hpp"
 
 
 class UserInput
@@ -36,7 +37,7 @@ class UserInput
     public:
         UserInput();
         void switchDriveMode(DriveMode newMode);
-        void processInput();
+        void processInput( CommsModule& );
 
     private:
         

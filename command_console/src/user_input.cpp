@@ -35,11 +35,10 @@ void UserInput::switchDriveMode(DriveMode newMode){
     m_drive_mode = newMode;
 }
 
-void UserInput::processInput(){
+void UserInput::processInput( CommsModule &comms_module ){
 
-    // TODO make a comm_packet and send necessary commands to the ngc
-    static CommsModule comms_module(CommsModule::udp, CommsModule::console_channel);
-    Drive_Command_Packet dcp;
+    // make a comm_packet and send necessary commands to the ngc
+    CommsPacket dcp( CommsPacket::console_command );
     static float speed = 0.0f;  
     const float speed_increment = 0.05f; 
     const float max_speed = 20.0f; 
@@ -52,17 +51,17 @@ void UserInput::processInput(){
         // Small joystick movements are ignored to ensure stable controls
         if (leftX > 0.1f) { // Creating deadzone because we don't want our little vehicle to shake
             std::cout << "Move right" << std::endl;
-            dcp.setSteer(leftX); 
+            dcp.setManualSteer(leftX); 
         } else if (leftX < -0.1f) {
             std::cout << "Move left" << std::endl;   
-            dcp.setSteer(leftX); 
+            dcp.setManualSteer(leftX); 
         }
         if (leftY > 0.1f) {
             std::cout << "Move forward" << std::endl;  
-            dcp.setSpeed(leftY);  
+            dcp.setManualSpeed(leftY);  
         } else if (leftY < -0.1f) {
             std::cout << "Move backward" << std::endl; 
-            dcp.setSpeed(leftY); 
+            dcp.setManualSpeed(leftY); 
         }
     }
     else
@@ -84,19 +83,19 @@ void UserInput::processInput(){
                 speed -= speed_increment; 
         }
         // Update the command packet's speed
-        dcp.setSpeed(speed); 
+        dcp.setManualSpeed(speed); 
         // Handle steering with LEFT/RIGHT keys
         if (IsKeyDown(KEY_RIGHT)) {
-            dcp.setSteer(1.0f);
+            dcp.setManualSteer(1.0f);
             std::cout << "Turn right" << std::endl;
         } else if (IsKeyDown(KEY_LEFT)) {
-            dcp.setSteer(-1.0f);
+            dcp.setManualSteer(-1.0f);
             std::cout << "Turn left" << std::endl;
         } else {
-            dcp.setSteer(0.0f);
+            dcp.setManualSteer(0.0f);
         }
     }
     // is this how i send packets??
 
-    comms_module.sendPacket(dcp, CommsModule::console_channel);
+    comms_module.sendPacket(dcp, CommsModule::command_channel);
 }

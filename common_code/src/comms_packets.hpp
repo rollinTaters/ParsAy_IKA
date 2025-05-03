@@ -1,158 +1,209 @@
+
 #pragma once
 #include <cstdint>
+#include <cstring>  // memcpy
 #include <array>
-// Base for all packet types, this is the data that is actually being sent
-// other packet types only employ custom methods to read/decode this data
-struct PacketBase
+
+struct CommsPacket
 {
+    // actual payload of the packet
     std::uint8_t packet_type;
-    std::int16_t data1;
-    std::int16_t data2;
-    std::int16_t data3;
-};
+    std::array< std::uint8_t, 31 > data;
 
-enum PacketType{
-    undefined,
-    drive_command,
-    drive_telemetry1,
-    drive_telemetry2,
-    turret,
-    ngc_command,
-    ngc_telemetry,
-    video_data,
+    enum PacketType{
+        undefined,
 
-    request1,
-    request2,
-    request3
-};
+        drive_command,    // NOT IMPLEMENTED    CCM -> Drive Module
+        drive_telemetry,  // NOT IMPLEMENTED    Drive Module -> CCM
+
+        turret,             // CCM <-> turret module
+
+        ngc_command,        // CCM -> NGC
+        ngc_telemetry,      // NGC -> CCM
+
+        video_packet,       // image processing -> console
+        console_telemetry,  // CCM -> console
+        console_command,    // console -> CCM
+
+        request1,   // this is an idea
+        request2,   // this is an idea
+        request3    // this is an idea
+    };
+
+    CommsPacket( PacketType t ):packet_type(t) {}
+    CommsPacket():packet_type(undefined) {}
+
+    private:
+    void writeFloat_1( float input, int offset, float minval, float maxval )
+    {
+        // clamp it
+        input = std::max( input, minval );
+        input = std::min( input, maxval );
+
+        // make the input fit between designated sizes value range
+        float range = maxval - minval;
+        std::uint8_t byte1 = (std::uint8_t)( input/range *255 );
+
+        std::memcpy( &(data[offset]), &byte1, sizeof( byte1 ) );
+    }
+
+    float readFloat_1( int offset, float minval, float maxval ) const
+    {
+        std::uint8_t byte1;
+        std::memcpy( &byte1, &(data[offset]), sizeof( byte1 ) );
+
+        float range = maxval - minval;
+        return ( byte1/255.f * range ) + minval;
+    }
+
+    void writeFloat_2( float input, int offset, float minval, float maxval )
+    {
+        // clamp it
+        input = std::max( input, minval );
+        input = std::min( input, maxval );
+
+        // make the input fit between designated sizes value range
+        float range = maxval - minval;
+        std::uint16_t byte2 = (std::uint16_t)( input/range *65535 );
+
+        std::memcpy( &(data[offset]), &byte2, sizeof( byte2 ) );
+    }
+
+    float readFloat_2( int offset, float minval, float maxval ) const
+    {
+        std::uint16_t byte2;
+        std::memcpy( &byte2, &(data[offset]), sizeof( byte2 ) );
+
+        float range = maxval - minval;
+        return ( byte2/65535.f * range ) + minval;
+    }
+
+    void write_2( std::uint16_t input, int offset )
+    {
+        std::uint8_t b1 = (std::uint8_t)(0xFF & input);
+        std::uint8_t b2 = (std::uint8_t)(input >> 8);
+        data[offset] = b1;
+        data[offset+1] = b2;
+    }
+
+    std::uint16_t read_2( int offset ) const
+    {
+        std::uint16_t b1 = data[offset];
+        std::uint16_t b2 = data[offset+1];
+        return ( b1 | (b2 << 8) );
+    }
+    public:
 
 /*
-   These are different packets that we use to transfer data between different subsystems
-   Feel free to add your own packets if needed
+   These are different methods that we use to parse (encode/decode) the data in the packets.
+   we use these packets to transfer data between different subsystems
+   Feel free to add your own packet parser methods if needed
 */
 
-// data sent to the drive module
-struct Drive_Command_Packet : public PacketBase
-{
-    Drive_Command_Packet(){ packet_type = drive_command; data1 = 0; data2 = 0;}
-    Drive_Command_Packet( PacketBase& pb )
-    {
-        packet_type = pb.packet_type;
-        data1 = pb.data1;
-        data2 = pb.data2;
-    }
-    std::uint16_t getSpeed(){ return data1; }
-    std::uint16_t getSteer(){ return data2; }
+    /* XXX there is no fucking drive module. electronics team is indecisive 
+    // ---- data sent to the drive module ----
+    float getSpeed(){ return data1; }
+    float getSteer(){ return data2; }
 
-    void setSpeed( std::uint16_t inp ){ data1 = inp; }
-    void setSteer( std::uint16_t inp ){ data2 = inp; }
-};
+    void setSpeed( float inp ){ data1 = inp; }
+    void setSteer( float inp ){ data2 = inp; }
 
-// data sent from drive module
-struct Drive_Telemetry_Packet1 : public PacketBase
-{
-    Drive_Telemetry_Packet1(){ packet_type = drive_telemetry1; data1 = 0; data2 = 0; data3 = 0; }
-    Drive_Telemetry_Packet1( PacketBase& pb )
-    {
-        packet_type = pb.packet_type;
-        data1 = pb.data1;
-        data2 = pb.data2;
-        data3 = pb.data3;
-    }
+    // ---- data sent from drive module ----
+    float getMotor1Temp(){ return data1; }
+    float getMotor1Amps(){ return data2; }
+    float getMotor1Vel() { return data3; }
+    float getMotor2Temp(){ return data1; }
+    float getMotor2Amps(){ return data2; }
+    float getMotor2Vel() { return data3; }
 
-    std::uint16_t getMotor1Temp(){ return data1; }
-    std::uint16_t getMotor1Amps(){ return data2; }
-    std::uint16_t getMotor1Vel() { return data3; }
-
-    void setMotor1Temp( std::uint16_t inp ){ data1 = inp; }
-    void setMotor1Amps( std::uint16_t inp ){ data2 = inp; }
-    void setMotor1Vel ( std::uint16_t inp ){ data3 = inp; }
-};
-struct Drive_Telemetry_Packet2 : public PacketBase
-{
-    Drive_Telemetry_Packet2(){ packet_type = drive_telemetry2; data1 = 0; data2 = 0; data3 = 0; }
-    Drive_Telemetry_Packet2( PacketBase& pb )
-    {
-        packet_type = pb.packet_type;
-        data1 = pb.data1;
-        data2 = pb.data2;
-        data3 = pb.data3;
-    }
-
-    std::uint16_t getMotor2Temp(){ return data1; }
-    std::uint16_t getMotor2Amps(){ return data2; }
-    std::uint16_t getMotor2Vel() { return data3; }
-
-    void setMotor1Temp( std::uint16_t inp ){ data1 = inp; }
-    void setMotor2Amps( std::uint16_t inp ){ data2 = inp; }
-    void setMotor3Vel ( std::uint16_t inp ){ data3 = inp; }
-};
+    void setMotor1Temp( float inp ){ data1 = inp; }
+    void setMotor1Amps( float inp ){ data2 = inp; }
+    void setMotor1Vel ( float inp ){ data3 = inp; }
+    void setMotor2Temp( float inp ){ data1 = inp; }
+    void setMotor2Amps( float inp ){ data2 = inp; }
+    void setMotor2Vel ( float inp ){ data3 = inp; }
+    */
 
 
-// data sent/received to/from the turret module
-struct Turret_Packet : public PacketBase
-{
-    std::uint16_t getPan() { return data1; }
-    std::uint16_t getTilt(){ return data2; }
-    std::uint16_t getLaserStatus(){ return data3; }
 
-    void setPan ( std::uint16_t inp ){ data1 = inp; }
-    void setTilt( std::uint16_t inp ){ data2 = inp; }
-    void setLaserStatus( std::uint16_t inp ){ data3 = inp; }
-};
+    /* TODO
+    // ---- data sent/received to/from the turret module ----
+    float getPan() { return data1; }
+    float getTilt(){ return data2; }
+    bool getLaserStatus(){ return data3; }
 
+    void setPan ( float inp ){ data1 = inp; }
+    void setTilt( float inp ){ data2 = inp; }
+    void setLaserStatus( bool inp ){ data3 = inp; }
+    */
 
-// data sent to the ngc module
-struct NGC_Command_Packet : public PacketBase
-{
-    std::uint16_t getControlMode(){ return data1; }
+    /* TODO
+    // ---- data sent to the ngc module ----
+    std::uint8_t getControlMode(){ return data1; }
 
-    void setControlMode( std::uint16_t inp ){ data1 = inp; }
-};
+    void setControlMode( std::uint8_t inp ){ data1 = inp; }
+    */
 
-// from NGC to CCM
-struct NGC_Telemetry_Packet : public PacketBase
-{
-    NGC_Telemetry_Packet(){ packet_type = ngc_telemetry; data1 = 0; data2 = 0; data3 = 0; }
-    NGC_Telemetry_Packet( PacketBase& pb )
-    {
-        packet_type = pb.packet_type;
-        data1 = pb.data1;
-        data2 = pb.data2;
-        data3 = pb.data3;
-    }
-    std::uint16_t getHeading(){ return data1; }
-    std::uint16_t getPitch(){ return data2; }
-    std::uint16_t getRoll(){ return data3; }
+    /* TODO
+    // ---- NGC TELEMETRY: from NGC to CCM ----
+    float getHeading(){ return data1; }
+    float getPitch()  { return data2; }
+    float getRoll()   { return data3; }
 
-    void setHeading( std::uint16_t inp ){ data1 = inp; }
-    void setPitch  ( std::uint16_t inp ){ data2 = inp; }
-    void setRoll   ( std::uint16_t inp ){ data3 = inp; }
-};
+    void setHeading( float inp ){ data1 = inp; }
+    void setPitch  ( float inp ){ data2 = inp; }
+    void setRoll   ( float inp ){ data3 = inp; }
+    */
 
-struct Video_Data_Packet : public PacketBase
-{
-    std::array<std::uint8_t, 25> payload;
-    Video_Data_Packet(){ packet_type = video_data;  data1 = 0; data2 = 0; data3 = 0; payload.fill(0); }
-    Video_Data_Packet( PacketBase& pb )
-    {
-        packet_type = pb.packet_type;
-        data1 = pb.data1;        // frame id
-        data2 = pb.data2 & 0xFF; // chunk id ( check out what bitwise and bit masking is )
-        // data3 = (pb.data2 >> 8) & 0xFF; // total chunks ( optional )
-        payload.fill(0); 
-    }
-    std::uint16_t getFrameID() const { return data1;}
-    std::uint16_t getChunkID() const { return data2;}
+    // ----  video data packet ----
+    std::uint16_t getFrameID() const { return read_2( 0 ); }
+    std::uint16_t getChunkID() const { return read_2( 2 ); }
     //std::uint16_t getTotalChunks() const { return data3;} // optional
-    const std::array<std::uint8_t, 25>& getPayload() const { return payload; } 
+    std::array<std::uint8_t, 25> getPayload() const
+    {
+        std::array<std::uint8_t, 25> le_array;
+        std::memcpy( &le_array, &(data[4]), sizeof(std::uint8_t)*25 );
+        return le_array;
+    }
 
-    void setFrameID(std::uint16_t id) { data1 = id; }
-    void setChunkID(std::uint8_t id) { data2 = id; }
+    void setFrameID(std::uint16_t id) { write_2( id, 0 ); }
+    void setChunkID(std::uint16_t id) { write_2( id, 2 ); }
     //void setTotalChunks(std::uint8_t chunks) { data3 = chunks; } // optional
-    void setPayload(const std::array<std::uint8_t, 25>& data) { payload = data; }
+    void setPayload(const std::array<std::uint8_t, 25>& inp_data)
+    {
+        std::memcpy( &(data[4]), &inp_data, sizeof(std::uint8_t)*25 );
+    }
 
+    // ---- Console Telemetry, from CCM to Console ----
+    float ct_getMotor1Temp(){ return readFloat_1( 0, -20.f, 250.f ); }
+    float ct_getMotor2Temp(){ return readFloat_1( 1, -20.f, 250.f ); }
+    float ct_getMotor1Amps(){ return readFloat_1( 2, -10.f, 300.f ); }
+    float ct_getMotor2Amps(){ return readFloat_1( 3, -10.f, 300.f ); }
+    float ct_getMotor1Vel() { return readFloat_1( 4, -5.f, 5.f ); }
+    float ct_getMotor2Vel() { return readFloat_1( 5, -5.f, 5.f ); }
+    float ct_getHeading(){ return 0; }
+    float ct_getPitch()  { return 0; }
+    float ct_getRoll()   { return 0; }
+    float ct_getSpeed()  { return 0; }
+
+
+    void ct_setMotor1Temp( float inp ){ writeFloat_1( inp, 0, -20.f, 250.f ); }
+    void ct_setMotor2Temp( float inp ){ writeFloat_1( inp, 1, -20.f, 250.f ); }
+    void ct_setMotor1Amps( float inp ){ writeFloat_1( inp, 2, -10.f, 300.f ); }
+    void ct_setMotor2Amps( float inp ){ writeFloat_1( inp, 3, -10.f, 300.f ); }
+    void ct_setMotor1Vel ( float inp ){ writeFloat_1( inp, 4, -5.f, 5.f ); }
+    void ct_setMotor2Vel ( float inp ){ writeFloat_1( inp, 5, -5.f, 5.f ); }
+    void ct_setHeading( float inp ){ }
+    void ct_setPitch  ( float inp ){ }
+    void ct_setRoll   ( float inp ){ }
+    void ct_setSpeed  ( float inp ){ }
+
+    // ---- Console Command, from Console to CCM ----
+    void setManualSpeed( float inp ){ writeFloat_2( inp, 0, -5.f, 5.f ); }
+    void setManualSteer( float inp ){ writeFloat_2( inp, 2, -1.f, 1.f );}
+
+    float getManualSpeed(){ return readFloat_2( 0, -5.f, 5.f ); }
+    float getManualSteer(){ return readFloat_2( 2, -1.f, 1.f ); }
 };
-
 
 

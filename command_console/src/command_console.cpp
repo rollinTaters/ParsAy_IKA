@@ -44,13 +44,8 @@ int main()
     video_frame.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8;
     Texture2D video_texFrame;
 
-    // declare dummy packets
-    PacketBase raw_packet;
-    Drive_Telemetry_Packet1 dtp1;
-    Drive_Telemetry_Packet2 dtp2;
-    NGC_Telemetry_Packet ngctp;
-    Drive_Command_Packet dcp;
-    Video_Data_Packet vdp;
+    // declare a dummy packet
+    CommsPacket packet;
 
     // graphics initialization
     const int screenWidth = 1900;
@@ -80,38 +75,28 @@ int main()
         if (comms_module.packetAvailable())
         {
             // read packet
-            comms_module.readPacket(raw_packet);
+            comms_module.readPacket(packet);
 
             // make sense of packet
-            switch (raw_packet.packet_type)
+            switch (packet.packet_type)
             {
-                // TODO add other type of gauges
-                case drive_telemetry1:
-                    dtp1 = raw_packet;
-                    cg::gauge_temp.updateVal(dtp1.getMotor1Temp());
-                    cg::gauge_amp.updateVal(dtp1.getMotor1Amps());
+                case CommsPacket::console_telemetry:
+                    cg::gauge_temp.updateVal(packet.ct_getMotor1Temp());
+                    cg::gauge_amp.updateVal (packet.ct_getMotor1Amps());
+                    cg::gauge_amp2.updateVal(packet.ct_getMotor2Amps());
+                    cg::gauge_temp2.updateVal   (packet.ct_getMotor2Temp());
+                    cg::gauge_compass.updateVal (packet.ct_getHeading());
+                    cg::gauge_adi.updateRollVal (packet.ct_getRoll());
+                    cg::gauge_adi.updatePitchVal(packet.ct_getPitch());
+                    cg::gauge_speed.updateVal   (packet.ct_getSpeed());
                     break;
 
-                case drive_telemetry2:
-                    dtp2 = raw_packet;
-                    cg::gauge_amp2.updateVal(dtp2.getMotor2Amps());
-                    cg::gauge_temp2.updateVal(dtp2.getMotor2Temp());
+                case CommsPacket::console_command:
+                    std::cerr<<" why are we receiving a console command packet when we should be the one sending it?\n";
                     break;
 
-                case ngc_telemetry:
-                    ngctp = raw_packet;
-                    cg::gauge_compass.updateVal(ngctp.getHeading());
-                    cg::gauge_adi.updateRollVal(ngctp.getRoll());
-                    cg::gauge_adi.updatePitchVal(ngctp.getPitch());
-                    break;
-
-                case drive_command:
-                    dcp = raw_packet;
-                    cg::gauge_speed.updateVal(dcp.getSpeed());
-                    break;
-
-                case video_data:
-                    vdp = raw_packet;
+                case CommsPacket::video_packet:
+                    //vdp = raw_packet; ??? where do we read data from the packet??
                     streamer.newFrame( video_frame.data );
                     // NOTE: loading an image (in RAM) to a texture (in VRAM) is expensive
                     video_texFrame = LoadTextureFromImage(video_frame);
@@ -121,19 +106,18 @@ int main()
                     UnloadTexture(video_texFrame);
                     break;
                 
-                case undefined:
+                case CommsPacket::undefined:
                     std::cerr << "Warning: Received undefined packet type" << std::endl;
                     break;
 
                 default:
-                    std::cerr << "Error: Received unknown packet type: " << raw_packet.packet_type << std::endl;
-                    std::cerr << "Packet data: " << raw_packet.data1 << ", " << raw_packet.data2 << ", " << raw_packet.data3 << std::endl;
+                    std::cerr << "Error: Received unknown packet type: " << (int)packet.packet_type << std::endl;
                     break;
             }
         }
 
         // process input
-        cg::input.processInput();
+        cg::input.processInput( comms_module );
         // render gauges
         cg::renderGauges();
         EndDrawing();
