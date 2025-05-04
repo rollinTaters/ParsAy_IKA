@@ -37,7 +37,7 @@ class UserInput
     public:
         UserInput();
         void switchDriveMode(DriveMode newMode);
-        void processInput( CommsModule& );
+        void processInput( CommsPacket& );
 
     private:
         

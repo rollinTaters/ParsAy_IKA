@@ -35,10 +35,9 @@ void UserInput::switchDriveMode(DriveMode newMode){
     m_drive_mode = newMode;
 }
 
-void UserInput::processInput( CommsModule &comms_module ){
+void UserInput::processInput( CommsPacket &dcp ){
 
-    // make a comm_packet and send necessary commands to the ngc
-    CommsPacket dcp( CommsPacket::console_command );
+    // populate the given packet with the input read from the console
     static float speed = 0.0f;  
     const float speed_increment = 0.05f; 
     const float max_speed = 20.0f; 
@@ -95,7 +94,4 @@ void UserInput::processInput( CommsModule &comms_module ){
             dcp.setManualSteer(0.0f);
         }
     }
-    // is this how i send packets??
-
-    comms_module.sendPacket(dcp, CommsModule::command_channel);
 }

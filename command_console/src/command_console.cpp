@@ -45,7 +45,8 @@ int main()
     Texture2D video_texFrame;
 
     // declare a dummy packet
-    CommsPacket packet;
+    CommsPacket packet; // this one we use for the data we received
+    CommsPacket packet2send( CommsPacket::console_command ); // this one we use for sending console packets
 
     // graphics initialization
     const int screenWidth = 1900;
@@ -116,11 +117,13 @@ int main()
             }
         }
 
-        // process input
-        cg::input.processInput( comms_module );
         // render gauges
         cg::renderGauges();
         EndDrawing();
+
+        // process input
+        cg::input.processInput( packet2send );
+        comms_module.sendPacket( packet2send, CommsModule::command_channel );
     }
 
     CloseWindow();

@@ -78,14 +78,6 @@ namespace cg {
     }
 
     // -- DEBUG --
-    float g_amp_val = 0.f;
-    float g_temp_val = 0.f;
-    float g_pitch_val = 0.f;
-    float g_roll_val = 0.f;
-    float g_heading_val = 0.f;
-    float g_speed_val = 0.f;
-    float g_battery_val = 0.f;
-    float g_signal_val = 0.f;
     /*                   __
                         // \
                         \\_/ //
@@ -95,35 +87,26 @@ namespace cg {
    
     void DEBUG_gauge_test()
     {
-       // nudge value towards a random direction
-       g_amp_val      += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-       g_temp_val     += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-       g_pitch_val    += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-       g_roll_val     += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-       g_heading_val  += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-       g_speed_val    += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-       g_battery_val  += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
-       g_signal_val   += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+        static float g_values[11] = {0};
 
-       // clamp value to be between 0 and 1
-       g_amp_val     = std::max( 0.f, std::min( g_amp_val    , 1.f ));
-       g_temp_val    = std::max( 0.f, std::min( g_temp_val   , 1.f ));
-       g_pitch_val   = std::max( 0.f, std::min( g_pitch_val  , 1.f ));
-       g_roll_val    = std::max( 0.f, std::min( g_roll_val   , 1.f ));
-       g_heading_val = std::max( 0.f, std::min( g_heading_val, 1.f ));
-       g_speed_val   = std::max( 0.f, std::min( g_speed_val, 1.f ));
-       g_battery_val = std::max( 0.f, std::min( g_battery_val, 1.f ));
-       g_signal_val = std::max( 0.f, std::min( g_signal_val, 1.f ));
-       
-       // update gauges
-       gauge_amp.updateProportionalVal( g_amp_val );
-       gauge_temp.updateProportionalVal( g_temp_val );
-       gauge_battery.updateProportionalVal( g_battery_val );
-       gauge_adi.updateRollVal_prop( g_roll_val );
-       gauge_adi.updatePitchVal_prop( g_pitch_val );
-       gauge_speed.updateProportionalVal( g_speed_val );
-       gauge_compass.updateProportionalVal( g_heading_val );
-       gauge_signal.updateProportionalVal( g_signal_val );
+       // nudge value towards a random direction
+        for( float &g : g_values )
+        {
+            g += ((rand()/float(RAND_MAX))-0.5f)*0.05f;
+            g = std::max( 0.f, std::min( g, 1.f ));
+        }
+
+        gauge_amp.       updateProportionalVal( g_values[0] );
+        gauge_amp2.      updateProportionalVal( g_values[1] );
+        gauge_temp.      updateProportionalVal( g_values[2] );
+        gauge_temp2.     updateProportionalVal( g_values[3] );
+        gauge_battery.   updateProportionalVal( g_values[4] );
+        gauge_adi.       updateRollVal_prop   ( g_values[5] );
+        gauge_adi.       updatePitchVal_prop  ( g_values[6] );
+        gauge_speed.     updateProportionalVal( g_values[7] );
+        gauge_compass.   updateProportionalVal( g_values[8] );
+        gauge_signal.    updateProportionalVal( g_values[9] );
+        gauge_tachometer.updateProportionalVal( g_values[10] );
     }
     // -- END OF DEBUG --
 }

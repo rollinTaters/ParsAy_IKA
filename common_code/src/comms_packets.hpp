@@ -175,35 +175,35 @@ struct CommsPacket
     }
 
     // ---- Console Telemetry, from CCM to Console ----
-    float ct_getMotor1Temp(){ return readFloat_1( 0, -20.f, 250.f ); }
-    float ct_getMotor2Temp(){ return readFloat_1( 1, -20.f, 250.f ); }
-    float ct_getMotor1Amps(){ return readFloat_1( 2, -10.f, 300.f ); }
-    float ct_getMotor2Amps(){ return readFloat_1( 3, -10.f, 300.f ); }
-    float ct_getMotor1Vel() { return readFloat_1( 4, -5.f, 5.f ); }
-    float ct_getMotor2Vel() { return readFloat_1( 5, -5.f, 5.f ); }
-    float ct_getHeading(){ return 0; }
-    float ct_getPitch()  { return 0; }
-    float ct_getRoll()   { return 0; }
-    float ct_getSpeed()  { return 0; }
+    float ct_getMotor1Temp(){ return readFloat_1( 0, -20.f, 250.f ); }  // celsius
+    float ct_getMotor2Temp(){ return readFloat_1( 1, -20.f, 250.f ); }  // celsius
+    float ct_getMotor1Amps(){ return readFloat_1( 2, -10.f, 300.f ); }  // ampere
+    float ct_getMotor2Amps(){ return readFloat_1( 3, -10.f, 300.f ); }  // ampere 
+    float ct_getMotor1Vel() { return readFloat_1( 4, -5.f, 5.f ); }     // m/s
+    float ct_getMotor2Vel() { return readFloat_1( 5, -5.f, 5.f ); }     // m/s
+    float ct_getHeading(){ return readFloat_2(  6, 0.f, PI ); }      // radian
+    float ct_getPitch()  { return readFloat_2(  8, -PI/2, PI/2 ); }  // radian
+    float ct_getRoll()   { return readFloat_2( 10, -PI/2, PI/2 ); }  // radian
+    float ct_getSpeed()  { return readFloat_2( 12, -5.f, 5.f ); }    // m/s
 
 
-    void ct_setMotor1Temp( float inp ){ writeFloat_1( inp, 0, -20.f, 250.f ); }
-    void ct_setMotor2Temp( float inp ){ writeFloat_1( inp, 1, -20.f, 250.f ); }
-    void ct_setMotor1Amps( float inp ){ writeFloat_1( inp, 2, -10.f, 300.f ); }
-    void ct_setMotor2Amps( float inp ){ writeFloat_1( inp, 3, -10.f, 300.f ); }
-    void ct_setMotor1Vel ( float inp ){ writeFloat_1( inp, 4, -5.f, 5.f ); }
-    void ct_setMotor2Vel ( float inp ){ writeFloat_1( inp, 5, -5.f, 5.f ); }
-    void ct_setHeading( float inp ){ }
-    void ct_setPitch  ( float inp ){ }
-    void ct_setRoll   ( float inp ){ }
-    void ct_setSpeed  ( float inp ){ }
+    void ct_setMotor1Temp( float inp ){ writeFloat_1( inp, 0, -20.f, 250.f ); } // celsius
+    void ct_setMotor2Temp( float inp ){ writeFloat_1( inp, 1, -20.f, 250.f ); } // celsius
+    void ct_setMotor1Amps( float inp ){ writeFloat_1( inp, 2, -10.f, 300.f ); } // ampere
+    void ct_setMotor2Amps( float inp ){ writeFloat_1( inp, 3, -10.f, 300.f ); } // ampere
+    void ct_setMotor1Vel ( float inp ){ writeFloat_1( inp, 4, -5.f, 5.f ); }    // m/s
+    void ct_setMotor2Vel ( float inp ){ writeFloat_1( inp, 5, -5.f, 5.f ); }    // m/s
+    void ct_setHeading( float inp ){ writeFloat_2( inp,  6, 0.f, PI ); }      // radian
+    void ct_setPitch  ( float inp ){ writeFloat_2( inp,  8, -PI/2, PI/2 ); }  // radian
+    void ct_setRoll   ( float inp ){ writeFloat_2( inp, 10, -PI/2, PI/2 ); }  // radian
+    void ct_setSpeed  ( float inp ){ writeFloat_2( inp, 12, -5.f, 5.f ); }    // m/s   
 
     // ---- Console Command, from Console to CCM ----
-    void setManualSpeed( float inp ){ writeFloat_2( inp, 0, -5.f, 5.f ); }
-    void setManualSteer( float inp ){ writeFloat_2( inp, 2, -1.f, 1.f );}
+    void setManualSpeed( float inp ){ writeFloat_2( inp, 0, -5.f, 5.f ); }  // m/s
+    void setManualSteer( float inp ){ writeFloat_2( inp, 2, -1.f, 1.f );}   // unitless
 
-    float getManualSpeed(){ return readFloat_2( 0, -5.f, 5.f ); }
-    float getManualSteer(){ return readFloat_2( 2, -1.f, 1.f ); }
+    float getManualSpeed(){ return readFloat_2( 0, -5.f, 5.f ); }   // m/s
+    float getManualSteer(){ return readFloat_2( 2, -1.f, 1.f ); }   // unitless
 };
 
 
