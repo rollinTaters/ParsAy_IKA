@@ -1,5 +1,3 @@
-RenderTexture2D turretViewRT;
-Camera3D turretCam;
 #include "raylib.h"
 #include "raymath.h"
 
@@ -11,10 +9,6 @@ extern Env_Emulator env_emulator;
 
 namespace GUI
 {
-
-    Vehicle* getVehicle() {
-        return &simulated_vehicle;
-    }
 
     Vector3 taters2raylib( Vector3 inp )
     { return Vector3RotateByAxisAngle( inp, (Vector3){1,0,0}, 3*PI/2.f ); }
@@ -37,6 +31,9 @@ namespace GUI
     Texture2D texture_yn;
     Texture2D texture_zp;
     Texture2D texture_zn;
+
+    RenderTexture2D turretViewRT;
+    Camera3D turretCam;
 
     // crosshair variables
     Vector3 crosshair;
@@ -90,24 +87,12 @@ namespace GUI
         last_wp_update = GetTime();
         wp_update_rate = 1; // seconds
 
-        turretViewRT = LoadRenderTexture(200, 200);
+        turretViewRT = LoadRenderTexture(
+                            simulated_vehicle.getTurret().camera_wide_resolution_x,
+                            simulated_vehicle.getTurret().camera_wide_resolution_y );
         turretCam = camera;  // Aynı ayarları kullanabiliriz
 
     }
-
-    // gui.cpp
-    void UpdateAndDrawEverything() 
-    {
-        // RenderTexture2D kamerandan görüntü al
-        Image img = LoadImageFromTexture(turretViewRT.texture); // BURADA RAM'e çekiyoruz
-
-        // Image processing fonksiyonuna gönder
-        //ProcessImage(img);
-
-        // RAM'den sildik (memory leak olmasın)
-        UnloadImage(img);
-    }
-
 
     void deInitGUI()
     {
@@ -171,9 +156,8 @@ namespace GUI
 
             ngc_system.directCommand( cmd_speed, cmd_rate );
         }
-        Vehicle* v = GUI::getVehicle();
-        Vector3 turret_pos = v->getCameraPosition();      // vehicle.cpp'de BB3D pozisyonu
-        Vector3 turret_dir = v->getCameraVector();        // yön vektörü
+        Vector3 turret_pos = simulated_vehicle.getCameraPosition();      // vehicle.cpp'de BB3D pozisyonu
+        Vector3 turret_dir = simulated_vehicle.getCameraVector();        // yön vektörü
 
         turretCam.position = turret_pos;
         turretCam.target = Vector3Add(turret_pos, Vector3Scale(turret_dir, 10.0f));

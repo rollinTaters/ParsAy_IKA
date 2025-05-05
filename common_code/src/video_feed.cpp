@@ -14,14 +14,17 @@ VideoFeed::VideoFeed(uint16_t frameWidth, uint16_t frameHight){
 
 void VideoFeed::setFrame( void* image_data, int image_width, int image_height )
 {
+    m_frameID++;
+
     m_outgoingFrameBytes.clear();
     int bytesPerPixel = 3; //RGB
     int totalSize = image_width * image_height * bytesPerPixel;
     //resizing vector to totalSize
     m_outgoingFrameBytes.resize(totalSize);
     std::memcpy(m_outgoingFrameBytes.data(), image_data, totalSize);
-    
-    m_frameID++;
+
+    // get the packets ready for transmission
+    splitIntoPackets();
 }
 
 void VideoFeed::splitIntoPackets()
@@ -41,13 +44,13 @@ void VideoFeed::splitIntoPackets()
         size_t offset = chunkID * payloadSize;
         size_t copySize = std::min(payloadSize,m_outgoingFrameBytes.size() - offset);
 
-        std::memcpy(payload.data(), m_incomingFrame.data.data(), payloadSize);
+        std::memcpy( payload.data(), &(m_outgoingFrameBytes[offset]), copySize );
         vdp.setPayload(payload);
         m_outgoingPackets.push_back(vdp);
     }
 }
 
-const std::vector<CommsPacket>& VideoFeed::getOutgoingPackets() const
+const std::vector<CommsPacket>& VideoFeed::getTXPackets() const
 { 
     return m_outgoingPackets; 
 }

@@ -31,13 +31,6 @@
 
 NGC::NGC( Vehicle* vehicle ): m_comms_module(CommsModule::udp, CommsModule::ngc_channel)
 {
-    /*
-    // init internal world map
-    int internal_map_size = 40; // metre
-    m_image_world_map.create( internal_map_size / m_metre_per_pixel,
-                              internal_map_size / m_metre_per_pixel );
-                              */
-
     // assign controlled vehicle
     m_vehicle = vehicle;
 
@@ -172,10 +165,14 @@ void NGC::mainThreadFunc()
         if( m_comms_module.packetAvailable() )
         {
             m_comms_module.readPacket( m_command_packet );
-            std::cout<<"NGC: got packet, data1:"<<m_command_packet.data1<<
-                                       " data2:"<<m_command_packet.data2<<
-                                       " data3:"<<m_command_packet.data3<<"\n";
+            std::cout<<"NGC: got command packet, data: \n";
+            for( std::uint8_t d : m_command_packet.data )
+                std::cout<< (int)d << " ";
+            std::cout<<"\n";
         }
+        // TODO send telemetry back
+        // sendTelemetry();
+
         // TODO check if dead reckoning is still active??
 
         // TODO run predictTrajectory and send it to command console for debug visualization

@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstring>  // memcpy
 #include <array>
+#include "utility.hpp"
 
 struct CommsPacket
 {

@@ -46,6 +46,43 @@ std::ostream& operator<<(std::ostream& os, const Vector3& v) {
     return os;
 }
 
+// DEBUG -- sends env_emulators cam view to command console
+#include "../../common_code/src/video_feed.hpp"
+void sendCamera2Console() 
+{
+    int feed_resolution_x = simulated_vehicle.getTurret().camera_wide_resolution_x/2;
+    int feed_resolution_y = simulated_vehicle.getTurret().camera_wide_resolution_y/2;
+
+    static int counter = 0;
+    static CommsModule undef_comms( CommsModule::udp, CommsModule::undefined );
+    static VideoFeed videofeed( feed_resolution_x, feed_resolution_y );
+
+    // throttling to prevent stealing all the resources
+    counter++;
+    if( counter > 30 )
+        counter = 0;
+    else
+        return;
+
+    // RenderTexture2D kamerandan görüntü al
+    Image img = LoadImageFromTexture( GUI::turretViewRT.texture ); // BURADA RAM'e çekiyoruz
+
+    ImageResize( &img, feed_resolution_x, feed_resolution_y );
+
+    // Image processing fonksiyonuna gönder
+    //ProcessImage(img);
+    videofeed.setFrame( img.data, img.width, img.height );
+    std::vector<CommsPacket> tx_packets = videofeed.getTXPackets();
+
+    // send 'em away
+    for( CommsPacket p : tx_packets )
+        undef_comms.sendPacket( p, CommsModule::console_channel );
+
+    // RAM'den sildik (memory leak olmasın)
+    UnloadImage(img);
+}
+
+
 // this is the vehicle we are managing/controlling
 Vehicle simulated_vehicle;
 
@@ -80,15 +117,15 @@ int main()
         GUI::checkUserInput();
 
         BeginDrawing();
-        BeginTextureMode(turretViewRT);
+        BeginTextureMode( GUI::turretViewRT ); // --- texture mode start
         ClearBackground(SKYBLUE);
 
-        BeginMode3D(turretCam);
+        BeginMode3D( GUI::turretCam );
         env_emulator.drawHMap();
         GUI::drawVehicle();
         EndMode3D();
 
-        EndTextureMode();
+        EndTextureMode();   // --------------- texture mode end
 
         ClearBackground( RAYWHITE );
 
@@ -107,8 +144,10 @@ int main()
         GUI::drawOverlay();
 
         DrawText("Turret View:", 600, 10, 10, DARKGRAY);
-        DrawTextureRec(turretViewRT.texture, (Rectangle){0, 0, 200, -200}, (Vector2){600, 30}, WHITE);
-        GUI::UpdateAndDrawEverything();
+        DrawTextureRec( GUI::turretViewRT.texture, (Rectangle){0, 0, 200, -200}, (Vector2){600, 30}, WHITE);
+
+        // send turret cam view to command console, debug
+        sendCamera2Console();
 
         EndDrawing();
     }

@@ -11,8 +11,7 @@ class VideoFeed
 
         //transmit data
         void setFrame( void* image_data, int image_width, int image_height );
-        void splitIntoPackets();
-        const std::vector<CommsPacket>& getOutgoingPackets() const;
+        const std::vector<CommsPacket>& getTXPackets() const;   // packets to be transmitted
         uint16_t getCurrentFrameID() const;
 
         //recieve data
@@ -29,6 +28,7 @@ class VideoFeed
         //transmit
         std::vector<uint8_t> m_outgoingFrameBytes;
         std::vector<CommsPacket> m_outgoingPackets;
+        void splitIntoPackets();    // splits outgoing framebytes to outgoingpackets
 
         //recieve
         struct FrameBuffer{

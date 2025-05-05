@@ -37,12 +37,10 @@
 
 #include <thread>
 #include <vector>
-#include <vector>
 #include "vehicle.hpp"
 #include "traction_motor.hpp"
 #include "../../common_code/src/comms_module.hpp"
 #include "../../common_code/src/utility.hpp"
-#include "SFML/Graphics/Image.hpp"
 
 // a little forward decleration, NOTE: remove the environment emulator for hardware tests
 class Env_Emulator;
@@ -114,7 +112,8 @@ class NGC
 
     // communications module
     CommsModule m_comms_module;
-    NGC_Command_Packet m_command_packet;
+    CommsPacket m_command_packet{ CommsPacket::ngc_command };
+    CommsPacket m_telemetry_packet = CommsPacket::ngc_telemetry;
 
     
 

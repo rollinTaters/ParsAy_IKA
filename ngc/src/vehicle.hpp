@@ -50,6 +50,11 @@ class Turret
     BB3D getCameraNarrowBox() const;
     Vector3 getCameraVector() const;    // both cameras have the same vector in an ideal world.
 
+    static constexpr int camera_wide_resolution_x = 1920;
+    static constexpr int camera_wide_resolution_y = 1080;
+    static constexpr int camera_narrow_resolution_x = 1920;
+    static constexpr int camera_narrow_resolution_y = 1080;
+
   private:
     // TODO
     // 3d bounding box has position and rotation information
