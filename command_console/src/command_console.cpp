@@ -35,22 +35,27 @@ int main()
     
     // create communications module
     CommsModule comms_module(CommsModule::udp, CommsModule::console_channel);
-    VideoFeed streamer( 1 );    // using resolution mode 1
+    VideoFeed streamer( 5 );    // using resolution mode 1
 
     // declare dummy packets
     CommsPacket packet; // this one we use for the data we received
     CommsPacket packet2send( CommsPacket::console_command ); // this one we use for sending console packets
-
-    Image video_frame;
-    std::uint8_t *video_frame_raw;
-    size_t video_frame_size;
-    Texture2D video_texFrame;
 
     // graphics initialization
     const int screenWidth = 1900;
     const int screenHeight = 900;
 
     cg::InitWindowSafe(screenWidth,screenHeight,"Command Console");
+
+    Image video_frame;
+    ImageFormat( &video_frame, PIXELFORMAT_UNCOMPRESSED_R8G8B8 );
+    video_frame.width = streamer.getResolutionWidth();
+    video_frame.height = streamer.getResolutionHeight();
+    video_frame.mipmaps = 1;
+
+    std::uint8_t *video_frame_raw = new std::uint8_t[1024]{0};
+    size_t video_frame_size;
+    Texture2D video_texFrame;
 
 
     // main loop
@@ -96,18 +101,36 @@ int main()
 
                 case CommsPacket::video_packet:
                     streamer.receivePacket( packet );
+                    /*// DEBUG        ----------------
                     std::cout<<"received video packet. frameID: "<<streamer.getCurrentFrameID()<<"\n";
+                    for( auto d : packet.data )
+                    {
+                        std::cout<< (int)d <<" ";
+                    }
+                    std::cout<<"\n";
+                    // DEBUG END    ---------------- */
+
                     if( streamer.isFrameReady() )
                     {
-                        std::cout<<"frame is ready and will be rendered!!\n";
                         streamer.RXFrame( video_frame_raw, video_frame_size );
-                        video_frame = LoadImageFromMemory( "jpg", video_frame_raw, video_frame_size );
-                        // NOTE: loading an image (in RAM) to a texture (in VRAM) is expensive
-                        video_texFrame = LoadTextureFromImage(video_frame);
-                        //frame, pos x, pos y, tint
-                        DrawTexture(video_texFrame, 960,50, WHITE);
+                        /*// DEBUG        ----------------
+                        std::cout<<"Command Console Main.cpp:\nRX frame size: "
+                            <<video_frame_size<<"\n";
+                        std::cout<<"raw frames:\n";
+                        for( int i = 0; i < video_frame_size; i++ )
+                        {
+                            std::cout<< (int)( video_frame_raw[i] ) << " ";
+                        }
+                        std::cout<<"\n";
+                        // DEBUG END    ---------------- */
+
+                        ImageFormat( &video_frame, PIXELFORMAT_UNCOMPRESSED_R8G8B8 );  // revert back to 3 channels
+                        video_frame = LoadImageFromMemory( ".png", video_frame_raw, video_frame_size );
+                        ImageFormat( &video_frame, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 );  // because there is a bug in raylib and UpdateTexture function only accepts this format
+                        Color* pixels = LoadImageColors( video_frame );
+                        //video_texFrame = LoadTextureFromImage(video_frame);
+                        UpdateTexture( video_texFrame, pixels );
                         UnloadImage(video_frame);
-                        UnloadTexture(video_texFrame);
                     }
                     break;
                 
@@ -123,6 +146,7 @@ int main()
 
         // render gauges
         cg::renderGauges();
+        DrawTextureEx( video_texFrame, {960,50}, 0.f, 16.f, WHITE);
         EndDrawing();
 
         // process input
@@ -130,6 +154,8 @@ int main()
         comms_module.sendPacket( packet2send, CommsModule::command_channel );
     }
 
+
+    UnloadTexture(video_texFrame);
     CloseWindow();
     std::cout << "Exiting. Have a nice day\n";
     return 0;

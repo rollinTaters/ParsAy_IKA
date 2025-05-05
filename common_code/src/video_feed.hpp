@@ -14,6 +14,12 @@ class VideoFeed
         static constexpr int resolution_1_y = 1080/2;
         static constexpr int resolution_2_x = 1920/4;
         static constexpr int resolution_2_y = 1080/4;
+        static constexpr int resolution_3_x = 1920/8;
+        static constexpr int resolution_3_y = 1080/8;
+        static constexpr int resolution_4_x = 1920/32;
+        static constexpr int resolution_4_y = 1080/32;
+        static constexpr int resolution_5_x = 1920/64;
+        static constexpr int resolution_5_y = 1080/64;
 
         int getResolutionWidth() const;
         int getResolutionHeight() const;
@@ -26,7 +32,7 @@ class VideoFeed
         //recieve data
         void receivePacket(const CommsPacket& packet);
         bool isFrameReady() const;
-        void RXFrame( void* ptr, size_t &size );
+        void RXFrame( std::uint8_t* ptr, size_t &size );
 
     private:
         // common 

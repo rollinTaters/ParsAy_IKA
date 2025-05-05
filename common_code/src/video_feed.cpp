@@ -7,8 +7,14 @@ VideoFeed::FrameBuffer::FrameBuffer( size_t frame_size )
 {
     data_size = frame_size;
     num_of_chunks = (frame_size + (chunk_size-1)) / chunk_size;
-    data = new std::uint8_t[ frame_size ];
-    chunksReceived = new bool[ num_of_chunks ];
+    data = new std::uint8_t[ frame_size ]{0};
+    chunksReceived = new bool[ num_of_chunks ]{false};
+
+    /*
+    std::cout<<"frame size: "<<frame_size
+        <<"\tfs/cs: "<< ((float)frame_size/(float)chunk_size)
+        <<"num chunks: "<<num_of_chunks<<"\n";
+        */
 }
 
 VideoFeed::FrameBuffer::~FrameBuffer()
@@ -34,6 +40,18 @@ VideoFeed::VideoFeed( int resolution_mode )
         case 2:
             m_height = resolution_2_y;
             m_width = resolution_2_x;
+            break;
+        case 3:
+            m_height = resolution_3_y;
+            m_width = resolution_3_x;
+            break;
+        case 4:
+            m_height = resolution_4_y;
+            m_width = resolution_4_x;
+            break;
+        case 5:
+            m_height = resolution_5_y;
+            m_width = resolution_5_x;
             break;
         default:
             std::cerr<<"Error: VideoFeed object got bullshit resolution mode\n";
@@ -62,8 +80,6 @@ void VideoFeed::TXFrame( void* image_data, size_t size )
     // split tx buffer into comms packets
     m_TX_packets.clear();
     size_t totalChunks = m_TX_buffer->num_of_chunks;
-
-    std::cout<<"total chunks in TXFrame: "<<totalChunks<<"\n";
 
     for(size_t chunkID = 0; chunkID < totalChunks; chunkID++)
     {
@@ -110,6 +126,7 @@ void VideoFeed::receivePacket(const CommsPacket& vdp)
         if( m_RX_buffer != nullptr ) delete m_RX_buffer;
         m_RX_buffer = new FrameBuffer( frame_size );
         m_RX_buffer->frameID = packetFrameID;
+        m_frameID = packetFrameID;
     }
     size_t offset = chunkID * (m_RX_buffer->chunk_size);
     auto payload = vdp.getPayload();
@@ -117,8 +134,20 @@ void VideoFeed::receivePacket(const CommsPacket& vdp)
     size_t copySize = std::min<size_t>( m_RX_buffer->chunk_size, frame_size - offset);
     std::memcpy( &((m_RX_buffer->data)[offset]), payload.data(), copySize);
 
+    /*// DEBUG        ------------
+    std::cout<<"\n\n----\nreceivePacket:\n";
+    std::cout<<"frameID: "<<packetFrameID<<
+        " chunks received: "<<chunkID+1<<"/"<<m_RX_buffer->num_of_chunks<<
+        " frame_size: "<<frame_size<<"\n"
+        <<"status of m_RX_buffer->data:\n";
+    for( int i = 0; i < m_RX_buffer->data_size; i++ )
+    {
+        std::cout<< (int)( (m_RX_buffer->data)[i] ) <<" ";
+    }
+    std::cout<<"\n----\n";
+    // DEBUG END    ------------    */
+
     m_RX_buffer->chunksReceived[chunkID] = true;
-    
 }
 
 bool VideoFeed::isFrameReady() const
@@ -134,16 +163,28 @@ bool VideoFeed::isFrameReady() const
     // check chunks 
 }
 
-void VideoFeed::RXFrame( void* ptr, size_t &size )
+void VideoFeed::RXFrame( std::uint8_t* ptr, size_t &size )
 {
     if( m_RX_buffer == nullptr )
     {
         std::cout<<"newFrame method does not have a valid m_RX_buffer to create new frame\n";
         return;
     }
-    if( ptr != nullptr ) delete ptr;
+    //if( ptr != nullptr ) delete ptr;  // this causes double free
 
-    ptr = new std::uint8_t[ m_RX_buffer->data_size ];
+    // and this probably never triggers, however im too damn tired to give any fucks right now
+    if( ptr == nullptr ) ptr = new std::uint8_t[ m_RX_buffer->data_size ];
+
     std::memcpy( ptr, m_RX_buffer->data, m_RX_buffer->data_size );
     size = m_RX_buffer->data_size;
+
+    /*// DEBUG        ------------
+    std::cout<<"\n\n----\nRXFrame:\n"
+        <<"status of ptr:\n";
+    for( int i = 0; i < m_RX_buffer->data_size; i++ )
+    {
+        std::cout<< (int)( ptr[i] ) <<" ";
+    }
+    std::cout<<"\n----\n";
+    // DEBUG END    ------------ */
 }

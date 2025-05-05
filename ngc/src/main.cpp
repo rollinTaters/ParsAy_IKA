@@ -50,19 +50,20 @@ std::ostream& operator<<(std::ostream& os, const Vector3& v) {
 #include "../../common_code/src/video_feed.hpp"
 void sendCamera2Console() 
 {
-    std::cout<<"we be here!!\n";
-    int feed_resolution_x = simulated_vehicle.getTurret().camera_wide_resolution_x/2;
-    int feed_resolution_y = simulated_vehicle.getTurret().camera_wide_resolution_y/2;
-
     static int counter = 0;
     static CommsModule undef_comms( CommsModule::udp, CommsModule::random_channel1 );
-    static VideoFeed videofeed( 1 );    // using mode 1 resolution
-    std::uint8_t *raw_image_data = new std::uint8_t[4000]; // this might leak
-    int *raw_image_data_size = new int(0);
+    static VideoFeed videofeed( 5 );
+
+    std::uint8_t *raw_image_data = nullptr;
+    int raw_image_data_size = 123;
+
+    int feed_resolution_x = videofeed.getResolutionWidth();
+    int feed_resolution_y = videofeed.getResolutionHeight();
+
 
     // throttling to prevent stealing all the resources
     counter++;
-    if( counter > 10 )
+    if( counter > 5 )
         counter = 0;
     else
         return;
@@ -70,19 +71,40 @@ void sendCamera2Console()
     // RenderTexture2D kamerandan görüntü al
     Image img = LoadImageFromTexture( GUI::turretViewRT.texture ); // BURADA RAM'e çekiyoruz
 
+    ImageFormat( &img, PIXELFORMAT_UNCOMPRESSED_R8G8B8 );
     ImageResize( &img, feed_resolution_x, feed_resolution_y );
 
-    //XXX XXX FIXME this shit gets stuck here, it somehow hangs this function here and the rest of the code just keeps running and skips this function on the next call time
-    raw_image_data = ExportImageToMemory( img, ".jpg", raw_image_data_size );
+    raw_image_data = ExportImageToMemory( img, ".png", &raw_image_data_size );
 
-    std::cout<<"raw image data size: "<<(int)(*raw_image_data_size)<<"\traw image data (ptr): "<<(std::uint8_t*)raw_image_data<<"\n";
+    // alternative, but doesnt work
+    //raw_image_data_size = (feed_resolution_x*feed_resolution_y*3);
+    //std::memcpy( raw_image_data, img.data, raw_image_data_size );
 
     // Image processing fonksiyonuna gönder
     //ProcessImage(img);
-    videofeed.TXFrame( raw_image_data, *raw_image_data_size );
+    videofeed.TXFrame( raw_image_data, raw_image_data_size );
     std::vector<CommsPacket> tx_packets = videofeed.getTXPackets();
 
+    /*// DEBUG        ----------------
+    std::cout<<"raw image data size: "<<raw_image_data_size<<"\n";
+    std::cout<<"raw image data thats being sent:\n";
+    for( int i = 0; i < raw_image_data_size; i++ )
+    {
+        std::cout<< (int)(raw_image_data[i]) <<" ";
+    }
+    std::cout<<"\n";
     std::cout<<"num of tx packets: "<<tx_packets.size()<<"\n";
+    std::cout<<"CommsPackets:\n";
+    for( auto p : tx_packets )
+    {
+        std::cout<<"-->";
+        for( auto d : p.data )
+            std::cout<< (int)d <<" ";
+        std::cout<<"<--\n";
+    }
+    std::cout<<"\n";
+    // DEBUG END    ----------------    */
+
     // send 'em away
     for( CommsPacket p : tx_packets )
         if( !undef_comms.sendPacket( p, CommsModule::console_channel ) )
@@ -90,6 +112,7 @@ void sendCamera2Console()
 
     // RAM'den sildik (memory leak olmasın)
     UnloadImage(img);
+    delete raw_image_data;
 }
 
 
