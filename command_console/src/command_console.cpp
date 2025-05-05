@@ -35,18 +35,16 @@ int main()
     
     // create communications module
     CommsModule comms_module(CommsModule::udp, CommsModule::console_channel);
-    VideoFeed streamer(800, 800);
+    VideoFeed streamer( 1 );    // using resolution mode 1
 
-    Image video_frame;
-    video_frame.width = 800;
-    video_frame.height = 800;
-    video_frame.mipmaps = 1;
-    video_frame.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8;
-    Texture2D video_texFrame;
-
-    // declare a dummy packet
+    // declare dummy packets
     CommsPacket packet; // this one we use for the data we received
     CommsPacket packet2send( CommsPacket::console_command ); // this one we use for sending console packets
+
+    Image video_frame;
+    std::uint8_t *video_frame_raw;
+    size_t video_frame_size;
+    Texture2D video_texFrame;
 
     // graphics initialization
     const int screenWidth = 1900;
@@ -97,14 +95,20 @@ int main()
                     break;
 
                 case CommsPacket::video_packet:
-                    //vdp = raw_packet; ??? where do we read data from the packet??
-                    streamer.newFrame( video_frame.data );
-                    // NOTE: loading an image (in RAM) to a texture (in VRAM) is expensive
-                    video_texFrame = LoadTextureFromImage(video_frame);
-                    //frame, pos x, pos y, tint
-                    DrawTexture(video_texFrame, 960,50, WHITE);
-                    UnloadImage(video_frame);
-                    UnloadTexture(video_texFrame);
+                    streamer.receivePacket( packet );
+                    std::cout<<"received video packet. frameID: "<<streamer.getCurrentFrameID()<<"\n";
+                    if( streamer.isFrameReady() )
+                    {
+                        std::cout<<"frame is ready and will be rendered!!\n";
+                        streamer.RXFrame( video_frame_raw, video_frame_size );
+                        video_frame = LoadImageFromMemory( "jpg", video_frame_raw, video_frame_size );
+                        // NOTE: loading an image (in RAM) to a texture (in VRAM) is expensive
+                        video_texFrame = LoadTextureFromImage(video_frame);
+                        //frame, pos x, pos y, tint
+                        DrawTexture(video_texFrame, 960,50, WHITE);
+                        UnloadImage(video_frame);
+                        UnloadTexture(video_texFrame);
+                    }
                     break;
                 
                 case CommsPacket::undefined:

@@ -50,16 +50,19 @@ std::ostream& operator<<(std::ostream& os, const Vector3& v) {
 #include "../../common_code/src/video_feed.hpp"
 void sendCamera2Console() 
 {
+    std::cout<<"we be here!!\n";
     int feed_resolution_x = simulated_vehicle.getTurret().camera_wide_resolution_x/2;
     int feed_resolution_y = simulated_vehicle.getTurret().camera_wide_resolution_y/2;
 
     static int counter = 0;
-    static CommsModule undef_comms( CommsModule::udp, CommsModule::undefined );
-    static VideoFeed videofeed( feed_resolution_x, feed_resolution_y );
+    static CommsModule undef_comms( CommsModule::udp, CommsModule::random_channel1 );
+    static VideoFeed videofeed( 1 );    // using mode 1 resolution
+    std::uint8_t *raw_image_data = new std::uint8_t[4000]; // this might leak
+    int *raw_image_data_size = new int(0);
 
     // throttling to prevent stealing all the resources
     counter++;
-    if( counter > 30 )
+    if( counter > 10 )
         counter = 0;
     else
         return;
@@ -69,14 +72,21 @@ void sendCamera2Console()
 
     ImageResize( &img, feed_resolution_x, feed_resolution_y );
 
+    //XXX XXX FIXME this shit gets stuck here, it somehow hangs this function here and the rest of the code just keeps running and skips this function on the next call time
+    raw_image_data = ExportImageToMemory( img, ".jpg", raw_image_data_size );
+
+    std::cout<<"raw image data size: "<<(int)(*raw_image_data_size)<<"\traw image data (ptr): "<<(std::uint8_t*)raw_image_data<<"\n";
+
     // Image processing fonksiyonuna gönder
     //ProcessImage(img);
-    videofeed.setFrame( img.data, img.width, img.height );
+    videofeed.TXFrame( raw_image_data, *raw_image_data_size );
     std::vector<CommsPacket> tx_packets = videofeed.getTXPackets();
 
+    std::cout<<"num of tx packets: "<<tx_packets.size()<<"\n";
     // send 'em away
     for( CommsPacket p : tx_packets )
-        undef_comms.sendPacket( p, CommsModule::console_channel );
+        if( !undef_comms.sendPacket( p, CommsModule::console_channel ) )
+            std::cout<<"packet sent failed!! ";
 
     // RAM'den sildik (memory leak olmasın)
     UnloadImage(img);

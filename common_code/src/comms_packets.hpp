@@ -159,20 +159,22 @@ struct CommsPacket
     // ----  video data packet ----
     std::uint16_t getFrameID() const { return read_2( 0 ); }
     std::uint16_t getChunkID() const { return read_2( 2 ); }
+    std::uint16_t getFrameSize() const { return read_2( 4 ); }  // this has one more byte to expand to
     //std::uint16_t getTotalChunks() const { return data3;} // optional
     std::array<std::uint8_t, 25> getPayload() const
     {
         std::array<std::uint8_t, 25> le_array;
-        std::memcpy( &le_array, &(data[4]), sizeof(std::uint8_t)*25 );
+        std::memcpy( &le_array, &(data[6]), sizeof(std::uint8_t)*25 );
         return le_array;
     }
 
     void setFrameID(std::uint16_t id) { write_2( id, 0 ); }
     void setChunkID(std::uint16_t id) { write_2( id, 2 ); }
+    void setFrameSize(std::uint16_t size) { write_2( size, 4 ); }
     //void setTotalChunks(std::uint8_t chunks) { data3 = chunks; } // optional
     void setPayload(const std::array<std::uint8_t, 25>& inp_data)
     {
-        std::memcpy( &(data[4]), &inp_data, sizeof(std::uint8_t)*25 );
+        std::memcpy( &(data[6]), &inp_data, sizeof(std::uint8_t)*25 );
     }
 
     // ---- Console Telemetry, from CCM to Console ----

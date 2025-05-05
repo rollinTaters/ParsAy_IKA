@@ -8,16 +8,25 @@ class VideoFeed
 {
     public:
         VideoFeed(uint16_t frameWidth, uint16_t frameHight);
+        VideoFeed( int resolution_mode );
+
+        static constexpr int resolution_1_x = 1920/2;
+        static constexpr int resolution_1_y = 1080/2;
+        static constexpr int resolution_2_x = 1920/4;
+        static constexpr int resolution_2_y = 1080/4;
+
+        int getResolutionWidth() const;
+        int getResolutionHeight() const;
+        uint16_t getCurrentFrameID() const;
 
         //transmit data
-        void setFrame( void* image_data, int image_width, int image_height );
+        void TXFrame( void* image_data, size_t size );  // populates m_TX_packets
         const std::vector<CommsPacket>& getTXPackets() const;   // packets to be transmitted
-        uint16_t getCurrentFrameID() const;
 
         //recieve data
         void receivePacket(const CommsPacket& packet);
         bool isFrameReady() const;
-        void newFrame( void* &ptr );
+        void RXFrame( void* ptr, size_t &size );
 
     private:
         // common 
@@ -26,16 +35,26 @@ class VideoFeed
         uint16_t m_frameID;
 
         //transmit
-        std::vector<uint8_t> m_outgoingFrameBytes;
-        std::vector<CommsPacket> m_outgoingPackets;
-        void splitIntoPackets();    // splits outgoing framebytes to outgoingpackets
+        //std::vector<uint8_t> m_outgoingFrameBytes;
+        std::vector<CommsPacket> m_TX_packets;
 
         //recieve
         struct FrameBuffer{
-            std::vector<uint8_t> data;
-            std::vector<bool> chunksRecieved;
+            FrameBuffer( size_t data_size );
+            ~FrameBuffer();
+            FrameBuffer( FrameBuffer& ) = delete;
+
+            static constexpr size_t chunk_size = 25; // num of bytes in a chunk of transmission (packet size)
+            size_t num_of_chunks;   // num of chunks in this frame
+            size_t data_size;       // num of bytes in this frames data
+
+            std::uint8_t *data = nullptr;
+            bool *chunksReceived = nullptr;
+            std::uint16_t frameID = 0;
+
         };
 
-        uint16_t m_incomingFrameID;
-        FrameBuffer m_incomingFrame;
+        FrameBuffer* m_RX_buffer = nullptr;
+        FrameBuffer* m_TX_buffer = nullptr;
+
 };

@@ -1,111 +1,132 @@
 #include "video_feed.hpp"
+#include <iostream> // cerr
 #include <cstdlib>
 #include <cstring> 
+
+VideoFeed::FrameBuffer::FrameBuffer( size_t frame_size )
+{
+    data_size = frame_size;
+    num_of_chunks = (frame_size + (chunk_size-1)) / chunk_size;
+    data = new std::uint8_t[ frame_size ];
+    chunksReceived = new bool[ num_of_chunks ];
+}
+
+VideoFeed::FrameBuffer::~FrameBuffer()
+{
+    delete data;
+    delete chunksReceived;
+}
 
 VideoFeed::VideoFeed(uint16_t frameWidth, uint16_t frameHight){
     m_height = frameHight;
     m_width = frameWidth;
     m_frameID = 0;
-    m_incomingFrameID = 0;
 }
+
+VideoFeed::VideoFeed( int resolution_mode )
+{
+    switch( resolution_mode )
+    {
+        case 1:
+            m_height = resolution_1_y;
+            m_width = resolution_1_x;
+            break;
+        case 2:
+            m_height = resolution_2_y;
+            m_width = resolution_2_x;
+            break;
+        default:
+            std::cerr<<"Error: VideoFeed object got bullshit resolution mode\n";
+    }
+    m_frameID = 0;
+}
+
+int VideoFeed::getResolutionWidth() const { return m_width; }
+int VideoFeed::getResolutionHeight() const { return m_height; }
+uint16_t VideoFeed::getCurrentFrameID() const { return m_frameID; }
 
 
 //transmit data
 
-void VideoFeed::setFrame( void* image_data, int image_width, int image_height )
+void VideoFeed::TXFrame( void* image_data, size_t size )
 {
     m_frameID++;
 
-    m_outgoingFrameBytes.clear();
-    int bytesPerPixel = 3; //RGB
-    int totalSize = image_width * image_height * bytesPerPixel;
-    //resizing vector to totalSize
-    m_outgoingFrameBytes.resize(totalSize);
-    std::memcpy(m_outgoingFrameBytes.data(), image_data, totalSize);
+    if( m_TX_buffer == nullptr ) delete m_TX_buffer;
+    m_TX_buffer = new FrameBuffer( size );
+    
+    m_TX_buffer->frameID = m_frameID;
 
-    // get the packets ready for transmission
-    splitIntoPackets();
-}
+    std::memcpy( m_TX_buffer->data, image_data, size );
 
-void VideoFeed::splitIntoPackets()
-{
-    m_outgoingPackets.clear();
-    const size_t payloadSize = 25;
-    size_t totalChunks = ( m_outgoingFrameBytes.size() + payloadSize - 1 ) / payloadSize; //
+    // split tx buffer into comms packets
+    m_TX_packets.clear();
+    size_t totalChunks = m_TX_buffer->num_of_chunks;
+
+    std::cout<<"total chunks in TXFrame: "<<totalChunks<<"\n";
 
     for(size_t chunkID = 0; chunkID < totalChunks; chunkID++)
     {
         CommsPacket vdp( CommsPacket::video_packet );
         vdp.setChunkID(chunkID);
         vdp.setFrameID(m_frameID);
+        vdp.setFrameSize( m_TX_buffer->data_size );
 
-        std::array<uint8_t, 25> payload{};
+        std::array<uint8_t, FrameBuffer::chunk_size> payload{};
 
-        size_t offset = chunkID * payloadSize;
-        size_t copySize = std::min(payloadSize,m_outgoingFrameBytes.size() - offset);
+        size_t offset = chunkID * FrameBuffer::chunk_size;
+        size_t copySize = std::min(FrameBuffer::chunk_size, size - offset);
 
-        std::memcpy( payload.data(), &(m_outgoingFrameBytes[offset]), copySize );
+        std::memcpy( payload.data(), &(m_TX_buffer->data)[offset], copySize );
         vdp.setPayload(payload);
-        m_outgoingPackets.push_back(vdp);
+        m_TX_packets.push_back(vdp);
     }
 }
 
-const std::vector<CommsPacket>& VideoFeed::getTXPackets() const
-{ 
-    return m_outgoingPackets; 
-}
+const std::vector<CommsPacket>& VideoFeed::getTXPackets() const { return m_TX_packets; }
 
-
-uint16_t VideoFeed::getCurrentFrameID() const
-{ 
-    return m_frameID; 
-}
 
 
 //
 //recieve data
 //
 
-
 void VideoFeed::receivePacket(const CommsPacket& vdp)
 {
     // check if given packet is indeed a video packet
     if( vdp.packet_type != CommsPacket::video_packet ) return;
 
-    //get packet
+    //get identifying data from packet
     uint16_t packetFrameID = vdp.getFrameID();
     uint16_t chunkID = vdp.getChunkID();
-    //if there is new frames then remove the old one
-    if (packetFrameID != m_incomingFrameID)
+    size_t frame_size = vdp.getFrameSize();
+
+    // make sure we have a rx frame buffer
+    if( m_RX_buffer == nullptr ) m_RX_buffer = new FrameBuffer( frame_size );
+
+    //if we are receiving a new frame, refresh rx buffer
+    if (packetFrameID != m_RX_buffer->frameID)
     {
-        m_incomingFrameID = packetFrameID;
-        m_incomingFrame.data.clear();
-        m_incomingFrame.chunksRecieved.clear();
-
-        int bytesPerPixel = 3;
-        size_t totalSize = m_width * m_height * bytesPerPixel;
-
-        m_incomingFrame.data.resize(totalSize, 0);
-        m_incomingFrame.chunksRecieved.resize(totalSize + 24 / 25, false);
-
+        if( m_RX_buffer != nullptr ) delete m_RX_buffer;
+        m_RX_buffer = new FrameBuffer( frame_size );
+        m_RX_buffer->frameID = packetFrameID;
     }
-    size_t offset = chunkID * 25;
+    size_t offset = chunkID * (m_RX_buffer->chunk_size);
     auto payload = vdp.getPayload();
 
-    size_t copySize = std::min<size_t>(25, m_incomingFrame.data.size() - offset);
-    std::memcpy(m_incomingFrame.data.data() + offset, payload.data(), copySize);
+    size_t copySize = std::min<size_t>( m_RX_buffer->chunk_size, frame_size - offset);
+    std::memcpy( &((m_RX_buffer->data)[offset]), payload.data(), copySize);
 
-    if(chunkID < m_incomingFrame.chunksRecieved.size()){
-        m_incomingFrame.chunksRecieved[chunkID] = true;
-    }
-
+    m_RX_buffer->chunksReceived[chunkID] = true;
     
 }
 
 bool VideoFeed::isFrameReady() const
 {
-    for (bool recieved : m_incomingFrame.chunksRecieved){
-        if (!recieved){
+    if( m_RX_buffer == nullptr ) return false;
+
+    for ( size_t i = 0; i < m_RX_buffer->num_of_chunks; i++ ){
+        if ( !(m_RX_buffer->chunksReceived)[i] ){
             return false;
         }
     }
@@ -113,22 +134,16 @@ bool VideoFeed::isFrameReady() const
     // check chunks 
 }
 
-void VideoFeed::newFrame( void* &ptr )
+void VideoFeed::RXFrame( void* ptr, size_t &size )
 {
-    // WARNING: following code plays with fire.
+    if( m_RX_buffer == nullptr )
+    {
+        std::cout<<"newFrame method does not have a valid m_RX_buffer to create new frame\n";
+        return;
+    }
+    if( ptr != nullptr ) delete ptr;
 
-    //reconstruct the Frame 
-    /*
-    Image reFrame = {
-        .width = m_width,
-        .height = m_height,
-        .mipmaps = 1,
-        .format = PIXELFORMAT_UNCOMPRESSED_R8G8B8,
-    };
-    */
-
-    // because memory leaks are bad
-    std::free( ptr );
-    ptr = malloc(m_incomingFrame.data.size());
-    std::memcpy(ptr, m_incomingFrame.data.data(), m_incomingFrame.data.size());
+    ptr = new std::uint8_t[ m_RX_buffer->data_size ];
+    std::memcpy( ptr, m_RX_buffer->data, m_RX_buffer->data_size );
+    size = m_RX_buffer->data_size;
 }
