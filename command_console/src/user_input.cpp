@@ -37,30 +37,68 @@ void UserInput::switchDriveMode(DriveMode newMode){
 
 void UserInput::processInput( CommsPacket &dcp ){
 
+
+    /*
+    FIXME there are two identifier things about comms modules:
+    - one is where you send the packet to:
+        comms_module.sendPacket( XX, CommsModule::ngc_channel );
+        comms_module.sendPacket( XX, CommsModule::console_channel );
+        comms_module.sendPacket( XX, CommsModule::drive_channel );
+        comms_module.sendPacket( XX, CommsModule::turret_channel );
+
+    - the other is what type of packet you send:
+        CommsPacket packet1( CommsPacket::drive_command );
+        CommsPacket packet1( CommsPacket::drive_telemetry );
+        CommsPacket packet1( CommsPacket::ngc_command );
+        CommsPacket packet1( CommsPacket::turret );
+        CommsPacket packet1( CommsPacket::video_packet );
+
+    So...
+    when you call this process input method, what king of packet will you send?
+    and to where will you send it?
+    ( you probably always want to send it to Central Command Module (CCM) )
+
+    for now, for testing purposes, this packet is modified to be a ngc_command packet
+    */
+    dcp.packet_type = CommsPacket::ngc_command;
+
+    // XXX
+    // TODO grab all the commands from ngc/gui.hpp and implement them here
+    // XXX
+
     // populate the given packet with the input read from the console
     static float speed = 0.0f;  
     const float speed_increment = 0.05f; 
     const float max_speed = 20.0f; 
     const float min_speed = 0.0f;
+
     if (IsGamepadAvailable(0)) 
     {
         float leftX = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X);
-        float leftY = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y); 
+        float leftY = -GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y); // axis is inverted
         
+        // TODO show the state of commands issued on the screen,
+        // we wanna know what kind of manual command we sent
+
         // Small joystick movements are ignored to ensure stable controls
         if (leftX > 0.1f) { // Creating deadzone because we don't want our little vehicle to shake
-            std::cout << "Move right" << std::endl;
+            //std::cout << "Move right" << std::endl;
             dcp.setManualSteer(leftX); 
         } else if (leftX < -0.1f) {
-            std::cout << "Move left" << std::endl;   
+            //std::cout << "Move left" << std::endl;   
             dcp.setManualSteer(leftX); 
+        } else {
+            dcp.setManualSteer( 0 );
         }
+
         if (leftY > 0.1f) {
-            std::cout << "Move forward" << std::endl;  
+            //std::cout << "Move forward" << std::endl;  
             dcp.setManualSpeed(leftY);  
         } else if (leftY < -0.1f) {
-            std::cout << "Move backward" << std::endl; 
+            //std::cout << "Move backward" << std::endl; 
             dcp.setManualSpeed(leftY); 
+        } else {
+            dcp.setManualSpeed( 0 );
         }
     }
     else

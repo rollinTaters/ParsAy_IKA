@@ -71,8 +71,9 @@ void sendCamera2Console()
     // RenderTexture2D kamerandan görüntü al
     Image img = LoadImageFromTexture( GUI::turretViewRT.texture ); // BURADA RAM'e çekiyoruz
 
-    ImageFormat( &img, PIXELFORMAT_UNCOMPRESSED_R8G8B8 );
     ImageResize( &img, feed_resolution_x, feed_resolution_y );
+    ImageFormat( &img, PIXELFORMAT_UNCOMPRESSED_R8G8B8 );
+    ImageFlipVertical( &img );   // because render textures are flipped, GPU's are weird..
 
     raw_image_data = ExportImageToMemory( img, ".png", &raw_image_data_size );
 
@@ -156,7 +157,7 @@ int main()
         BeginMode3D( GUI::turretCam );
         env_emulator.drawHMap();
         GUI::drawVehicleBody();
-        GUI::drawTurret();   // camera gets obscured by a part of turret. well... fixme
+        //GUI::drawTurret();   // camera gets obscured by a part of turret. well... fixme
         EndMode3D();
 
         EndTextureMode();   // --------------- texture mode end

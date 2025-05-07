@@ -165,10 +165,27 @@ void NGC::mainThreadFunc()
         if( m_comms_module.packetAvailable() )
         {
             m_comms_module.readPacket( m_command_packet );
-            std::cout<<"NGC: got command packet, data: \n";
+
+            // null packet catch
+            if( m_command_packet.isNull() )
+            {
+                std::cerr<<"packet was null\n";
+                break;  // TODO will this break out of run_main_thread loop ??? we dont want that
+            }
+            if( m_command_packet.packet_type == CommsPacket::ngc_command )
+            {
+                directCommand(
+                    m_command_packet.getManualSpeed(),
+                    m_command_packet.getManualSteer() );
+            }
+
+            // DEBUG
+            std::cout<<"NGC: got command packet, type: "<< (int)m_command_packet.packet_type
+                <<"data: \n";
             for( std::uint8_t d : m_command_packet.data )
                 std::cout<< (int)d << " ";
             std::cout<<"\n";
+            // DEBUG END
         }
         // TODO send telemetry back
         // sendTelemetry();

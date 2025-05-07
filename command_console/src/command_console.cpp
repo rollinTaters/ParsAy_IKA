@@ -124,12 +124,15 @@ int main()
                         std::cout<<"\n";
                         // DEBUG END    ---------------- */
 
-                        ImageFormat( &video_frame, PIXELFORMAT_UNCOMPRESSED_R8G8B8 );  // revert back to 3 channels
+                        //ImageFormat( &video_frame, PIXELFORMAT_UNCOMPRESSED_R8G8B8 );  // revert back to 3 channels
                         video_frame = LoadImageFromMemory( ".png", video_frame_raw, video_frame_size );
-                        ImageFormat( &video_frame, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 );  // because there is a bug in raylib and UpdateTexture function only accepts this format
-                        Color* pixels = LoadImageColors( video_frame );
-                        //video_texFrame = LoadTextureFromImage(video_frame);
-                        UpdateTexture( video_texFrame, pixels );
+
+                        // because there is a bug in raylib and UpdateTexture function only accepts this format
+                        //ImageFormat( &video_frame, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 ); 
+                        //Color* pixels = LoadImageColors( video_frame );
+                        //UpdateTexture( video_texFrame, pixels );
+
+                        video_texFrame = LoadTextureFromImage(video_frame);
                         UnloadImage(video_frame);
                     }
                     break;
@@ -151,7 +154,18 @@ int main()
 
         // process input
         cg::input.processInput( packet2send );
-        comms_module.sendPacket( packet2send, CommsModule::command_channel );
+
+        // DEBUG
+        std::cout<<"we be sending this data: \n";
+        for( auto d: packet2send.data )
+        {
+            std::cout<<(int)d<<" ";
+        }
+        std::cout<<"\n";
+        // DEBUG END
+
+         // for testing purposes we send it to ngc, normally we wanna send to ccm
+        comms_module.sendPacket( packet2send, CommsModule::ngc_channel );  
     }
 
 

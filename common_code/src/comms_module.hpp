@@ -63,7 +63,7 @@ class CommsModule
         drive_channel = 54001,
         turret_channel = 54002,
         console_channel = 54003,    // this will later be linked to nrf24 or lora
-        command_channel = 54004,
+        ccm_channel = 54004,        // this will also
         random_channel1 = 54005,
         random_channel2 = 54006,
         undefined = 0

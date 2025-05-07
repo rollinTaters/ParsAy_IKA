@@ -4,13 +4,10 @@
 #include <cstring>  // memcpy
 #include <array>
 #include "utility.hpp"
+//#include <iostream> // DEBUG
 
 struct CommsPacket
 {
-    // actual payload of the packet
-    std::uint8_t packet_type;
-    std::array< std::uint8_t, 31 > data;
-
     enum PacketType{
         undefined,
 
@@ -30,6 +27,11 @@ struct CommsPacket
         request2,   // this is an idea
         request3    // this is an idea
     };
+
+    // actual payload of the packet
+    std::uint8_t packet_type = undefined;
+    std::array< std::uint8_t, 31 > data{0};
+
 
     CommsPacket( PacketType t ):packet_type(t) {}
     CommsPacket():packet_type(undefined) {}
@@ -94,6 +96,20 @@ struct CommsPacket
         return ( b1 | (b2 << 8) );
     }
     public:
+
+    bool isNull() const
+    {
+        // if there is data, its not null packet
+        for( std::uint8_t d : data )
+            if( d != 0 )
+                return false;
+
+        // if there is no data and packet type is undefined
+        if( packet_type == undefined ) return true;
+
+        // if there is no data, but packet type is defined,
+        return false;
+    }
 
 /*
    These are different methods that we use to parse (encode/decode) the data in the packets.
