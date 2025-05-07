@@ -48,7 +48,11 @@ class Turret
 
     BB3D getCameraWideBox() const;
     BB3D getCameraNarrowBox() const;
-    Vector3 getCameraVector() const;    // both cameras have the same vector in an ideal world.
+
+    BB3D getLaserBox() const;
+
+    bool getLaserStatus() const;    // true for laser active
+    void setLaserStatus( bool );    // true for laser active
 
     static constexpr int camera_wide_resolution_x = 1920;
     static constexpr int camera_wide_resolution_y = 1080;
@@ -76,6 +80,8 @@ class Turret
     BB3D m_camera_narrow_box;   // narrow field of view camera, used for fine adjustment of turret aim
     BB3D m_laser_box;
 
+    bool m_laser_active = false;
+
     float m_yaw = 0.f;      // radians, 0 is dead ahead, positive towards port
     float m_pitch = 0.f;    // radians, 0 is dead ahead, positive towards up
 };
@@ -97,10 +103,6 @@ class Vehicle
 
     // Returns a reference to the turret (modifiable)
     Turret& getTurret();
-
-    Vector3 getCameraPosition() const;
-    Vector3 getCameraVector() const;
-
 
     // Returns a const reference to the turret (read-only)
     const Turret& getTurret() const;

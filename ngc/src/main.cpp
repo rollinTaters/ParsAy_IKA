@@ -150,34 +150,44 @@ int main()
         GUI::checkUserInput();
 
         BeginDrawing();
-        BeginTextureMode( GUI::turretViewRT ); // --- texture mode start
+        BeginTextureMode( GUI::turretViewRT ); // --- texture mode start, Turret Camera texture gets populated here
         ClearBackground(SKYBLUE);
 
         BeginMode3D( GUI::turretCam );
         env_emulator.drawHMap();
-        GUI::drawVehicle();
+        GUI::drawVehicleBody();
+        GUI::drawTurret();   // camera gets obscured by a part of turret. well... fixme
         EndMode3D();
 
         EndTextureMode();   // --------------- texture mode end
 
         ClearBackground( RAYWHITE );
 
-        BeginMode3D( GUI::camera );  //--- mode 3D start
+        BeginMode3D( GUI::camera );  //--- mode 3D start, our debug screen get populated here
 
         env_emulator.drawHMap();
         GUI::drawLIDAR();
         GUI::drawAxisBillboards();
-        GUI::drawVehicle();
+        GUI::drawVehicleBody();
+        GUI::drawTurret();
         GUI::drawCrosshair();
 
         EndMode3D();  //------------- mode 3D end
 
         DrawFPS( 10, 10 );
         GUI::drawWPs();
-        GUI::drawOverlay();
 
+        // display turret camera's video feed on screen
+        DrawTexturePro(
+                GUI::turretViewRT.texture,  // texture itself
+                {0, 0, 1920, -1080},    // source rectangle
+                {700, 30, 1920/8, 1080/8},     // destination rectangle
+                {0, 0},     // origin
+                0.f,        // rotation
+                WHITE );    // tint
         DrawText("Turret View:", 600, 10, 10, DARKGRAY);
-        DrawTextureRec( GUI::turretViewRT.texture, (Rectangle){0, 0, 200, -200}, (Vector2){600, 30}, WHITE);
+
+        GUI::drawOverlay(); // nearly all the text is here
 
         // send turret cam view to command console, debug
         sendCamera2Console();

@@ -39,17 +39,17 @@ Turret::Turret()
     m_pitch_box.setSize( 0.200f, 0.050f, 0.020f );
     m_pitch_box.setAng({m_pitch, 0.f, 0.f}); 
 
-    m_camera_wide_box.setPos ( 0.023f, 0.008f, 0.005f );
-    m_camera_wide_box.setSize( 0.010f, 0.020f, 0.010f );
-    m_camera_wide_box.setAng ( 0.000f, 0.000f, 0.000f );
+    m_camera_wide_box.setPos    (  0.023f,  0.008f,  0.045f );
+    m_camera_wide_box.setSize   (  0.010f,  0.020f,  0.010f );
+    m_camera_wide_box.setAng    (  0.000f,  0.000f,  0.000f );
 
-    m_camera_narrow_box.setPos ( 0.000f, 0.000f, 0.000f );
-    m_camera_narrow_box.setSize( 0.000f, 0.000f, 0.000f );
-    m_camera_narrow_box.setAng ( 0.000f, 0.000f, 0.000f );
+    m_camera_narrow_box.setPos  ( -0.050f,  0.008f,  0.070f );
+    m_camera_narrow_box.setSize (  0.010f,  0.095f,  0.020f );
+    m_camera_narrow_box.setAng  (  0.000f,  0.000f,  0.000f );
 
-    m_laser_box.setPos ( 0.000f, 0.000f, 0.000f );;
-    m_laser_box.setSize( 0.000f, 0.000f, 0.000f );;
-    m_laser_box.setAng ( 0.000f, 0.000f, 0.000f );;
+    m_laser_box.setPos          ( -0.032f,  0.014f,  0.030f );;
+    m_laser_box.setSize         (  0.025f,  0.040f,  0.025f );;
+    m_laser_box.setAng          (  0.000f,  0.000f,  0.000f );;
 }
 
 Vehicle::Vehicle()
@@ -159,10 +159,7 @@ float Vehicle::readSensor( const unsigned short int number )
 }
 
 
-void Vehicle::overridePos( const v3f pos )
-{
-    m_bb3d.setPos(pos);
-}
+void Vehicle::overridePos( const v3f pos ) { m_bb3d.setPos(pos); }
 
 void Vehicle::setNavigationState( const int time_step_milli )
 {
@@ -214,13 +211,15 @@ const Turret& Vehicle::getTurret() const {
 
 void Turret::setYaw(float yaw_angle) {
     m_yaw = yaw_angle;
-    m_yaw_box.setAng({0, 0, yaw_angle});
+    //m_yaw_box.setAng({0, 0, yaw_angle});
+    m_yaw_box.setAng( {yaw_angle, 0, 0} );
 }
 
 // Pitch açısını ayarlayan fonksiyon
 void Turret::setPitch(float pitch_angle) {
     m_pitch = pitch_angle;
-    m_pitch_box.setAng({pitch_angle, 0, 0});  // pitch is around X
+    //m_pitch_box.setAng({pitch_angle, 0, 0});  // pitch is around X
+    m_pitch_box.setAng( {0, pitch_angle, 0} );
 }
 
 // Yaw açısını döndüren fonksiyon
@@ -250,17 +249,9 @@ BB3D Turret::getCameraNarrowBox() const {
     return m_camera_narrow_box.onTop( m_pitch_box.onTop( m_yaw_box ) );
 }
 
-// Forward direction of camera in global coordinates
-Vector3 Turret::getCameraVector() const {
-    Point dir = getCameraNarrowBox().getLocalVecY();
-    return { (float)dir.x, (float)dir.y, (float)dir.z };
+BB3D Turret::getLaserBox() const {
+    return m_laser_box.onTop( m_pitch_box.onTop( m_yaw_box ) );
 }
 
-Vector3 Vehicle::getCameraVector() const {
-    return m_turret.getCameraVector();  // ← Bu senin Turret::getCameraVector()
-}
-
-Vector3 Vehicle::getCameraPosition() const {
-    Point pos = m_turret.getCameraNarrowBox().getPos();
-    return { (float)pos.x, (float)pos.y, (float)pos.z };
-}
+bool Turret::getLaserStatus() const { return m_laser_active; }
+void Turret::setLaserStatus( bool inp ) { m_laser_active = inp; }
