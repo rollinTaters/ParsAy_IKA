@@ -268,12 +268,98 @@ const cQuaternion cQuaternion::fromEuler( v3f euler )
 	float sY = sinf(y);
 	float sZ = sinf(z);
 
-    // YXZ
+#define QUATERNION_EULER_ORDER QUATERNION_EULER_ZXY
+//#define QUATERNION_EULER_ORDER QUATERNION_EULER_XYZ // roll around X, pitch around Y, yaw around Z
+//#define QUATERNION_EULER_ORDER QUATERNION_EULER_YXZ // deviceorientation
+//#define QUATERNION_EULER_ORDER QUATERNION_EULER_ZYX
+//#define QUATERNION_EULER_ORDER QUATERNION_EULER_YZX
+//#define QUATERNION_EULER_ORDER QUATERNION_EULER_XZY
+
+#if QUATERNION_EULER_ORDER == QUATERNION_EULER_ZXY
+	// axisAngle([0, 0, 1], φ) * axisAngle([1, 0, 0], θ) * axisAngle([0, 1, 0], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sY * sZ,
+		sY * cX * cZ - sX * sZ * cY,
+		sX * sY * cZ + sZ * cX * cY,
+		sX * cY * cZ + sY * sZ * cX);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_XYZ // roll around X, pitch around Y, yaw around Z
+	// axisAngle([1, 0, 0], φ) * axisAngle([0, 1, 0], θ) * axisAngle([0, 0, 1], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sY * sZ,
+		sX * cY * cZ + sY * sZ * cX,
+		sY * cX * cZ - sX * sZ * cY,
+		sX * sY * cZ + sZ * cX * cY);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_YXZ // deviceorientation
+	// axisAngle([0, 1, 0], φ) * axisAngle([1, 0, 0], θ) * axisAngle([0, 0, 1], ψ)
 	return cQuaternion(
 		sX * sY * sZ + cX * cY * cZ,
 		sX * sZ * cY + sY * cX * cZ,
 		sX * cY * cZ - sY * sZ * cX,
 		sZ * cX * cY - sX * sY * cZ);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_ZYX
+	// axisAngle([0, 0, 1], φ) * axisAngle([0, 1, 0], θ) * axisAngle([1, 0, 0], ψ)
+	return cQuaternion(
+		sX * sY * sZ + cX * cY * cZ,
+		sZ * cX * cY - sX * sY * cZ,
+		sX * sZ * cY + sY * cX * cZ,
+		sX * cY * cZ - sY * sZ * cX);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_YZX
+	// axisAngle([0, 1, 0], φ) * axisAngle([0, 0, 1], θ) * axisAngle([1, 0, 0], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sY * sZ,
+		sX * sY * cZ + sZ * cX * cY,
+		sX * cY * cZ + sY * sZ * cX,
+		sY * cX * cZ - sX * sZ * cY);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_XZY
+	// axisAngle([1, 0, 0], φ) * axisAngle([0, 0, 1], θ) * axisAngle([0, 1, 0], ψ)
+	return cQuaternion(
+		sX * sY * sZ + cX * cY * cZ,
+		sX * cY * cZ - sY * sZ * cX,
+		sZ * cX * cY - sX * sY * cZ,
+		sX * sZ * cY + sY * cX * cZ);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_ZYZ
+	// axisAngle([0, 0, 1], φ) * axisAngle([0, 1, 0], θ) * axisAngle([0, 0, 1], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sZ * cY,
+		sY * sZ * cX - sX * sY * cZ,
+		sX * sY * sZ + sY * cX * cZ,
+		sX * cY * cZ + sZ * cX * cY);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_ZXZ
+	// axisAngle([0, 0, 1], φ) * axisAngle([1, 0, 0], θ) * axisAngle([0, 0, 1], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sZ * cY,
+		sX * sY * sZ + sY * cX * cZ,
+		sX * sY * cZ - sY * sZ * cX,
+		sX * cY * cZ + sZ * cX * cY);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_YXY
+	// axisAngle([0, 1, 0], φ) * axisAngle([1, 0, 0], θ) * axisAngle([0, 1, 0], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sZ * cY,
+		sX * sY * sZ + sY * cX * cZ,
+		sX * cY * cZ + sZ * cX * cY,
+		sY * sZ * cX - sX * sY * cZ);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_YZY
+	// axisAngle([0, 1, 0], φ) * axisAngle([0, 0, 1], θ) * axisAngle([0, 1, 0], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sZ * cY,
+		sX * sY * cZ - sY * sZ * cX,
+		sX * cY * cZ + sZ * cX * cY,
+		sX * sY * sZ + sY * cX * cZ);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_XYX
+	// axisAngle([1, 0, 0], φ) * axisAngle([0, 1, 0], θ) * axisAngle([1, 0, 0], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sZ * cY,
+		sX * cY * cZ + sZ * cX * cY,
+		sX * sY * sZ + sY * cX * cZ,
+		sX * sY * cZ - sY * sZ * cX);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_XZX
+	// axisAngle([1, 0, 0], φ) * axisAngle([0, 0, 1], θ) * axisAngle([1, 0, 0], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sZ * cY,
+		sX * cY * cZ + sZ * cX * cY,
+		sY * sZ * cX - sX * sY * cZ,
+		sX * sY * sZ + sY * cX * cZ);
+#endif
 }
 
 const cQuaternion cQuaternion::fromAxisAngle( v3f axis, float radian ) 
@@ -439,11 +525,13 @@ BB3D BB3D::onTop( BB3D base ) const
 
     // FIXME this shit be broken
     // -- rotations --
+    /*
     v3f q_vec = { m_quat.x, m_quat.y, m_quat.z };
     base.m_quat.rotateVector( q_vec );
     copy.m_quat.x = q_vec.x;
     copy.m_quat.y = q_vec.y;
     copy.m_quat.z = q_vec.z;
+    */
     copy.m_quat = base.m_quat * copy.m_quat;
 
     return copy;

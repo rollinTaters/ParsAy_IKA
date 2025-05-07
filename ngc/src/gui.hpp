@@ -106,6 +106,25 @@ namespace GUI
         CloseWindow();
     }
 
+    // DEBUG - draws axes of given box, useful for determining attitude of objects
+    void drawAxes( BB3D box )
+    {
+        float line_length = 0.3f;   // meters
+
+        Vector3 pos = taters2raylib( box.getPos() );
+        Vector3 ax_x = taters2raylib( box.getLocalVecX() * line_length );
+        Vector3 ax_y = taters2raylib( box.getLocalVecY() * line_length );
+        Vector3 ax_z = taters2raylib( box.getLocalVecZ() * line_length );
+
+        Color color_x = RED;
+        Color color_y = RED;
+        Color color_z = RED;
+        
+        DrawLine3D( pos, pos+ax_x, color_x );
+        DrawLine3D( pos, pos+ax_y, color_y );
+        DrawLine3D( pos, pos+ax_z, color_z );
+    }
+
     void checkUserInput()
     {
         // moving camera around
@@ -156,15 +175,32 @@ namespace GUI
 
             ngc_system.directCommand( cmd_speed, cmd_rate );
         }
-        Vector3 turret_pos = simulated_vehicle.getCameraPosition();      // vehicle.cpp'de BB3D pozisyonu
-        Vector3 turret_dir = simulated_vehicle.getCameraVector();        // yön vektörü
 
-        turretCam.position = turret_pos;
-        turretCam.target = Vector3Add(turret_pos, Vector3Scale(turret_dir, 10.0f));
+
+        // -------- TURRET --------
+
+        Turret& turret = simulated_vehicle.getTurret();  // vehicle.hpp'de getTurret fonksiyonu olmalı
+
+        static bool use_wide_camera;
+        BB3D cam_box;
+
+        // update turret cameras variables
+        if( use_wide_camera )
+        {
+            cam_box = turret.getCameraWideBox();
+        }else{
+            cam_box = turret.getCameraNarrowBox();
+        }
+        v3f cam_pos = cam_box.getPos();
+        v3f cam_dir = cam_box.getLocalVecY();
+        v3f cam_up  = cam_box.getLocalVecZ();
+
+        turretCam.position = taters2raylib( cam_pos );
+        turretCam.target = taters2raylib( cam_pos + cam_dir );
+        turretCam.up = taters2raylib( cam_up );
 
 
         // turret control (yaw & pitch)
-        Turret& turret = simulated_vehicle.getTurret();  // vehicle.hpp'de getTurret fonksiyonu olmalı
 
         float deltaYaw = 0.01f;
         float deltaPitch = 0.01f;
@@ -179,7 +215,14 @@ namespace GUI
         if (IsKeyDown(KEY_DOWN))  // ↓
             turret.setPitch(turret.getPitch() - deltaPitch);
 
-        // ngc commands
+        if( IsKeyPressed(KEY_PERIOD) )  // .
+            use_wide_camera = !use_wide_camera;
+        if( IsKeyPressed(KEY_I) )   // i
+            turret.setLaserStatus( !turret.getLaserStatus() );
+
+
+        // -------- NGC COMMANDS --------
+
         if( IsKeyPressed( KEY_X ) )
             ::ngc_system.executeWPs();
         if( IsKeyPressed( KEY_C ) )
@@ -209,7 +252,7 @@ namespace GUI
 
     }
 
-    void drawVehicle()
+    void drawVehicleBody()
     {
         float wheelbase = simulated_vehicle.wheelbase;
         float track = simulated_vehicle.track;
@@ -248,23 +291,44 @@ namespace GUI
                     RED );
         }
 
+    }
+
+    void drawTurret()
+    {
+        Turret turret = simulated_vehicle.getTurret();
+
         // turret base (yaw)
-        BB3D yaw_box = simulated_vehicle.getTurret().getYawBox();
+        BB3D yaw_box = turret.getYawBox();
         DrawCubeV(taters2raylib(yaw_box.getPos()), taters2raylib(yaw_box.getSize()), DARKBLUE);
 
         // turret pitch platform (pitch)
-        BB3D pitch_box = simulated_vehicle.getTurret().getPitchBox();
+        BB3D pitch_box = turret.getPitchBox();
         DrawCubeV(taters2raylib(pitch_box.getPos()), taters2raylib(pitch_box.getSize()), BLUE);
         
         // turret general purpose camera
-        BB3D cam_box = simulated_vehicle.getTurret().getCameraWideBox();
-        DrawCubeV(taters2raylib(cam_box.getPos()), taters2raylib(cam_box.getSize()), SKYBLUE);
+        BB3D w_cam_box = turret.getCameraWideBox();
+        DrawCubeV( taters2raylib( w_cam_box.getPos() ), taters2raylib( w_cam_box.getSize() ), SKYBLUE );
+
+        // turret aiming camera
+        BB3D n_cam_box = turret.getCameraNarrowBox();
+        DrawCubeV( taters2raylib( n_cam_box.getPos() ), taters2raylib( n_cam_box.getSize() ), SKYBLUE );
+
+        BB3D laser_box = turret.getLaserBox();
+        DrawCubeV( taters2raylib( laser_box.getPos() ), taters2raylib( laser_box.getSize() ), MAROON );
+        if( turret.getLaserStatus() )
+            DrawLine3D( taters2raylib( laser_box.getPos() ), taters2raylib( (laser_box.getPos()+laser_box.getLocalVecY())*100.f ), RED );
        
         // camera direction line
-        Vector3 cam_pos = taters2raylib(cam_box.getPos());
-        Vector3 cam_dir = taters2raylib(simulated_vehicle.getTurret().getCameraVector());
-        DrawLine3D(cam_pos, Vector3Add(cam_pos, Vector3Scale(cam_dir, 1.0f)), YELLOW);
+        Vector3 cam_pos = taters2raylib( w_cam_box.getPos() );
+        Vector3 cam_dir = taters2raylib( w_cam_box.getLocalVecY() );
+        DrawLine3D(cam_pos, Vector3Add( cam_pos, Vector3Scale(cam_dir, 1.0f)), YELLOW );
 
+        /*// DEBUG
+        drawAxes( yaw_box );
+        drawAxes( pitch_box );
+        drawAxes( w_cam_box );
+        drawAxes( n_cam_box );
+        */
     }
 
     void drawCrosshair()
@@ -318,9 +382,11 @@ namespace GUI
                 "X: execute waypoints\n"
                 "C: create waypoint\n"
                 "T: toggle hat mode\n"
+                ".: change turret camera\n"
+                "i: toggle laser\n"
                 "Left/Right: turret yaw\n"
                 "Up/Down: turret pitch\n",
-                (Vector2){10,600}, 20, 2, BLACK ); //cannot seeing changed with black
+                (Vector2){10,500}, 20, 2, BLACK ); //cannot see stuff, changed to black
         DrawTextEx(
                 font,
                 TextFormat("crosshair: %3.2fx %3.2fy %3.2fz", crosshair.x, crosshair.y, crosshair.z),
@@ -342,6 +408,7 @@ namespace GUI
         v3f internal_pos = simulated_vehicle.getBox().getPos();
         v3f internal_vel = simulated_vehicle.getVel();
         v3f internal_att = simulated_vehicle.getBox().getAngEuler();
+        v3f turret_att = simulated_vehicle.getTurret().getCameraNarrowBox().getAngEuler();
         DrawTextEx(
             font,
             TextFormat("Simulation Pos: %3.2fx  %3.2fy  %3.2fz",
@@ -367,13 +434,18 @@ namespace GUI
             TextFormat("Simulation att: %3.2fyaw  %3.2fpitch  %3.2froll",
                 real_att.x, real_att.y, real_att.z),
             (Vector2){350, 90}, 20, 2, BLACK );
+        DrawTextEx(
+            font,
+            TextFormat("Turret att: %3.2fyaw  %3.2fpitch  %3.2froll",
+                turret_att.x, turret_att.y, turret_att.z),
+            (Vector2){350, 110}, 20, 2, BLACK );
 
         // ngc system output
         DrawTextEx(
                 font,
                 TextFormat("ngc target speed: %3.2fm/s   rate: %3.2frad/s",
                     ngc_system.hey_emulator_speed, ngc_system.hey_emulator_rate),
-                (Vector2){350, 120}, 20, 2, BLACK );
+                (Vector2){350, 140}, 20, 2, BLACK );
     }
 
     void drawWPs()
