@@ -75,7 +75,10 @@ class Env_Emulator
     bool m_model_initialized = false;
     const float m_metre_per_pixel = 0.050;  // 50mm per pixel
 
-    float shittyPixelMarch( BB3D, v3f ) const;
+    //float shittyPixelMarch( BB3D, v3f ) const;
+    float useRaycast( v3f, v3f ) const;
+
+    Matrix getWorldTransform( Vector3 offset ) const;   // for objects in world
 
     // physics simulation thread
     std::thread* m_phys_thread = nullptr;

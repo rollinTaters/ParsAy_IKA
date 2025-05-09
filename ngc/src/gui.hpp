@@ -1,3 +1,8 @@
+/*
+    This file should only be included in main.cpp
+    if you include it multiple times, you will get multiple definition errors for variables defined here
+    ( yes we could fix that issue with a gui.cpp file, but i wanna do it this way. )
+*/
 #include "raylib.h"
 #include "raymath.h"
 
@@ -481,7 +486,7 @@ namespace GUI
         for( Point &p : pts )
         {
             DrawSphere( taters2raylib(p), 0.1, RED );
-            std::cout<<"ImObP: "<<p.x<<"x "<<p.y<<"y "<<p.z<<"z\n"; // DEBUG
+            //std::cout<<"ImObP: "<<p.x<<"x "<<p.y<<"y "<<p.z<<"z\n"; // DEBUG
         }
     }
 

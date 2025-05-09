@@ -181,18 +181,26 @@ void NGC::mainThreadFunc()
 
         // TODO run CONTROL type methods
 
-        // checking wp satisfaction
-        if( !m_waypoints.empty() && m_waypoints.front().absDist(m_vehicle->getBox().getPos()) < 0.1f )
+        if( !m_waypoints.empty() )
         {
-            m_waypoints.erase( m_waypoints.begin() );
-        }
+            // checking wp satisfaction
+            if( m_waypoints.front().absDist(m_vehicle->getBox().getPos()) < 0.150f )
+            {
+                m_waypoints.erase( m_waypoints.begin() );
+                if( m_waypoints.empty() )
+                {
+                    m_execute_waypoints = false;
+                    halt();
+                }
+            }
 
-        if( !m_waypoints.empty() && m_execute_waypoints )
-        {
-            hitWP( m_waypoints.front() );
-        }else{
-            m_execute_waypoints = false;
-            halt();
+            if( m_execute_waypoints )
+            {
+                hitWP( m_waypoints.front() );
+            }else{
+                m_execute_waypoints = false;
+                halt();
+            }
         }
 
         //std::cout<<"ngc main thread spam. counter:"<<counter<<"\n";
@@ -213,7 +221,8 @@ bool NGC::getLIDARData()
     
     v3f sensor_position = sensor_box.getPos();
     v3f sensor_direction = sensor_box.getLocalVecY();
-    cQuaternion lidar_quat = cQuaternion::fromAxisAngle( sensor_box.getLocalVecZ(), 0 );
+    v3f sensor_Z = sensor_box.getLocalVecZ();
+    //cQuaternion lidar_quat = cQuaternion{ 0, sensor_Z.x, sensor_Z.y, sensor_Z.z };
     Sensor_Data data = m_vehicle->getSensorData();
 
     // clear previous read
@@ -222,9 +231,8 @@ bool NGC::getLIDARData()
     for( int i = 0; i < LIDAR_POINTS; i++ )
     {
         if( data.lidar[i] == 0.f ) continue;    // no read is 0 metres
-        lidar_quat.w = data.lidar_angle[i] / 2.f;
         Point p = sensor_direction * data.lidar[i];
-        lidar_quat.rotateVector( p );
+        cQuaternion::fromAxisAngle( sensor_box.getLocalVecZ(), data.lidar_angle[i] ).rotateVector( p );
         p += sensor_position;
         m_immediate_obstacles.push_back( p );
     }
@@ -516,6 +524,10 @@ void NGC::halt()
 {
     motor_R.setSpeed(0);
     motor_L.setSpeed(0);
+
+    // this is a baad baad way of doing things
+    hey_emulator_speed = 0;
+    hey_emulator_rate = 0;
 }
 
 void NGC::setControlOutput_rate( float speed, float turn_rate )
