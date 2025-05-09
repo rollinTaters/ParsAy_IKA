@@ -1,12 +1,13 @@
 SFML_dir_linux := ./../SFML/SFML-2.6.x-linux
 SFML_dir_win := ./../SFML/SFML-2.6.x-win
+raylib_dir := ./../raylib-5.5_linux_amd64
 
-SFML_libs := -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-system -lsfml-network
+SFML_libs := -lsfml-system -lsfml-network
 #SFML_libs_static := -DSFML_STATIC -MMD -MP -static-libstdc++ -static-libgcc -lsfml-main -lsfml-audio-s -lsfml-graphics-s -lsfml-window-s -lsfml-system-s -lsfml-network-s  -lopengl32 -lfreetype -lwinmm -lgdi32 -lopenal32 -lFLAC -lvorbisenc -lvorbis -logg -lws2_32
 
 # ==== command console objects ====
-CC_OBJECTS := command_console.o console_graphics.o gauge.o
-COMMON_OBJECTS := utility.o comms_module.o
+CC_OBJECTS := command_console.o console_graphics.o gauge.o adi.o user_input.o
+COMMON_OBJECTS := utility.o comms_module.o video_feed.o
 
 LINUX_CC_RELEASE_OBJECTS = $(addprefix obj/linux_, $(CC_OBJECTS))
 LINUX_COMMON_OBJECTS = $(addprefix ../common_code/obj/linux_, $(COMMON_OBJECTS))
@@ -20,8 +21,8 @@ DEBUG_FLAGS_O3 := -g -ggdb -O3 -Wall -Wextra
 DEBUG_FLAGS_O0 := -g -ggdb -O0 -Wall -Wextra
 RELEASE_FLAGS := -O3 -std=c++17
 
-LINUX_DEBUG_LDFLAGS := -Wl,-rpath=$(SFML_dir_linux)/lib -I $(SFML_dir_linux)/include -L$(SFML_dir_linux)/lib $(SFML_libs)
-LINUX_LDFLAGS := -Wl,-rpath=./lib -I $(SFML_dir_linux)/include -L$(SFML_dir_linux)/lib $(SFML_libs)
+LINUX_DEBUG_LDFLAGS := -Wl,-rpath=$(SFML_dir_linux)/lib:$(raylib_dir)/lib -I $(SFML_dir_linux)/include -I $(raylib_dir)/include -L$(SFML_dir_linux)/lib -L$(raylib_dir)/lib $(SFML_libs) -lraylib
+LINUX_LDFLAGS := -Wl,-rpath=./lib -I $(SFML_dir_linux)/include -I $(raylib_dir)/include -L$(SFML_dir_linux)/lib -L$(raylib_dir)/lib $(SFML_libs) -lraylib
 WIN_LDFLAGS := -mwindows -I $(SFML_dir_win)/include -L$(SFML_dir_win)/lib -L/usr/x86_64-w64-mingw32/lib -L/usr/x86_64-w64-mingw32/bin $(SFML_libs) -lsfml-main
 
 WIN_COMPILER := x86_64-w64-mingw32-g++-posix
@@ -34,8 +35,8 @@ RELEASE_PATH := release_builds/v$(BUILD_VER)
 
 
 # ==== Command Console Linux Debug buid ====
-command_console: $(LINUX_CC_DEBUG_O3_OBJECTS)
-	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) $(LINUX_CC_DEBUG_O3_OBJECTS) -o command_console $(LINUX_DEBUG_LDFLAGS)
+command_console: $(LINUX_CC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS)
+	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) $(LINUX_CC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS) -o command_console $(LINUX_DEBUG_LDFLAGS)
 
 $(LINUX_COMMON_OBJECTS): ../common_code/obj/linux_%.o: ../common_code/src/%.cpp ../common_code/src/%.hpp
 	make -C ../common_code
@@ -87,6 +88,3 @@ CC_win64: $(WIN_CC_RELEASE_OBJECTS)
 
 $(WIN_CC_RELEASE_OBJECTS): obj/win_%.o : src/%.cpp
 	$(WIN_COMPILER) $(RELEASE_FLAGS) -c $< -o $@ $(WIN_LDFLAGS)
-
-	
-

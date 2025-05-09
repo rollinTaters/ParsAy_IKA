@@ -27,26 +27,52 @@
 #include "vehicle.hpp"
 #include "env_emulator.hpp" // read sensor
 
+Turret::Turret()
+    : m_yaw(0.0f), m_pitch(0.0f)
+{
+    // Position and size init is up to mechanical design, but here is a basic example:
+    m_yaw_box.setPos({0.f, 0.f, 0.5f});  // position relative to vehicle
+    m_yaw_box.setSize( 0.200f, 0.150f, 0.220f );
+    m_yaw_box.setAng({0.f, 0.f, m_yaw}); 
+
+    m_pitch_box.setPos({0.2f, 0.0f, 0.f});   // relative to yaw box
+    m_pitch_box.setSize( 0.200f, 0.050f, 0.020f );
+    m_pitch_box.setAng({m_pitch, 0.f, 0.f}); 
+
+    m_camera_wide_box.setPos    (  0.023f,  0.008f,  0.045f );
+    m_camera_wide_box.setSize   (  0.010f,  0.020f,  0.010f );
+    m_camera_wide_box.setAng    (  0.000f,  0.000f,  0.000f );
+
+    m_camera_narrow_box.setPos  ( -0.050f,  0.008f,  0.070f );
+    m_camera_narrow_box.setSize (  0.010f,  0.095f,  0.020f );
+    m_camera_narrow_box.setAng  (  0.000f,  0.000f,  0.000f );
+
+    m_laser_box.setPos          ( -0.032f,  0.014f,  0.030f );;
+    m_laser_box.setSize         (  0.025f,  0.040f,  0.025f );;
+    m_laser_box.setAng          (  0.000f,  0.000f,  0.000f );;
+}
+
 Vehicle::Vehicle()
 {
     // populate sensors on vehicle
-    m_sensor[0] = Sensor_Emulator( E_type_IMU,      sf::Vector3f( 0, 0, 0), sf::Vector3f(0, 0, 0) );
-    m_sensor[1] = Sensor_Emulator( E_type_distance, sf::Vector3f(-0.20, 0,0), sf::Vector3f(0,0,-50) );
-    m_sensor[2] = Sensor_Emulator( E_type_distance, sf::Vector3f(-0.10, 0,0), sf::Vector3f(0,0,-20) );
-    m_sensor[3] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.00, 0,0), sf::Vector3f(0,0,  0) );
-    m_sensor[4] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.10, 0,0), sf::Vector3f(0,0, 20) );
-    m_sensor[5] = Sensor_Emulator( E_type_distance, sf::Vector3f( 0.20, 0,0), sf::Vector3f(0,0, 50) );
+    m_sensor[0] = Sensor_Emulator( E_type_IMU,      v3f( 0, 0, 0), v3f(0, 0, 0) );
+    m_sensor[1] = Sensor_Emulator( E_type_LIDAR,    v3f( 0, 0, 0.7), v3f(0, 0, 0) );
+    m_sensor[2] = Sensor_Emulator( E_type_distance, v3f(-0.20, 0,0), v3f(0,0,-50) );
+    m_sensor[3] = Sensor_Emulator( E_type_distance, v3f(-0.10, 0,0), v3f(0,0,-20) );
+    m_sensor[4] = Sensor_Emulator( E_type_distance, v3f( 0.00, 0,0), v3f(0,0,  0) );
+    m_sensor[5] = Sensor_Emulator( E_type_distance, v3f( 0.10, 0,0), v3f(0,0, 20) );
+    m_sensor[6] = Sensor_Emulator( E_type_distance, v3f( 0.20, 0,0), v3f(0,0, 50) );
+    m_sensor[7] = Sensor_Emulator( E_type_turret_encoder, v3f(0,0,0), v3f(0,0,0) );
 
-    m_vel = sf::Vector3f( 0,0,0 );
-    m_acc = sf::Vector3f( 0,0,0 );
+    m_vel = v3f( 0,0,0 );
+    m_acc = v3f( 0,0,0 );
 
     m_bb3d.setSize(0.8, 1.3, 0.6);
     m_bb3d.setPos(0,0,0);
     m_bb3d.setAng(0,0,0);
 }
 
-Vehicle::Vehicle( const Vehicle& other ):
-    m_num_sensors(other.m_num_sensors)
+Vehicle::Vehicle( const Vehicle& other )
 {
     for( int i = 0; i < m_num_sensors; i++ )
     {
@@ -59,18 +85,52 @@ Vehicle::Vehicle( const Vehicle& other ):
     m_mass = other.m_mass;
 }
 
-Vehicle& Vehicle::operator =( const Vehicle& rhs )
+/*
+Vehicle& Vehicle::operator =(const Vehicle& rhs)
 {
-    return *this = Vehicle(rhs);
+    if (this != &rhs) {  // Kendisine atama yapılmadığını kontrol et
+        // DONT. this is constexpr. this is hardcoded. m_num_sensors = rhs.m_num_sensors;
+        // Diğer üyeleri kopyala (örneğin m_turret)
+    }
+    return *this;
 }
+*/
+//arranged according to the directive
+/* BUT THERE ARE STILL PROBLEMMM
+Vehicle& Vehicle::operator=(const Vehicle& rhs)
+{
+    if (this != &rhs) 
+    {
+        // copy the sensors 
+        for (int i = 0; i < m_num_sensors; i++)
+        {
+            m_sensor[i] = rhs.m_sensor[i];
+        }
+
+        // copy other members
+        m_bb3d = rhs.m_bb3d;
+        m_vel = rhs.m_vel;
+        m_acc = rhs.m_acc;
+        m_turn_radius = rhs.m_turn_radius;
+        m_mass = rhs.m_mass;
+        m_turret = rhs.m_turret; // <<<<<< 
+        m_angVel = rhs.m_angVel;
+        m_angAcc = rhs.m_angAcc;
+        m_sensor_data = rhs.m_sensor_data;
+    }
+    return *this;
+}
+*/
 
 BB3D Vehicle::getBox() const { return m_bb3d; }
 
-// TODO add simulated error to these
-sf::Vector3f Vehicle::getVel() const { return m_vel; }
-sf::Vector3f Vehicle::getAcc() const { return m_acc; }
-sf::Vector3f Vehicle::getAngVel() const { return m_angVel; }
-sf::Vector3f Vehicle::getAngAcc() const { return m_angAcc; }
+v3f Vehicle::getPos() const { return m_bb3d.getPos(); }
+v3f Vehicle::getVel() const { return m_vel; }
+v3f Vehicle::getAcc() const { return m_acc; }
+v3f Vehicle::getAngVel() const { return m_angVel; }
+v3f Vehicle::getAngAcc() const { return m_angAcc; }
+
+Sensor_Data Vehicle::getSensorData() const { return m_sensor_data; };
 
 Sensor_Emulator Vehicle::getSensor( const unsigned short int number ) const
 {
@@ -78,15 +138,15 @@ Sensor_Emulator Vehicle::getSensor( const unsigned short int number ) const
     {
         std::cerr<<"ERROR! Requested non existing sensor, returning default constructed sensor.\n";
         return Sensor_Emulator();
+    }
+    return m_sensor[ number ];
+}
 /*
 								/\/\
 								  \_\  _..._
 								  (" )(_..._)
 								   ^^  // \\
 */
-    }
-    return m_sensor[ number ];
-}
 
 float Vehicle::readSensor( const unsigned short int number )
 {
@@ -98,69 +158,100 @@ float Vehicle::readSensor( const unsigned short int number )
     return m_sensor[number].read( m_sensor_data );
 }
 
-void Vehicle::setAcceleration( const float acc )
-{
-    // TODO maybe do a limit check?
-    m_acc.y = acc;
-}
 
-void Vehicle::setTurnRadius( const float radius )
-{
-    // TODO maybe do a limit check?
-    m_turn_radius = radius;
-}
+void Vehicle::overridePos( const v3f pos ) { m_bb3d.setPos(pos); }
 
-void Vehicle::overridePos( const sf::Vector3f pos )
+void Vehicle::setNavigationState( const int time_step_milli )
 {
-    m_bb3d.setPos(pos);
-}
+    // convert time step from milliseconds to seconds
+    double time_step = time_step_milli/1000.f;
 
-void Vehicle::simulatePhys( const float time_step )
-{
-    // ah shit, here we go again...
-    
-    // we calculate new iteration values
-    // and set current values to new iterations values
-    // we do not want to mix old and new iteration values
+    // -- dead reckoning calculations --
+    // this part ive yanked from the simulatePhys method.
+    // this is using the eulers method for integration, we should switch to RungeKutta 4th order
 
-    // to avoid mixing
-    float fwd_vel = m_vel.y;
+    // set our acceleration values from imu sensor output
+    m_acc = m_sensor_data.acceleration;
+    // this line commented out because IMU outputs angular velocity???
+    //m_angAcc = m_sensor_data.angular_rate;
+    m_angVel = m_sensor_data.angular_rate;
 
     // translations
-    m_bb3d.translateLocal( m_vel );
+    m_bb3d.translateLocal( m_vel * time_step );
 
     // rotations, we should switch to quaternions...
-    m_bb3d.yawLeft( m_angVel.z );
-    m_bb3d.pitchUp( m_angVel.x );
-    m_bb3d.rollRight( m_angVel.y );
+    m_bb3d.yawLeft( m_angVel.z * time_step );
+    m_bb3d.pitchUp( m_angVel.x * time_step );
+    m_bb3d.rollRight( m_angVel.y * time_step );
 
     // first derivatives (using eulers method)
-    m_vel += m_acc * time_step;
-    m_angVel += m_angAcc * time_step;
+    m_vel += m_acc * (float)time_step;
+    // this line commented out because IMU outputs angular velocity???
+    //m_angVel += m_angAcc * time_step;
 
-    // second derivatives
-    // these are affected by forces, we dont simulate forces. shit.
-    // unless we simulate forces, we must model them
-    
-    // this is centripetal acceleration to model tire sideways friction
-    m_acc.x = -(fwd_vel*fwd_vel)/m_turn_radius;
-    //m_angAcc = /*DONT HAVE FORCE DATA*/;
-
-    // modelling turning
-    m_angVel.z = fwd_vel/m_turn_radius;
-
-    // here be gravity
-    /*  TODO we are not ready yet, there is no floor to resist our fall
-    Quaternion qc = m_bb3d.getQuat().conjugate();
-    sf::Vector3f gravity( 0, 0, -9.81f );
-    qc.rotateVector( gravity ); // gravity on local csys
-    m_acc += gravity;
+    // DEBUG
+    m_vel = m_sensor_data.velocity; // DEBUG, does imu give this to us outright?? idk
+    /*
+    std::cout<<"dead reckon time step: "<<time_step<<"\n";
+    std::cout<<"IMU acce: "<<m_acc.x<<"x "<<m_acc.y<<"y "<<m_acc.z<<"z\n";
+    std::cout<<"IMU velo: "<<m_vel.x<<"x "<<m_vel.y<<"y "<<m_vel.z<<"z\n";
+    std::cout<<"IMU rate: "<<m_angVel.x<<"x "<<m_angVel.y<<"y "<<m_angVel.z<<"z\n";
     */
 }
 
-void Vehicle::setNavigationState( const int time_step )
-{
-    // TODO dead reckoning calculations
-    std::cout<<"DEBUG: setNavigationState got "<<time_step<<" as time step\n";
+// Vehicle sınıfının Turret nesnesiyle ilgili fonksiyonlarının implementasyonu
+
+Turret& Vehicle::getTurret() {
+    return m_turret;  // m_turret, Vehicle sınıfındaki Turret üyesi
 }
 
+const Turret& Vehicle::getTurret() const {
+    return m_turret;
+}
+
+void Turret::setYaw(float yaw_angle) {
+    m_yaw = yaw_angle;
+    //m_yaw_box.setAng({0, 0, yaw_angle});
+    m_yaw_box.setAng( {yaw_angle, 0, 0} );
+}
+
+// Pitch açısını ayarlayan fonksiyon
+void Turret::setPitch(float pitch_angle) {
+    m_pitch = pitch_angle;
+    //m_pitch_box.setAng({pitch_angle, 0, 0});  // pitch is around X
+    m_pitch_box.setAng( {0, pitch_angle, 0} );
+}
+
+// Yaw açısını döndüren fonksiyon
+float Turret::getYaw() const {
+    return m_yaw;
+}
+
+// Pitch açısını döndüren fonksiyon
+float Turret::getPitch() const {
+    return m_pitch;
+}
+
+BB3D Turret::getYawBox() const {
+    return m_yaw_box;
+}
+
+BB3D Turret::getPitchBox() const {
+    return m_pitch_box.onTop( m_yaw_box );
+}
+
+// Final camera bounding box, including both yaw and pitch
+BB3D Turret::getCameraWideBox() const {
+    return m_camera_wide_box.onTop( m_pitch_box.onTop( m_yaw_box ) );
+}
+
+BB3D Turret::getCameraNarrowBox() const {
+    return m_camera_narrow_box.onTop( m_pitch_box.onTop( m_yaw_box ) );
+}
+
+BB3D Turret::getLaserBox() const {
+    return m_laser_box.onTop( m_pitch_box.onTop( m_yaw_box ) );
+}
+
+bool Turret::getLaserStatus() const { return m_laser_active; }
+void Turret::setLaserStatus( bool inp ) { m_laser_active = inp; }

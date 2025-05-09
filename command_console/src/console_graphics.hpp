@@ -24,38 +24,67 @@
 
 
 /*
-   This is where we display data from the vehicle and issue control commands
+    This is where we display data from the vehicle and issue control commands
 
-   - vehicle attitude indicator
+    - DONE - vehicle attitude indicator
 
-   - vehicle control mode (manual, auto-drive, fully-auto)
+    - TODO vehicle control mode (manual, auto-drive, fully-auto)
 
-   - camera feeds
+    - TODO camera feeds
 
-   - turret attitude
-   - weapon control (target aquisition status, big red fire button)
+    - TODO turret attitude
+    - TODO weapon control (target aquisition status, big red fire button)
 
-   - motor loading
-   - component temperatures
-   - land speed
-   - direction of travel
+    - MAYBE LATER - motor loading
+    - TODO component temperatures
+    - DONE - motor temperatures
+    - DONE - land speed
+    - DONE - direction of travel
 
-   - overhead map
-   - waypoints display
+    - TODO - overhead map
+    - TODO - waypoints display
 
-   - immediate obstacle display
+    - WILL BE MIGRATED FROM NGC GUI - immediate obstacle display
 
 
-   */
+    */
 
 #pragma once
-#include "SFML/Graphics.hpp"
+
+#include "raylib.h"
 #include "gauge.hpp"
+#include "adi.hpp"
+#include "user_input.hpp"
+#include <cassert>
+#include <cmath>
 
-extern Gauge gauge_temp;
-extern Gauge gauge_amp;
+    namespace cg {
+     
+        extern Gauge gauge_temp;
+        extern Gauge gauge_amp;
+        extern Gauge gauge_amp2;
+        extern Gauge gauge_temp2;
+        extern Gauge gauge_speed;
+        extern Gauge gauge_compass;
+        extern Gauge gauge_tachometer;
+        extern Gauge gauge_battery;
+        extern Gauge gauge_signal;
+        extern Adi   gauge_adi;
+        extern UserInput input;
 
-bool init_graphics( sf::RenderTarget* );
 
-void DEBUG_gauge_test();
+        void InitWindowSafe(int width, int height, const char* title);
 
+        void createPanel(Vector2 pos, Vector2 size , Color color, const char* title);
+
+        bool isInitialized();
+
+        void renderGauges();
+
+
+        inline void EnsureWindow() {
+            assert(isInitialized() && "Can't call cg::InitWindowSafe() before creating objects!");
+        }
+        // Debug test
+        void DEBUG_gauge_test();
+   }

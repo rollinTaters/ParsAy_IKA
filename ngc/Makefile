@@ -1,18 +1,17 @@
-SFML_dir_linux := ./../SFML/SFML-2.6.x-linux
-SFML_dir_win := ./../SFML/SFML-2.6.x-win
+SFML_dir := ./../SFML/SFML-2.6.x-linux
+raylib_dir := ./../raylib-5.5_linux_amd64
 
-SFML_libs := -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-system -lsfml-network
+#SFML_libs := -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-system -lsfml-network
 #SFML_libs_static := -DSFML_STATIC -MMD -MP -static-libstdc++ -static-libgcc -lsfml-main -lsfml-audio-s -lsfml-graphics-s -lsfml-window-s -lsfml-system-s -lsfml-network-s  -lopengl32 -lfreetype -lwinmm -lgdi32 -lopenal32 -lFLAC -lvorbisenc -lvorbis -logg -lws2_32
 
 # ==== Navigation Guidance and Control objects ====
-NGC_OBJECTS := main.o vehicle.o ngc.o sensor_emulator.o env_emulator.o
-COMMON_OBJECTS := utility.o comms_module.o
+NGC_OBJECTS := main.o vehicle.o ngc.o sensor_emulator.o env_emulator.o traction_motor.o
+COMMON_OBJECTS := utility.o comms_module.o video_feed.o
 
 LINUX_NGC_RELEASE_OBJECTS = $(addprefix obj/linux_, $(NGC_OBJECTS))
 LINUX_COMMON_OBJECTS = $(addprefix ../common_code/obj/linux_, $(COMMON_OBJECTS))
 LINUX_NGC_DEBUG_O3_OBJECTS = $(addprefix obj/debug_o3_, $(NGC_OBJECTS))
-LINUX_NGC_DEBUG_O0_OBJECTS = $(addprefix obj/debug_o0_, $(NGC_OBJECTS))
-WIN_NGC_RELEASE_OBJECTS = $(addprefix obj/win_, $(NGC_OBJECTS))
+LINUX_NGC_DEBUG_GUI_OBJECTS = $(addprefix obj/debug_gui_, $(NGC_OBJECTS))
 
 
 # ==== flags ====
@@ -20,38 +19,38 @@ DEBUG_FLAGS_O3 := -g -ggdb -O3 -Wall -Wextra
 DEBUG_FLAGS_O0 := -g -ggdb -O0 -Wall -Wextra
 RELEASE_FLAGS := -O3 -std=c++17
 
-LINUX_DEBUG_LDFLAGS := -Wl,-rpath=$(SFML_dir_linux)/lib -I $(SFML_dir_linux)/include -L$(SFML_dir_linux)/lib $(SFML_libs)
-LINUX_LDFLAGS := -Wl,-rpath=./lib -I $(SFML_dir_linux)/include -L$(SFML_dir_linux)/lib $(SFML_libs)
-WIN_LDFLAGS := -mwindows -I $(SFML_dir_win)/include -L$(SFML_dir_win)/lib -L/usr/x86_64-w64-mingw32/lib -L/usr/x86_64-w64-mingw32/bin $(SFML_libs) -lsfml-main
+LINUX_DEBUG_LDFLAGS := -Wl,-rpath=$(raylib_dir)/lib:$(SFML_dir)/lib -I $(raylib_dir)/include -I $(SFML_dir)/include -L$(raylib_dir)/lib -L$(SFML_dir)/lib -lraylib -lsfml-system -lsfml-network
+LINUX_LDFLAGS := -Wl,-rpath=./lib -I $(raylib_dir)/include -L$(raylib_dir)/lib -lraylib
 
-WIN_COMPILER := x86_64-w64-mingw32-g++-posix
 LINUX_COMPILER := g++
 
 BUILD_VER := 0.2
 RELEASE_PATH := release_builds/v$(BUILD_VER)
 
-.PHONY: clean release src/main.hpp
+.PHONY: clean clear release gui headless src/main.hpp
 
 # ==== Unmanned Land Vehicle Linux Debug build ====
-ngc: $(LINUX_NGC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS)
-	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) $(LINUX_NGC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS) -o ngc $(LINUX_DEBUG_LDFLAGS)
+gui: $(LINUX_NGC_DEBUG_GUI_OBJECTS) $(LINUX_COMMON_OBJECTS)
+	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) -DDEBUG_GUI $(LINUX_NGC_DEBUG_GUI_OBJECTS) $(LINUX_COMMON_OBJECTS) -o ngc $(LINUX_DEBUG_LDFLAGS)
+
+#headless: $(LINUX_NGC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS)
+	#$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) $(LINUX_NGC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS) -o ngc $(LINUX_DEBUG_LDFLAGS)
 
 $(LINUX_COMMON_OBJECTS): ../common_code/obj/linux_%.o: ../common_code/src/%.cpp ../common_code/src/%.hpp
 	make -C ../common_code
 
-o0: $(LINUX_NGC_DEBUG_O0_OBJECTS)
-	$(LINUX_COMPILER) $(DEBUG_FLAGS_O0) $(LINUX_NGC_DEBUG_O0_OBJECTS) -o ngc $(LINUX_DEBUG_LDFLAGS)
-
 $(LINUX_NGC_DEBUG_O3_OBJECTS): obj/debug_o3_%.o: src/%.cpp src/%.hpp
-	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) -c $< -o $@ $(LINUX_LDFLAGS)
+	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) -c $< -o $@ $(LINUX_DEBUG_LDFLAGS)
 
-$(LINUX_NGC_DEBUG_O0_OBJECTS): obj/debug_o0_%.o: src/%.cpp src/%.hpp
-	$(LINUX_COMPILER) $(DEBUG_FLAGS_O0) -c $< -o $@ $(LINUX_LDFLAGS)
+$(LINUX_NGC_DEBUG_GUI_OBJECTS): obj/debug_gui_%.o: src/%.cpp src/%.hpp
+	$(LINUX_COMPILER) $(DEBUG_FLAGS_O0) -Wno-missing-field-initializers -DDEBUG_GUI -c $< -o $@ $(LINUX_DEBUG_LDFLAGS)
 
 clean:
 	rm -f *.o obj/*.o ngc ../common_code/obj/*.o
-	make ngc
+	make 
 
+clear:
+	rm -f *.o obj/*.o ngc ../common_code/obj/*.o
 
 
 # ==== Release commands ====
@@ -59,14 +58,14 @@ release:
 	rm -r -f $(RELEASE_PATH) obj/linux_*.o obj/win_*.o
 	make $(RELEASE_PATH)
 	make NGC_linux
-	make NGC_win64
+	#make NGC_win64
 	tar -C ./$(RELEASE_PATH) -acf ./$(RELEASE_PATH)/linux64_$(BUILD_VER).tar linux
-	zip -r -q ./$(RELEASE_PATH)/win64_$(BUILD_VER).zip ./$(RELEASE_PATH)/win
+	#zip -r -q ./$(RELEASE_PATH)/win64_$(BUILD_VER).zip ./$(RELEASE_PATH)/win
 
 $(RELEASE_PATH):
 	mkdir $(RELEASE_PATH)
-	mkdir $(RELEASE_PATH)/win
-	mkdir $(RELEASE_PATH)/win/ngc
+	#mkdir $(RELEASE_PATH)/win
+	#mkdir $(RELEASE_PATH)/win/ngc
 	mkdir $(RELEASE_PATH)/linux
 	mkdir $(RELEASE_PATH)/linux/ngc
 
@@ -79,20 +78,6 @@ NGC_linux: $(LINUX_NGC_RELEASE_OBJECTS)
 $(LINUX_NGC_RELEASE_OBJECTS): obj/linux_%.o : src/%.cpp
 	$(LINUX_COMPILER) $(RELEASE_FLAGS) -c $< -o $@ $(LINUX_LDFLAGS)
 
-
-# ==== Windows Release build ====
-NGC_win64: $(WIN_NGC_RELEASE_OBJECTS)
-	cp -r $(SFML_dir_win)/lib/sfml-graphics-2.dll $(RELEASE_PATH)/win/ulv/sfml-graphics-2.dll
-	cp -r $(SFML_dir_win)/lib/sfml-system-2.dll $(RELEASE_PATH)/win/ulv/sfml-system-2.dll
-	cp -r $(SFML_dir_win)/lib/sfml-window-2.dll $(RELEASE_PATH)/win/ulv/sfml-window-2.dll
-	cp /usr/lib/gcc/x86_64-w64-mingw32/10-posix/libgcc_s_seh-1.dll $(RELEASE_PATH)/win/ulv/libgcc_s_seh-1.dll
-	cp /usr/lib/gcc/x86_64-w64-mingw32/10-posix/libstdc++-6.dll $(RELEASE_PATH)/win/ulv/libstdc++-6.dll
-	cp /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll $(RELEASE_PATH)/win/ulv/libwinpthread-1.dll
-	#cp -r gfx $(RELEASE_PATH)/win/ngc/gfx
-	$(WIN_COMPILER) $(RELEASE_FLAGS) $(WIN_NGC_RELEASE_OBJECTS) -o $(RELEASE_PATH)/win/ngc/NGC_win64 $(WIN_LDFLAGS) 
-
-$(WIN_NGC_RELEASE_OBJECTS): obj/win_%.o : src/%.cpp
-	$(WIN_COMPILER) $(RELEASE_FLAGS) -c $< -o $@ $(WIN_LDFLAGS)
 
 
 

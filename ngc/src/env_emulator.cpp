@@ -23,28 +23,26 @@
 */
 
 
-#include <chrono>   // thread sleep
+#include <chrono>   // thread sleep steady_clock
 #include <iostream>     // cerr
 #include "env_emulator.hpp"
+#include "ngc.hpp"  // we gon get commanded speed and rate values
+#include "raylib.h"
+#include "raymath.h"    // matrix
+
+Vector3 toVector3(const v3f& v) {
+    return Vector3{ v.x, v.y, v.z };
+}
 
 Env_Emulator::Env_Emulator( const Vehicle& inp_vehicle ):
     m_real_vehicle(inp_vehicle)
 {
-    // load the course image from the disk
-    if( !m_image_course.loadFromFile("gfx/course1.png") )
-    {
-        std::cerr<<"Error. Could not load course image from file!\n";
-    }
-    // set position of m_real_vehicle in course
-    m_real_vehicle.overridePos( sf::Vector3f(340*m_metre_per_pixel, 775*m_metre_per_pixel, 0.5f) );
-
-    // init clock
-    m_clock = sf::Clock();
 }
 
 Env_Emulator::~Env_Emulator()
 {
     stopPhysSim();
+    unloadModel();
 }
 
 bool Env_Emulator::startPhysSim()
@@ -82,23 +80,134 @@ bool Env_Emulator::stopPhysSim()
     return true;
 }
 
+void Env_Emulator::setNGC( NGC * inp )
+{
+    m_ngc = inp;
+}
+
+Vehicle Env_Emulator::getRealVehicle() const
+{
+    return m_real_vehicle;
+}
+
+/*
+   SWITCH TO CHRONO
 sf::Time Env_Emulator::getTime() const
 {
     return m_clock.getElapsedTime();
 }
+*/
 
 void Env_Emulator::physThreadFunc()
 {
-    unsigned int step_time = 1000/30.f;
+    unsigned int step_time_milli = 1000/30.f;
+    double step_time = step_time_milli/1000.f;
     while( m_run_phys_thread )
     {
-        m_real_vehicle.simulatePhys( step_time );
-        std::this_thread::sleep_for( std::chrono::milliseconds( step_time ) );
+        // ah shit, here we go again...
+        
+        // we calculate new iteration values
+        // and set current values to new iterations values
+        // we do not want to mix old and new iteration values
+
+        // A very lazy vehicle actuator simulation by hard setting vehicles velocity
+        if( m_ngc != nullptr )
+        {
+            m_real_vehicle.m_vel.y = m_ngc->hey_emulator_speed;
+            m_real_vehicle.m_angVel.z = m_ngc->hey_emulator_rate;
+        }
+
+        // to avoid mixing
+        float fwd_vel = m_real_vehicle.m_vel.y;
+
+        // translations
+        m_real_vehicle.m_bb3d.translateLocal( m_real_vehicle.m_vel * step_time );
+
+        // rotations, we should switch to quaternions...
+        m_real_vehicle.m_bb3d.yawLeft( m_real_vehicle.m_angVel.z * step_time );
+        m_real_vehicle.m_bb3d.pitchUp( m_real_vehicle.m_angVel.x * step_time );
+        m_real_vehicle.m_bb3d.rollRight( m_real_vehicle.m_angVel.y * step_time );
+
+        // first derivatives (using eulers method)
+        m_real_vehicle.m_vel += m_real_vehicle.m_acc * step_time;
+        m_real_vehicle.m_angVel += m_real_vehicle.m_angAcc * step_time;
+
+        // second derivatives
+        // these are affected by forces, we dont simulate forces. shit.
+        // unless we simulate forces, we must model them
+        
+        // this is centripetal acceleration to model tire sideways friction
+        if( m_real_vehicle.m_turn_radius != 0 )
+            m_real_vehicle.m_acc.x = -(fwd_vel*fwd_vel)/m_real_vehicle.m_turn_radius;
+        //m_angAcc = /*DONT HAVE FORCE DATA*/;
+
+        // modelling turning
+        if( m_real_vehicle.m_turn_radius != 0 )
+            m_real_vehicle.m_angVel.z = fwd_vel/m_real_vehicle.m_turn_radius;
+
+        // here be gravity
+        /*  TODO we are not ready yet, there is no floor to resist our fall
+        Quaternion qc = m_bb3d.getQuat().conjugate();
+        v3f gravity( 0, 0, -9.81f );
+        qc.rotateVector( gravity ); // gravity on local csys
+        m_acc += gravity;
+        */
+
+        std::this_thread::sleep_for( std::chrono::milliseconds( step_time_milli ) );
+        // TODO we wont sleep for exacly step_time, determine the slept time and use that as the "step time"
     }
+}
+
+float Env_Emulator::shittyPixelMarch( BB3D i_box, v3f i_dir ) const
+{
+    /*
+    // pixel marching setup, for direction sensor
+    unsigned int max_iteration = 1000;
+    unsigned int iteration = 0;
+    bool march_successful = false;
+    Point start_pos = i_box.getPos();
+    start_pos /= m_metre_per_pixel; // convert meters to pixel position
+    Point check_pos = start_pos; // position we will iterate upon
+    Point direction = i_dir * 0.005;
+
+
+    while( iteration < max_iteration )
+    {
+        // check if pixel is marked as "wall"
+        // TODO this is stupid, getimagecolor takes the image argument by copy to its function frame. change this to be a straight up "height" array
+        Color colour =  GetImageColor( m_image_course, (int)round(check_pos.x),
+                                           (int)round(check_pos.y) );
+        if( ColorIsEqual( colour, BLACK ) )
+        {
+            // found wall, return it
+            march_successful = true;
+            break;
+        }
+        // TODO what about floors? at least return when point goes below Z0
+
+        // TODO we may skip some pixels if we move by a unit vector, check if this is the case
+        // move to next iteration
+        check_pos += direction;
+        iteration++;
+    }
+
+    // returning found value
+    if( !march_successful )
+    {
+        // NOTE: maybe there was no obstacle? this isnt necessarly a failure
+        //std::cerr<<"Environment emulator: sensor did not hit obstacle\n";
+        return 0.f;
+    }
+    return ( (check_pos - start_pos)*m_metre_per_pixel ).mag();
+    */
+    return 0.f;
 }
 
 bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) const
 {
+    // nullptr sensor protection
+    if (!sensor) return false;
+
     // determine sensor type
     Sensor_Type sensor_type = sensor->getType();
 
@@ -106,14 +215,10 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
     BB3D sensor_box = sensor->getBox();
     sensor_box += m_real_vehicle.getBox();
     
-    // pixel marching setup, for direction sensor
-    unsigned int max_iteration = 1000;
-    unsigned int iteration = 0;
-    bool march_successful = false;
-    sf::Vector3f start_pos = sensor_box.getPos();
-    start_pos /= m_metre_per_pixel; // convert meters to pixel position
-    sf::Vector3f check_pos = start_pos; // position we will iterate upon
-    sf::Vector3f direction = sensor_box.getAngEuler();
+    // for lidar case
+    float rad_increment = (2*PI)/LIDAR_POINTS;
+    v3f sensor_direction = sensor_box.getLocalVecY();
+    cQuaternion lidar_quat = cQuaternion::fromAxisAngle( sensor_box.getLocalVecZ(), rad_increment );
 
     switch( sensor_type )
     {
@@ -123,45 +228,25 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
             return false;
         // ---- Simple distance sensor ----
         case E_type_distance:
-
-            while( iteration < max_iteration )
-            {
-                // check if pixel is marked as "wall"
-                if( m_image_course.getPixel( (int)round(check_pos.x),
-                                             (int)round(check_pos.y) ) == sf::Color::Black )
-                {
-                    // found wall, return it
-                    march_successful = true;
-                    break;
-                }
-                // TODO what about floors? at least return when point goes below Z0
-
-                // TODO we may skip some pixels if we move by a unit vector, check if this is the case
-                // move to next iteration
-                check_pos += direction;
-            }
-
-            // returning found value
-            if( !march_successful )
-            {
-                // NOTE: maybe there was no obstacle? this isnt necessarly a failure
-                std::cerr<<"Environment emulator: sensor did not hit obstacle\n";
-                //data.distance = 1000.f;
-                return false;
-            }
-            data.distance = mag( (check_pos - start_pos)*m_metre_per_pixel );
+            data.distance = shittyPixelMarch( sensor_box, sensor_box.getLocalVecY() );
             return true;
 
         // ---- LIDAR ----
         case E_type_LIDAR:
-            // TODO
-            std::cerr<<"ERROR: LIDAR type sensor is not implemented in environment emulator\n";
-            return false;
+            //std::cout<<"env emulator: reading lidar sensor\n";    // DEBUG
+            for( int i = 0; i < LIDAR_POINTS; i++ )
+            {
+                data.lidar[i] = shittyPixelMarch( sensor_box, sensor_direction );
+                data.lidar_angle[i] = rad_increment * i;
+                lidar_quat.rotateVector( sensor_direction );
+            }
+            return true;
 
         // ---- IMU ----
         case E_type_IMU:
             data.acceleration = m_real_vehicle.getAcc();
-            data.angular_rate = m_real_vehicle.getAngAcc();
+            data.velocity = m_real_vehicle.getVel();
+            data.angular_rate = m_real_vehicle.getAngVel();
             // TODO data.magnetic_north;
             data.barometric_pressure = 101325;
             return true;
@@ -177,6 +262,116 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
             // TODO
             data.electric_current = 0;
             return false;
+        
+        // ---- Turret Encoders ----
+        case E_type_turret_encoder:
+            data.turret_pitch = m_real_vehicle.getTurret().getPitch();
+            data.turret_yaw = m_real_vehicle.getTurret().getYaw();
+            return true;
+
     }
+}
+
+namespace GUI{
+    extern Vector3 taters2raylib( v3f );
+}
+
+bool Env_Emulator::setupModel()
+{
+    // ---- height map setup ----
+    // load the course image from the disk
+    Image im_height_map = LoadImage("./gfx/course1.png");
+    if( !IsImageValid( im_height_map ) )
+    {
+        std::cerr<<"Error. Could not load course image from file!\n";
+        m_model_initialized = false;
+        return false;
+    }
+    //im_height_map = GenImageCellular( 2000, 3000, 75 );
+    //ImageFlipVertical( &im_height_map );
+    //ImageFlipHorizontal( &im_height_map );
+    //ImageBlurGaussian( &im_height_map, 12 );
+    //ImageColorInvert( &im_height_map );
+    //ImageColorGrayscale( &im_height_map );
+
+    // set position of m_real_vehicle in course
+    m_real_vehicle.overridePos( Point(340*m_metre_per_pixel, (1080-775)*m_metre_per_pixel, 0.5f) );
+
+    float resize_factor = 0.2f;
+
+    // grab original mesh size
+    Vector3 mesh_size = {
+        m_metre_per_pixel*im_height_map.width,
+        2,
+        m_metre_per_pixel*im_height_map.height };
+
+    // resize image down
+    ImageResize( &im_height_map,
+            im_height_map.width*resize_factor,
+            im_height_map.height*resize_factor );
+
+    // generate height map
+    m_hm_mesh = GenMeshHeightmap( im_height_map, (mesh_size) );
+
+    // resize image to original, ( here be losses )
+    ImageResize( &im_height_map,
+            im_height_map.width/resize_factor,
+            im_height_map.height/resize_factor );
+
+    // invert color before loading texture, so its lighter color
+    ImageColorInvert( &im_height_map );
+    Image im_overlay = GenImageCellular( im_height_map.width, im_height_map.height, 20 );
+    Rectangle rect = {0,0,im_height_map.width,im_height_map.height};
+    ImageDraw( &im_height_map, im_overlay, rect, rect, Fade(WHITE, 0.5f) );
+
+    m_hm_texture = LoadTextureFromImage( im_height_map );
+    m_hm_model = LoadModelFromMesh( m_hm_mesh );
+    m_hm_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = m_hm_texture;
+    UnloadImage( im_height_map );
+
+    m_model_initialized = true;
+    return true;
+}
+
+bool Env_Emulator::unloadModel()
+{
+    if( m_model_initialized )
+    {
+        UnloadTexture( m_hm_texture );
+        UnloadModel( m_hm_model );
+        m_model_initialized = false;
+        return true;
+    }
+    return false;
+}
+
+void Env_Emulator::drawHMap() 
+{
+    if( !m_model_initialized ) return;
+
+    // map start position offset
+    //Vector3 map_offset = GUI::taters2raylib( Point(340*m_metre_per_pixel, (1080-775)*m_metre_per_pixel, 0.5f) );
+    Vector3 map_offset = GUI::taters2raylib( Point( 0, -1080*m_metre_per_pixel, -0.25 ) );
+
+    // get quaternions and positions, convert them to raylib axis conventions
+    cQuaternion veh_quat = m_real_vehicle.getBox().getQuaternion();
+    Vector3 veh_quat_axis = GUI::taters2raylib( { veh_quat.x, veh_quat.y, veh_quat.z } );
+    Vector3 veh_pos = GUI::taters2raylib( m_real_vehicle.getBox().getPos() );
+    veh_pos += map_offset;
+
+    // convert quaternions and vectors to raylib units
+    Quaternion vehicle_rotation = { veh_quat_axis.x, veh_quat_axis.y, veh_quat_axis.z, -veh_quat.w };
+    Vector3 vehicle_position = { veh_pos.x, veh_pos.y, veh_pos.z };
+
+    Matrix rotation_matrix = QuaternionToMatrix( vehicle_rotation );
+
+    Matrix translation_matrix = MatrixTranslate( -vehicle_position.x, -vehicle_position.y, -vehicle_position.z );
+
+    Matrix world_transform = MatrixMultiply( translation_matrix, rotation_matrix );
+
+    m_hm_model.transform = world_transform;
+
+    DrawModel( m_hm_model, (Vector3){0,0,0}, 1.f, DARKGREEN );
+
 }
 

@@ -29,54 +29,29 @@
 
 Sensor_Emulator::Sensor_Emulator()
 {
-    m_time_last_read = sf::Time::Zero;
-    m_time_cooldown = sf::Time::Zero;
 }
 
 Sensor_Emulator::Sensor_Emulator( Sensor_Type type,
-                                  const sf::Vector3f inp_pos,
-                                  const sf::Vector3f inp_angle )
+                                  const v3f inp_pos,
+                                  const v3f inp_angle )
     :m_type(type)
 {
     m_bb3d.setPos( inp_pos );
     m_bb3d.setAng( inp_angle );
-
-    m_time_last_read = env_emulator.getTime();
-    m_time_cooldown = sf::milliseconds(20);
+    m_bb3d.setSize( 0.010f, 0.010f, 0.010f );
 }
 
 Sensor_Emulator::Sensor_Emulator( Sensor_Type type, const BB3D inp_bb3d )
     :m_type(type)
 {
     m_bb3d = inp_bb3d;
-
-    m_time_last_read = env_emulator.getTime();
-    m_time_cooldown = sf::milliseconds(20);
 }
 
-bool Sensor_Emulator::isReady() const
-{
-    // this is stupid, we dont know shit about sensors yet
-    //if( env_emulator.getTime() >= m_time_last_read + m_time_cooldown )
-        return true;
-    return false;
-}
 
 float Sensor_Emulator::read( Sensor_Data& data )
 {
     // we are a sensor emulator, there is no hardware to read
     // forward the call to the environment emulator
-    if( !isReady() )
-    {
-        std::cerr<<"tried reading sensor prematurely, sensor returned 0.f\n";
-        return 0.f;
-    }
-    if( m_time_cooldown == sf::Time::Zero )
-    {
-        std::cerr<<"WARNING! Are you trying to read a default constructed sensor?? sensor returned 0.f\n";
-        return 0.f;
-    }
-    m_time_last_read = env_emulator.getTime();
     return env_emulator.getSensorData(this, data );
 }
 

@@ -35,16 +35,16 @@
 
 #pragma once
 #include <thread>
-#include "SFML/Graphics/Image.hpp"
-#include "SFML/System/Clock.hpp"
+#include "raylib.h"
 #include "vehicle.hpp"
 //#include "sensor_emulator.hpp"  // getSensorData needs to know what a sensor is
 
 class Sensor_Emulator;  // getSensorData needs to know what a sensor is
+class NGC;  // we are gonna get the commanded speed and rate values from it
 
 class Env_Emulator
 {
-    public:
+  public:
     Env_Emulator( const Vehicle& );
     ~Env_Emulator();
     Env_Emulator( const Env_Emulator& )  = delete;
@@ -53,17 +53,29 @@ class Env_Emulator
     // vehicle simulation
     bool startPhysSim();
     bool stopPhysSim();
+    
+    void setNGC( NGC * );
+    Vehicle getRealVehicle() const;
 
     // returns time elapsed since emulator start
-    sf::Time getTime() const;
+    // SWITCH TO CHRONO sf::Time getTime() const;
 
     // this populates the sensor data object with emulated sensor readings from the "real" vehicle
     bool getSensorData( Sensor_Emulator*, Sensor_Data& ) const; // returns false on read fail
 
-    private:
+    void drawHMap();
+    bool setupModel();
+    bool unloadModel();
+
+  private:
     // "real" map/course
-    sf::Image m_image_course;
-    const float m_metre_per_pixel = 0.005;  // 5mm per pixel
+    Texture2D m_hm_texture;
+    Mesh m_hm_mesh;
+    Model m_hm_model;
+    bool m_model_initialized = false;
+    const float m_metre_per_pixel = 0.050;  // 50mm per pixel
+
+    float shittyPixelMarch( BB3D, v3f ) const;
 
     // physics simulation thread
     std::thread* m_phys_thread = nullptr;
@@ -73,8 +85,10 @@ class Env_Emulator
     // "real" vehicle, is copied from given vehicle on constructor method
     Vehicle m_real_vehicle;
 
+    NGC * m_ngc = nullptr;
+
     // simulation clock
-    sf::Clock m_clock;
+    std::chrono::steady_clock m_clock;
 
 };
 

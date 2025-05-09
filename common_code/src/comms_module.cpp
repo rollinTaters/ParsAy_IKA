@@ -1,11 +1,35 @@
+/*
+	MIT License
+
+	Copyright (c) 2025 rollinTaters
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+	
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
+	
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
+*/
+
 #include "comms_module.hpp"
 
-CommsModule::CommsModule( Type typ ):m_type(typ)
+CommsModule::CommsModule( Type typ, Channel channel ):m_type(typ)
 {
 #ifdef LOCALHOST
-    if( m_udp.bind(54000) != sf::Socket::Status::Done )
+    if( m_udp.bind(channel) != sf::Socket::Status::Done )
     {
-        std::cerr<<"Comms Module: failed to bind udp socket to port 54000\n";
+        std::cerr<<"Comms Module: failed to bind udp socket to port "<<channel<<"\n";
     }
     m_selector.add(m_udp);
 #endif
@@ -13,17 +37,25 @@ CommsModule::CommsModule( Type typ ):m_type(typ)
 
 CommsModule::~CommsModule()
 {
-    // TODO clear memory if needed
+    /*
+#ifdef LOCALHOST
+    for( sf::UdpSocket* p : m_vector_udp )
+    {
+        delete p;
+    }
+#endif
+*/
 }
 
-bool CommsModule::sendPacket( Packet )
+bool CommsModule::sendPacket( CommsPacket p, Channel c )
 {
 #ifdef LOCALHOST
+    // send the packet
     if( m_udp.send(
-                &Packet,
-                sizeof(Packet),
+                &p,
+                sizeof(CommsPacket),
                 sf::IpAddress::LocalHost,
-                54000 )
+                c )
             == sf::Socket::Status::Done )
     {
         return true;
@@ -33,7 +65,7 @@ bool CommsModule::sendPacket( Packet )
 }
 
 
-bool CommsModule::sendRequest( Request )
+bool CommsModule::sendRequest( CommsPacket::PacketType req )
 {
     return false;
 }
@@ -41,22 +73,24 @@ bool CommsModule::sendRequest( Request )
 bool CommsModule::packetAvailable()
 {
 #ifdef LOCALHOST
+    // NOTE: This shit may block for 10ms
+    m_selector.wait( sf::seconds(0.01f) );
     if( m_selector.isReady(m_udp) )
         return true;
 #endif
     return false;
 }
 
-bool CommsModule::readPacket( Packet& )
+bool CommsModule::readPacket( CommsPacket& p )
 {
 #ifdef LOCALHOST
     std::size_t received;
-    sf::IpAdress sender;
+    sf::IpAddress sender;
     unsigned short port;
 
     if( m_udp.receive(
-                Packet,
-                sizeof(Packet),
+                &p,
+                sizeof(CommsPacket),
                 received,
                 sender,
                 port )
