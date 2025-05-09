@@ -1,7 +1,7 @@
-# Image Processing for Sign Detection
+# Machine Learning Submodule
 
 ## Dependencies
-- OpenCV (4.x or later)
-- Qt 6 (for GUI features) (For now, in the future it won't be necessary)
+1. [onnx-tensorrt](https://github.com/onnx/onnx-tensorrt)
+2. [yolov5](https://github.com/ultralytics/yolov5)
+3. [OpenCV]()
 
-This is only a structure of project it is not usable right now.

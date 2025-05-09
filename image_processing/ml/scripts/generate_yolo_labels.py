@@ -1,3 +1,8 @@
+#
+# YOLO needs a rectangle for detection, but we are working with the data of a circle 
+# ..................................................................................
+#
+
 import json
 import os
 from PIL import Image
