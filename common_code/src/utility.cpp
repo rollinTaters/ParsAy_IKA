@@ -25,6 +25,8 @@
 
 #include "utility.hpp"
 
+//#include <iostream> // DEBUG
+
 // ---- Point ----
 Point::Point():x(0), y(0), z(0) {}
 Point::Point( const float in_x, const float in_y, const float in_z ):
@@ -93,14 +95,14 @@ float Point::heading() const
                 rad = asin( unit_vec.y );
             else
                 rad = (PI/2.f) - acos( unit_vec.x );
-            rad = PI/2.f - rad;
+            //rad = PI/2.f - rad;
         }else{
             // sector II
             if( use_arcsin )
                 rad = asin( unit_vec.y );
             else
                 rad = (PI/2.f) - acos( -unit_vec.x );
-            rad = (3.f*PI)/2.f + rad;
+            rad = /*(3.f*PI)/2.f*/ 2*PI - rad;
         }
     }else{
         if( unit_vec.x > 0 )
@@ -110,7 +112,7 @@ float Point::heading() const
                 rad = asin( -unit_vec.y );
             else
                 rad = (PI/2.f) - acos( unit_vec.x );
-            rad = PI/2.f + rad;
+            rad = PI/*/2.f*/ - rad;
         }else{
             // sector III
             if( use_arcsin )
@@ -120,6 +122,7 @@ float Point::heading() const
             rad = PI + rad;
         }
     }
+
     // fucking finally
     return rad;
 }

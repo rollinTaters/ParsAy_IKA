@@ -231,6 +231,7 @@ namespace GUI
         if( IsKeyPressed( KEY_C ) )
         {
             Point p(crosshair.x, crosshair.y, crosshair.z);
+            simulated_vehicle.getBox().getQuaternion().rotateVector( p );
             Point p_veh = simulated_vehicle.getPos();
             ::ngc_system.addWP( p+p_veh );
 
@@ -392,17 +393,18 @@ namespace GUI
                 (Vector2){10,500}, 20, 2, BLACK ); //cannot see stuff, changed to black
         DrawTextEx(
                 font,
-                TextFormat("crosshair: %3.2fx %3.2fy %3.2fz", crosshair.x, crosshair.y, crosshair.z),
+                TextFormat("crosshair: %3.2fx %3.2fy %3.2fz \n\theading: %3.2f",
+                    crosshair.x, crosshair.y, crosshair.z, (v3f){crosshair.x, crosshair.y, crosshair.z}.heading()),
                 (Vector2){10,30}, 20, 2, DARKGRAY );
         DrawTextEx(
                 font,
                 TextFormat("num WPs: %d", ngc_wps.size()),
-                (Vector2){10,50}, 20, 2, DARKGRAY );
+                (Vector2){10,70}, 20, 2, DARKGRAY );
         for( int i = 0; i < (int)ngc_wps.size(); i++ )
         {
             Point p = ngc_wps[i];
             DrawTextEx( font, TextFormat("wp%d: %3.1fx %3.1fy %3.1fz", i, p.x, p.y, p.z),
-                        (Vector2){160, 50+(16.f*i)}, 16, 1, DARKGRAY );
+                        (Vector2){160, 70+(16.f*i)}, 16, 1, DARKGRAY );
         }
     
         // position of vehicle in different frames

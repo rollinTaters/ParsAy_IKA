@@ -181,8 +181,8 @@ int main()
         // display turret camera's video feed on screen
         DrawTexturePro(
                 GUI::turretViewRT.texture,  // texture itself
-                {0, 0, 1920, -1080},    // source rectangle
-                {700, 30, 1920/8, 1080/8},     // destination rectangle
+                {0, 0, 1920, -1080},        // source rectangle
+                {700, 30, 1920/8, 1080/8},  // destination rectangle
                 {0, 0},     // origin
                 0.f,        // rotation
                 WHITE );    // tint

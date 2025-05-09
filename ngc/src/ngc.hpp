@@ -114,6 +114,7 @@ class NGC
     CommsModule m_comms_module;
     CommsPacket m_command_packet{ CommsPacket::ngc_command };
     CommsPacket m_telemetry_packet = CommsPacket::ngc_telemetry;
+    void processPacket( CommsPacket& );
 
     
 

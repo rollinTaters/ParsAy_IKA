@@ -165,27 +165,7 @@ void NGC::mainThreadFunc()
         if( m_comms_module.packetAvailable() )
         {
             m_comms_module.readPacket( m_command_packet );
-
-            // null packet catch
-            if( m_command_packet.isNull() )
-            {
-                std::cerr<<"packet was null\n";
-                break;  // TODO will this break out of run_main_thread loop ??? we dont want that
-            }
-            if( m_command_packet.packet_type == CommsPacket::ngc_command )
-            {
-                directCommand(
-                    m_command_packet.getManualSpeed(),
-                    m_command_packet.getManualSteer() );
-            }
-
-            // DEBUG
-            std::cout<<"NGC: got command packet, type: "<< (int)m_command_packet.packet_type
-                <<"data: \n";
-            for( std::uint8_t d : m_command_packet.data )
-                std::cout<< (int)d << " ";
-            std::cout<<"\n";
-            // DEBUG END
+            processPacket( m_command_packet );
         }
         // TODO send telemetry back
         // sendTelemetry();
@@ -200,17 +180,20 @@ void NGC::mainThreadFunc()
         // TODO run createTargetWaypoint, createOpenSpaceWaypoint
 
         // TODO run CONTROL type methods
-        // DEBUG
+
+        // checking wp satisfaction
+        if( !m_waypoints.empty() && m_waypoints.front().absDist(m_vehicle->getBox().getPos()) < 0.1f )
+        {
+            m_waypoints.erase( m_waypoints.begin() );
+        }
+
         if( !m_waypoints.empty() && m_execute_waypoints )
         {
-            // TODO checking wp satisfaction
-            std::cout<<"NGC: executing... mode:";
-            std::cout<<hitWP( m_waypoints.front() )<<"\n";
+            hitWP( m_waypoints.front() );
         }else{
             m_execute_waypoints = false;
             halt();
         }
-        // END OF DEBUG
 
         //std::cout<<"ngc main thread spam. counter:"<<counter<<"\n";
         //counter++;
@@ -408,7 +391,7 @@ int NGC::hitWP( Point wp )
     float wp_heading = d_wp.heading();
 
     // our vehicles heading
-    float vehicle_heading = box.getAngEuler().x;    // x:yaw, y:pitch, z:roll
+    float vehicle_heading = -box.getAngEuler().z;    // x: attitude y: bank z: heading
 
     // wp's bearing (aka target bearing)
     float t_bearing = wp_heading - vehicle_heading;
@@ -416,6 +399,13 @@ int NGC::hitWP( Point wp )
     // make sure bearing is between 0 and 2pi
     t_bearing += 2*PI;
     t_bearing = fmod( t_bearing, (2*PI) );
+    
+    /*
+    std::cout<<"\n";
+    std::cout<<"NGC: hitWP(): delta wp: "<<d_wp.x<<"x "<<d_wp.y<<"y "<<d_wp.z<<"z\n";
+    std::cout<<"NGC: hitWP(): wp heading: "<<wp_heading<<"\n";
+    std::cout<<"NGC: hitWP(): delta bearing: "<<t_bearing<<"\n";
+    */
 
     // front and rear mobility cones
     // 0-5 degrees -> ignore turn, just go straight
@@ -451,41 +441,49 @@ int NGC::hitWP( Point wp )
     // find out in which cone we are
     if( t_bearing <= fwd_r_nt || t_bearing >= fwd_l_nt )
     {   // forward no turn
+        //std::cout<<"mode: forward no turn\n";
         setControlOutput_rate( target_speed, 0 );
         return 1;
 
     }else if( t_bearing <= fwd_r_at )
     {   // forward right arc turn
+        //std::cout<<"mode: forward right arc turn\n";
         t_speed = target_speed;
         mode = 2;
 
     }else if( t_bearing <= bcw_r_at )
     {   // Point turn right
+        //std::cout<<"mode: forward point turn right\n";
         setControlOutput_rate( 0, -point_turn_rate );
         return 3;
 
     }else if( t_bearing <= bcw_r_nt )
     {   // backward right arc turn
+        //std::cout<<"mode: backward right arc turn\n";
         t_speed = target_reverse_speed;
         mode = 4;
 
     }else if( t_bearing <= bcw_l_nt )
     {   // backward no turn
+        //std::cout<<"mode: backward no turn\n";
         setControlOutput_rate( target_reverse_speed, 0 );
         return 5;
 
     }else if( t_bearing <= bcw_l_at )
     {   // backward left arc turn
+        //std::cout<<"mode: backward left arc turn\n";
         t_speed = target_reverse_speed;
         mode = 6;
 
     }else if( t_bearing <= fwd_l_at )
     {   // forward left point turn
+        //std::cout<<"mode: forward point turn left\n";
         setControlOutput_rate( 0, point_turn_rate );
         return 7;
 
     }else //if( t_bearing <= fwd_l_nt )
     {   // forward left arc turn
+        //std::cout<<"mode: forward left arc turn\n";
         t_speed = target_speed;
         mode = 8;
     }
@@ -567,6 +565,31 @@ void NGC::setControlOutput_radius( float speed, float turn_radius )
 
     // because i am doin it the dirty way
     hey_emulator_speed = speed;
-    hey_emulator_rate = speed/turn_radius;
+    hey_emulator_rate = -fabs(speed)/turn_radius;
+}
+
+void NGC::processPacket( CommsPacket &packet )
+{
+    // null packet catch
+    if( packet.isNull() )
+    {
+        std::cerr<<"packet was null\n";
+        return;
+    }
+
+    if( m_command_packet.packet_type != CommsPacket::ngc_command )
+        return;
+
+    directCommand(
+        packet.getManualSpeed(),
+        packet.getManualSteer() );
+
+    // DEBUG
+    std::cout<<"NGC: packet type: "<< (int)packet.packet_type<<" "
+        <<"data: \n";
+    for( std::uint8_t d : packet.data )
+        std::cout<< (int)d << " ";
+    std::cout<<"\n";
+    // DEBUG END
 }
 
