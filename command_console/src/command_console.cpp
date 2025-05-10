@@ -27,7 +27,8 @@
 #include "../../common_code/src/comms_module.hpp"
 #include "../../common_code/src/video_feed.hpp"
 #include "raylib.h"
-
+#include <chrono>
+#include <thread>
 
 int main()
 {
@@ -166,6 +167,7 @@ int main()
 
          // for testing purposes we send it to ngc, normally we wanna send to ccm
         comms_module.sendPacket( packet2send, CommsModule::ngc_channel );  
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 
 
