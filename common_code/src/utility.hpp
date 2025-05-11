@@ -31,11 +31,13 @@
 #pragma once
 
 #include <cmath>
+#include <iostream>
 
 #ifndef PI
 #define PI 3.141592
 #endif
 
+void panic(char *msg);
 
 struct Point
 {
@@ -158,6 +160,7 @@ struct BB3D
     friend BB3D operator +( BB3D left, BB3D right );
     friend BB3D& operator +=( BB3D& left, BB3D right );
 };
+
 
 // adds positions and angles, uses left operands size
 BB3D operator +( BB3D left, BB3D right );

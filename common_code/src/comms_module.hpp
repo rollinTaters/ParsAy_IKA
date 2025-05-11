@@ -66,6 +66,8 @@ class CommsModule
         ccm_channel = 54004,        // this will also
         random_channel1 = 54005,
         random_channel2 = 54006,
+		  img_proc_sender = 54007,
+		  img_proc_receiver = 54008,
         undefined = 0
     };
 

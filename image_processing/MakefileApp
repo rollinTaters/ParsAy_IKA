@@ -1,0 +1,44 @@
+SFML_dir_linux := ../SFML/SFML-2.6.x-linux
+SFML_libs := -lsfml-system -lsfml-network
+
+CXX := g++
+
+SRC_DIR := src
+BIN_DIR := bin
+OBJ_DIR := obj
+
+LINUX_LDFLAGS := -Wl,-rpath=./lib -I $(SFML_dir_linux)/include -L$(SFML_dir_linux)/lib $(SFML_libs)
+
+TARGET := $(BIN_DIR)/app
+SRCS := $(wildcard $(SRC_DIR)/*.cpp)
+COMMON_OBJS := $(wildcard ../common_code/obj/*.o)
+OBJS := $(SRCS:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o) $(COMMON_OBJS)
+CXXFLAGS := -Wall -Wextra -std=c++17
+LIBS := `pkg-config --cflags --libs opencv4` -lQt6Core -lQt6Gui -lQt6Widgets -I./../common_code/src -I$(SFML_dir_linux)/include  -L$(SFML_dir_linux)/lib  $(SFML_libs)
+
+
+
+all: $(TARGET)
+
+
+$(TARGET): $(OBJS) | $(BIN_DIR) $(OBJ_DIR)
+	$(CXX) $(OBJS) -o $(TARGET) $(LIBS) $(LINUX_LDFLAGS)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) $(LIBS) -c $< -o $@ $(LINUX_LDFLAGS)
+
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
+
+run: $(TARGET)
+	./$(TARGET)
+
+test: $(TARGET)
+	./$(TARGET) test 
+
+
+clean:
+	rm -rf $(BIN_DIR) $(OBJ_DIR)

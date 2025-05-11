@@ -2,6 +2,22 @@
 #include "comms_packets.hpp"
 #include <vector>
 #include <cstdint>
+#define CHUNK_SIZE 25
+
+struct FrameBuffer{
+  FrameBuffer( size_t data_size );
+  ~FrameBuffer(); // DESTRUCTER OF A STRUCT 
+  FrameBuffer( FrameBuffer& ) = delete;
+
+  static constexpr size_t chunk_size = 25; // num of bytes in a chunk of transmission (packet size)
+  size_t num_of_chunks;   // num of chunks in this frame
+  size_t data_size;       // num of bytes in this frames data
+
+  std::uint8_t *data = nullptr;
+  bool *chunksReceived = nullptr;
+  std::uint16_t frameID = 0;
+
+};
 
 
 class VideoFeed
@@ -45,21 +61,6 @@ class VideoFeed
         std::vector<CommsPacket> m_TX_packets;
 
         //recieve
-        struct FrameBuffer{
-            FrameBuffer( size_t data_size );
-            ~FrameBuffer();
-            FrameBuffer( FrameBuffer& ) = delete;
-
-            static constexpr size_t chunk_size = 25; // num of bytes in a chunk of transmission (packet size)
-            size_t num_of_chunks;   // num of chunks in this frame
-            size_t data_size;       // num of bytes in this frames data
-
-            std::uint8_t *data = nullptr;
-            bool *chunksReceived = nullptr;
-            std::uint16_t frameID = 0;
-
-        };
-
         FrameBuffer* m_RX_buffer = nullptr;
         FrameBuffer* m_TX_buffer = nullptr;
 

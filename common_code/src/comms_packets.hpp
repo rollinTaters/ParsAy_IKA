@@ -4,7 +4,8 @@
 #include <cstring>  // memcpy
 #include <array>
 #include "utility.hpp"
-//#include <iostream> // DEBUG
+// #include <iostream> // DEBUG
+
 
 struct CommsPacket
 {
@@ -186,7 +187,14 @@ struct CommsPacket
 
     void setFrameID(std::uint16_t id) { write_2( id, 0 ); }
     void setChunkID(std::uint16_t id) { write_2( id, 2 ); }
-    void setFrameSize(std::uint16_t size) { write_2( size, 4 ); }
+    void setFrameSize(size_t size) {
+		if (size > 65535) {
+		  std::cout << "FRAME SIZE: " << size << "\n";
+
+		  panic("MAX FRAM SIZE");
+		}
+		write_2( size, 4 );
+	 }
     //void setTotalChunks(std::uint8_t chunks) { data3 = chunks; } // optional
     void setPayload(const std::array<std::uint8_t, 25>& inp_data)
     {

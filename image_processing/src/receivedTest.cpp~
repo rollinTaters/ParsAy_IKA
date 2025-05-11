@@ -1,0 +1,46 @@
+#include "opencv2/highgui.hpp"
+#include <comms_packets.hpp>
+#include <iostream>
+#include <video_feed.hpp>
+#include <comms_module.hpp>
+
+#include <opencv2/opencv.hpp>
+
+int main(int argc, char *argv[])
+{
+  (void) argc;
+  (void) argv;
+  
+  CommsModule comms_module(CommsModule::udp, CommsModule::img_proc_receiver);
+  VideoFeed streamer( 1 );    // using resolution mode 1
+  CommsPacket packet; // this one we use for the data we received
+  std::uint8_t *video_frame_raw = new std::uint8_t[1024]{0};
+  size_t video_frame_size;
+
+  
+  while (true) {
+	 if (comms_module.packetAvailable()) {
+		comms_module.readPacket(packet);
+		streamer.receivePacket( packet );	 	 
+		if( streamer.isFrameReady() ) {
+		  streamer.RXFrame( video_frame_raw, video_frame_size );
+		  for( std::uint8_t d : packet.data )
+			 std::cout<< (int)d << " ";
+		  //cv::Mat frame = cv::imdecode(*video_frame_raw, 1);
+		  std::cout << "HEEEY" << "\n";
+		
+		  //		  cv::imshow("screen", frame);
+
+		  //		  if (cv::waitKey(30) == 27) {
+		  //			 break;
+		  //		  }
+
+		}
+
+	 }
+	
+  }
+  
+  return 0;
+}
+

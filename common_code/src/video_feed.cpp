@@ -1,9 +1,17 @@
 #include "video_feed.hpp"
 #include <iostream> // cerr
 #include <cstdlib>
-#include <cstring> 
+#include <cstring>
+#include <assert.h>
 
-VideoFeed::FrameBuffer::FrameBuffer( size_t frame_size )
+void panic(char *msg)
+{  
+  std::cerr << "ERROR: " << msg << "\n";
+  exit(-69);
+}
+
+
+FrameBuffer::FrameBuffer( size_t frame_size )
 {
     data_size = frame_size;
     num_of_chunks = (frame_size + (chunk_size-1)) / chunk_size;
@@ -17,7 +25,7 @@ VideoFeed::FrameBuffer::FrameBuffer( size_t frame_size )
         */
 }
 
-VideoFeed::FrameBuffer::~FrameBuffer()
+FrameBuffer::~FrameBuffer()
 {
     delete data;
     delete chunksReceived;
@@ -68,14 +76,14 @@ uint16_t VideoFeed::getCurrentFrameID() const { return m_frameID; }
 
 void VideoFeed::TXFrame( void* image_data, size_t size )
 {
-    m_frameID++;
+  m_frameID++;
 
     if( m_TX_buffer == nullptr ) delete m_TX_buffer;
-    m_TX_buffer = new FrameBuffer( size );
+	 m_TX_buffer = new FrameBuffer( size );
     
     m_TX_buffer->frameID = m_frameID;
 
-    std::memcpy( m_TX_buffer->data, image_data, size );
+	 std::memcpy( m_TX_buffer->data, image_data, size );
 
     // split tx buffer into comms packets
     m_TX_packets.clear();
@@ -96,7 +104,7 @@ void VideoFeed::TXFrame( void* image_data, size_t size )
         std::memcpy( payload.data(), &(m_TX_buffer->data)[offset], copySize );
         vdp.setPayload(payload);
         m_TX_packets.push_back(vdp);
-    }
+		  }
 }
 
 const std::vector<CommsPacket>& VideoFeed::getTXPackets() const { return m_TX_packets; }
@@ -109,8 +117,9 @@ const std::vector<CommsPacket>& VideoFeed::getTXPackets() const { return m_TX_pa
 
 void VideoFeed::receivePacket(const CommsPacket& vdp)
 {
+
     // check if given packet is indeed a video packet
-    if( vdp.packet_type != CommsPacket::video_packet ) return;
+  //    if( vdp.packet_type != CommsPacket::video_packet ) return;
 
     //get identifying data from packet
     uint16_t packetFrameID = vdp.getFrameID();
@@ -118,7 +127,8 @@ void VideoFeed::receivePacket(const CommsPacket& vdp)
     size_t frame_size = vdp.getFrameSize();
 
     // make sure we have a rx frame buffer
-    if( m_RX_buffer == nullptr ) m_RX_buffer = new FrameBuffer( frame_size );
+
+    if( m_RX_buffer == nullptr ) m_RX_buffer = new FrameBuffer( (size_t)frame_size );
 
     //if we are receiving a new frame, refresh rx buffer
     if (packetFrameID != m_RX_buffer->frameID)
@@ -132,35 +142,44 @@ void VideoFeed::receivePacket(const CommsPacket& vdp)
     auto payload = vdp.getPayload();
 
     size_t copySize = std::min<size_t>( m_RX_buffer->chunk_size, frame_size - offset);
+	 
     std::memcpy( &((m_RX_buffer->data)[offset]), payload.data(), copySize);
-
-    /*// DEBUG        ------------
+	 /*
     std::cout<<"\n\n----\nreceivePacket:\n";
     std::cout<<"frameID: "<<packetFrameID<<
         " chunks received: "<<chunkID+1<<"/"<<m_RX_buffer->num_of_chunks<<
         " frame_size: "<<frame_size<<"\n"
         <<"status of m_RX_buffer->data:\n";
-    for( int i = 0; i < m_RX_buffer->data_size; i++ )
+    for( size_t i = 0; i < m_RX_buffer->data_size; i++ )
     {
         std::cout<< (int)( (m_RX_buffer->data)[i] ) <<" ";
     }
     std::cout<<"\n----\n";
-    // DEBUG END    ------------    */
+	 */
+	 
+
 
     m_RX_buffer->chunksReceived[chunkID] = true;
 }
 
 bool VideoFeed::isFrameReady() const
 {
-    if( m_RX_buffer == nullptr ) return false;
+  //if( m_RX_buffer == nullptr ) return false;
 
-    for ( size_t i = 0; i < m_RX_buffer->num_of_chunks; i++ ){
-        if ( !(m_RX_buffer->chunksReceived)[i] ){
-            return false;
-        }
-    }
-    return true;
-    // check chunks 
+  if (m_RX_buffer == nullptr) {
+	 std::cout << "m_RX_buffer == nullptr" << "\n";
+	 return false;
+  }
+
+
+  for ( size_t i = 0; i < m_RX_buffer->num_of_chunks; i++ ){
+	 if ( !(m_RX_buffer->chunksReceived)[i] ){
+
+		return false;
+	 }
+  }
+  return true;
+  // check chunks 
 }
 
 void VideoFeed::RXFrame( std::uint8_t* ptr, size_t &size )
@@ -188,3 +207,4 @@ void VideoFeed::RXFrame( std::uint8_t* ptr, size_t &size )
     std::cout<<"\n----\n";
     // DEBUG END    ------------ */
 }
+
