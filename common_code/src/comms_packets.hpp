@@ -27,6 +27,7 @@ struct CommsPacket
         request3    // this is an idea
     };
 
+
     // actual payload of the packet
     std::uint8_t packet_type = undefined;
     std::array< std::uint8_t, 31 > data{0};
@@ -224,24 +225,24 @@ struct CommsPacket
     float getManualSteer(){ return readFloat_2( 2, -1.f, 1.f ); }   // unitless
 
     // Camera commands for debugging purposes there won't be any camera in real life
-    void setCamera(float inp) { writeFloat_2(inp, 0, -PI, PI); }
-    float getCamera() const { return readFloat_2(0, -PI, PI); }
+    void setCamera(float inp) { writeFloat_2(inp, 14, -PI, PI); }
+    float getCamera() const { return readFloat_2(14, -PI, PI); }
 
     // Mode commands
-    void setHatMode(float inp) { writeFloat_2(inp, 2, -1.0f, 1.0f); }
-    float getHatMode() const { return readFloat_2(2, -1.0f, 1.0f); }
+    void setHatMode(float inp) { writeFloat_2(inp, 16, -1.0f, 1.0f); }
+    float getHatMode() const { return readFloat_2(16, -1.0f, 1.0f); }
 
     // Crosshair commands
-    void setCrosshair(float inp) { writeFloat_2(inp, 4, -1.0f, 1.0f); }
-    float getCrosshair() const { return readFloat_2(4, -1.0f, 1.0f); }
+    void setCrosshair(float inp) { writeFloat_2(inp, 18, -1.0f, 1.0f); }
+    float getCrosshair() const { return readFloat_2(18, -1.0f, 1.0f); }
 
     // Turret commands
-    void setTurret(float inp) { writeFloat_2(inp, 6, -PI, PI); }
-    float getTurret() const { return readFloat_2(6, -PI, PI); }
+    void setTurret(float inp) { writeFloat_2(inp, 20, -PI, PI); }
+    float getTurret() const { return readFloat_2(20, -PI, PI); }
 
     // Waypoint commands
-    void setWaypoint(float inp) { writeFloat_2(inp, 8, -1.0f, 1.0f); }
-    float getWaypoint() const { return readFloat_2(8, -1.0f, 1.0f); }
+    void setWaypoint(float inp) { writeFloat_2(inp, 22, -1.0f, 1.0f); }
+    float getWaypoint() const { return readFloat_2(22, -1.0f, 1.0f); }
 
 
 };
