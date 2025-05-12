@@ -63,7 +63,7 @@ void sendCamera2Console()
 
     // throttling to prevent stealing all the resources
     counter++;
-    if( counter > 5 )
+    if( counter > 50 )
         counter = 0;
     else
         return;
@@ -171,6 +171,8 @@ int main()
         GUI::drawAxisBillboards();
         GUI::drawVehicleBody();
         GUI::drawTurret();
+        GUI::drawPath();
+        GUI::drawPredictOPs();
         GUI::drawCrosshair();
 
         EndMode3D();  //------------- mode 3D end
@@ -191,13 +193,15 @@ int main()
         GUI::drawOverlay(); // nearly all the text is here
 
         // send turret cam view to command console, debug
-        sendCamera2Console();
+        //sendCamera2Console();
 
         EndDrawing();
     }
 
-    // this also closes the window
+    env_emulator.stopPhysSim();
+    ngc_system.stop();
     env_emulator.unloadModel();
+    // this also closes the window
     GUI::deInitGUI();
 #else   // HEADLESS MODE
     std::this_thread::sleep_for( std::chrono::seconds(10) );

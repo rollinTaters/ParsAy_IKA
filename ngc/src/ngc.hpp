@@ -62,11 +62,12 @@ class NGC
     bool stopDeadReckoning();
 
     bool addWP( Point );    // add new waypoint to the queues end
-    bool addWP( Point, int );   // add it after given slot
+    bool addWP( Point, size_t );   // add it after given slot
     std::vector<Point> getWPs() const;
     bool executeWPs();  // starts executing current waypoints
 
     std::vector<Point> getImObPoints() const;   // immediate obstacles
+    OP* getPredictOPs();
 
     // Because we gotta run simulations
     float hey_emulator_speed = 0;
@@ -74,6 +75,7 @@ class NGC
 
     // maybe this should be a method of central command module
     void directCommand( float speed, float rate );
+    float getTurnRadius();
 
   private:
 
@@ -88,7 +90,9 @@ class NGC
 
     // waypoints
     std::vector<Point> m_waypoints;
+    Point m_target_wp;
     bool m_execute_waypoints = false;
+    OP m_predict_ops[40];
 
     // time keeping and clocks
     std::chrono::steady_clock m_clock;
@@ -144,9 +148,11 @@ class NGC
     bool markImmediateObstacles();
 
     // predict trajectory function: ( NAVIGATION )
-    // - using vehicle steer actuator, drive actuator, and inertia, predicts next x number of positions in y amout of time
-    // TODO
-    bool predictTrajectory();
+    // - integrates current control outputs to some time step forward
+    // - runs hitWP at that state to get future control outputs
+    // - repeats this procedure for given number of times
+    // - stores resulting Oriented Points in given array
+    bool predictTrajectory( OP predicted_points[], int num_points );
 
     // create target waypoint function: ( GUIDANCE )
     // - look at the previous positions on internal world map,
@@ -161,8 +167,14 @@ class NGC
     // - takes an input position and finds a new position which is furthest away from any obstacles, but closest to input pos
     bool createOpenSpaceWaypoint( Point& );
 
+    // returns next wp if given box satisfies closure distance
+    // returns box position if there are no wps left in queue
+    // returns the same wp if closure distance is not satisfied
+    Point nextWP( Point wp, const BB3D& box, float closure ) const;
+    Point nextWP( std::vector<Point>::const_iterator wp_it, const BB3D& box, float closure ) const;
 
-    int hitWP( Point );
+
+    int hitWP( Point, const BB3D&, float&, float& );
 
     // navigation happens with a queue of waypoints, sub waypoints may need to be calculated for this queueueueu
 
@@ -181,6 +193,9 @@ class NGC
     void halt();
     void setControlOutput_rate( float, float );
     void setControlOutput_radius( float, float );
+
+    float m_control_speed = 0.f;
+    float m_control_rate = 0.f;
     
 };
 
