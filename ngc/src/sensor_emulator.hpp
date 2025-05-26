@@ -42,7 +42,8 @@ enum Sensor_Type{
     E_type_LIDAR,
     E_type_IMU,
     E_type_temperature,
-    E_type_current
+    E_type_current,
+    E_type_turret_encoder
 };
 
 struct Sensor_Data
@@ -53,6 +54,7 @@ struct Sensor_Data
     
     // for distance sensor
     float distance;
+
 
     // for lidar sensor
     float lidar[LIDAR_POINTS];  // metre
@@ -81,6 +83,11 @@ struct Sensor_Data
     //float electric_current_motor2;
     //float electric_current_electronics;
     //float electric_current_turret??;
+
+
+    // turret encoder sensor populates these two angles
+    float turret_pitch = 0.0f;  // Current turret angle (radian)
+    float turret_yaw = 0.0f;    // Current turret angle (radian)
 };
 
 class Sensor_Emulator

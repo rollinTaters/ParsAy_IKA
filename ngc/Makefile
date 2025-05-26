@@ -6,7 +6,7 @@ raylib_dir := ./../raylib-5.5_linux_amd64
 
 # ==== Navigation Guidance and Control objects ====
 NGC_OBJECTS := main.o vehicle.o ngc.o sensor_emulator.o env_emulator.o traction_motor.o
-COMMON_OBJECTS := utility.o comms_module.o
+COMMON_OBJECTS := utility.o comms_module.o video_feed.o
 
 LINUX_NGC_RELEASE_OBJECTS = $(addprefix obj/linux_, $(NGC_OBJECTS))
 LINUX_COMMON_OBJECTS = $(addprefix ../common_code/obj/linux_, $(COMMON_OBJECTS))
@@ -47,7 +47,7 @@ $(LINUX_NGC_DEBUG_GUI_OBJECTS): obj/debug_gui_%.o: src/%.cpp src/%.hpp
 
 clean:
 	rm -f *.o obj/*.o ngc ../common_code/obj/*.o
-	make ngc
+	make 
 
 clear:
 	rm -f *.o obj/*.o ngc ../common_code/obj/*.o

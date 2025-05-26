@@ -44,7 +44,7 @@ class NGC;  // we are gonna get the commanded speed and rate values from it
 
 class Env_Emulator
 {
-    public:
+  public:
     Env_Emulator( const Vehicle& );
     ~Env_Emulator();
     Env_Emulator( const Env_Emulator& )  = delete;
@@ -63,11 +63,11 @@ class Env_Emulator
     // this populates the sensor data object with emulated sensor readings from the "real" vehicle
     bool getSensorData( Sensor_Emulator*, Sensor_Data& ) const; // returns false on read fail
 
-    void drawHMap() const;
+    void drawHMap();
     bool setupModel();
     bool unloadModel();
 
-    private:
+  private:
     // "real" map/course
     Texture2D m_hm_texture;
     Mesh m_hm_mesh;
@@ -75,7 +75,10 @@ class Env_Emulator
     bool m_model_initialized = false;
     const float m_metre_per_pixel = 0.050;  // 50mm per pixel
 
-    float shittyPixelMarch( BB3D, v3f ) const;
+    //float shittyPixelMarch( BB3D, v3f ) const;
+    float useRaycast( v3f, v3f ) const;
+
+    Matrix getWorldTransform( Vector3 offset ) const;   // for objects in world
 
     // physics simulation thread
     std::thread* m_phys_thread = nullptr;

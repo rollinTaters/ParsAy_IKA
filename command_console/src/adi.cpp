@@ -26,108 +26,97 @@
 
 #include "adi.hpp"
 
-Adi::Adi(sf::Vector2f pos, float dia){
-        m_dia = dia;
-        m_pos = pos;
+Adi::Adi(Vector2 pos, float dia) {
+    m_dia = dia;
+    m_pos = pos;
 
-        m_roll_value = 0;
-        m_max_roll_value = 180;
-        m_min_roll_value = -180;
+    m_roll_value = 0;
+    m_max_roll_value = 180;
+    m_min_roll_value = -180;
 
-        m_pitch_value = 0;
-        m_max_pitch_value = 100;
-        m_min_pitch_value = 200;
-        // uploading textures
-        if (!roll_markings.loadFromFile("./assets/attitude_director_indicator/roll_markings_.png")) {
-            std::cerr << "Error: adi class could not load Roll markings texture!";
-        }
-        if (!pitch_scale.loadFromFile("./assets/attitude_director_indicator/pitch_scale_.png")) {
-            std::cerr << "Error: adi class could not load Pitch scale texture!";
-        }
-        if (!horizon.loadFromFile("./assets/attitude_director_indicator/horizon.png")) {
-            std::cerr << "Error: adi class could not load Horizon texture!";
-        }
-        roll_markings_sprite.setTexture(roll_markings);
-        pitch_scale_sprite.setTexture(pitch_scale);
-        horizon_sprite.setTexture(horizon);
-        
-        // Calculate scale factors to match the gauge size
-        // our textures are 600x600
-        roll_markings_sprite.setScale( dia/600, dia/600 );
-        pitch_scale_sprite.setScale( dia/600, dia/600 );
-        horizon_sprite.setScale( dia/600, dia/600 );
-
-        // Set origin to center of texture
-        roll_markings_sprite.setOrigin(roll_markings.getSize().x / 2.f, roll_markings.getSize().y / 2.f);
-        pitch_scale_sprite.setOrigin(pitch_scale.getSize().x / 2.f, pitch_scale.getSize().y / 2.f);
-        horizon_sprite.setOrigin(horizon.getSize().x / 2.f, horizon.getSize().y / 2.f);
-        
-        // Position at center of gauge
-        roll_markings_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
-        pitch_scale_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
-        horizon_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
-
-        horizon_sprite.setRotation(0);
-        pitch_scale_sprite.setRotation(0);
-
-
+    m_pitch_value = 0;
+    m_max_pitch_value = 100;
+    m_min_pitch_value = -100;
 }
-void Adi::updateRollVal_prop(const float prop)
+
+void Adi::init()
 {
+    // Texture 
+    roll_markings = LoadTexture("./assets/attitude_director_indicator/rm.png");
+    if (roll_markings.id == 0) {
+        std::cerr << "Error: adi class could not load Roll markings texture!" << std::endl;
+    }
+
+    pitch_scale = LoadTexture("./assets/attitude_director_indicator/pitch_scale_.png");
+    if (pitch_scale.id == 0) {
+        std::cerr << "Error: adi class could not load Pitch scale texture!" << std::endl;
+    }
+
+    horizon = LoadTexture("./assets/attitude_director_indicator/horizon.png");
+    if (horizon.id == 0) {
+        std::cerr << "Error: adi class could not load Horizon texture!" << std::endl;
+    }
+    
+    horizon_outline = LoadTexture("./assets/attitude_director_indicator/horizon_outline.png");
+    if (horizon_outline.id == 0) {
+        std::cerr << "Error: adi class could not load Horizon Outline texture!" << std::endl;
+    }
+}
+
+void Adi::updateRollVal_prop(const float prop) {
     m_roll_value = (prop * (m_max_roll_value - m_min_roll_value)) + m_min_roll_value;
 }
-void Adi::updatePitchVal_prop(const float prop)
-{
+
+void Adi::updatePitchVal_prop(const float prop) {
     m_pitch_value = (prop * (m_max_pitch_value - m_min_pitch_value)) + m_min_pitch_value;
 }
 
-void Adi::updateRollVal(const float val)
-{
+void Adi::updateRollVal(const float val) {
     m_roll_value = val;
-
     if (m_roll_value < m_min_roll_value)
         m_roll_value = m_min_roll_value;
     if (m_roll_value > m_max_roll_value)
         m_roll_value = m_max_roll_value;
 }
 
-void Adi::updatePitchVal(const float val)
-{
+void Adi::updatePitchVal(const float val) {
     m_pitch_value = val;
-
     if (m_pitch_value < m_min_pitch_value)
         m_pitch_value = m_min_pitch_value;
     if (m_pitch_value > m_max_pitch_value)
         m_pitch_value = m_max_pitch_value;
 }
 
-void Adi::render(sf::RenderTarget& target){
-        // Safely check if textures are loaded before trying to draw sprites     
+void Adi::render() {
 
-        sf::Vector2f originalPosition(m_pos.x , m_pos.y + m_dia / 2.f); 
-        float newX = originalPosition.x;
-        float newY = originalPosition.y - m_pitch_value * m_pitch_scale;
-        
-        float x_min = m_pos.x - m_dia / 2.f;
-        float x_max = m_pos.x + m_dia / 2.f;
-        float y_min = m_pos.y - m_dia / 2.f;
-        float y_max = m_pos.y + m_dia / 2.f;
-    
-        if (newX < x_min) newX = x_min;
-        if (newX > x_max) newX = x_max;
-        if (newY < y_min) newY = y_min;
-        if (newY > y_max) newY = y_max;
-    
+    Vector2 originalPosition = {m_pos.x, m_pos.y + m_dia / 2.f};
+    float newX = originalPosition.x;
+    float newY = originalPosition.y - m_pitch_value * m_pitch_scale;
 
-        horizon_sprite.setRotation(m_roll_value);
-        pitch_scale_sprite.setRotation(m_roll_value);
 
-        horizon_sprite.setPosition(newX, newY);
-        pitch_scale_sprite.setPosition(newX, newY);
+    DrawTexturePro(horizon_outline,
+                   {0, 0, (float)horizon_outline.width, (float)horizon_outline.height},
+                   {m_pos.x, m_pos.y + m_dia / 2.f, m_dia, m_dia},
+                   {m_dia / 2, m_dia / 2}, 0, WHITE);
+    DrawTexturePro(horizon,
+                   {0, 0, (float)horizon.width, (float)horizon.height},
+                   {newX, newY, m_dia, m_dia},
+                   {m_dia / 2, m_dia / 2}, m_roll_value, WHITE);
+    DrawTexturePro(pitch_scale,
+                   {0, 0, (float)pitch_scale.width, (float)pitch_scale.height},
+                   {newX, newY, m_dia, m_dia},
+                   {m_dia / 2, m_dia / 2}, m_roll_value, WHITE);
 
-        // Draw ADI components in correct order (after updating their pos and rotations)
-        target.draw(horizon_sprite);
-        target.draw(pitch_scale_sprite);
-        target.draw(roll_markings_sprite);
-  
+    int outerRadius = (m_dia / 2) + 300;
+    int innerRadius = (m_dia / 2) - 26;
+    // color rgb, opacity
+    const Color color1 = {180,180,180,255};
+    DrawRing({m_pos.x, m_pos.y + m_dia / 2.f}, innerRadius, outerRadius, 0, 360, 64, color1);
+                   
+
+    DrawTexturePro(roll_markings,
+                   {0, 0, (float)roll_markings.width, (float)roll_markings.height},
+                   {m_pos.x, m_pos.y + m_dia / 2.f, m_dia, m_dia},
+                   {m_dia / 2, m_dia / 2}, 0, WHITE);
+
 }

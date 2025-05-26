@@ -23,22 +23,23 @@
 */
 /// User Inputs ///
 #pragma once
-#include "SFML/Graphics.hpp"
-#include <cmath>
-#include <iostream>
-#define PI 3.141592
+#include "../../common_code/src/comms_module.hpp"
+
 
 class UserInput
 {
     enum DriveMode
     {
-        Manuel,
-        Autonomous
+        manuel,
+        semi_autonomous,
+        autonomous
     };
     public:
         UserInput();
-        float calculateSpeed(float currentSpeed, float acceleration, bool isAccelerating);
-        float calculateRotation(float currentAngle, float rotationSpeed, bool isTurningLeft, bool isTurningRight);
-        DriveMode switchDriveMode(DriveMode currentMode);
+        void switchDriveMode(DriveMode newMode);
+        void processInput( CommsPacket& );
 
+    private:
+        
+        DriveMode m_drive_mode;
 };

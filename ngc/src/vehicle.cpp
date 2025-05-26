@@ -27,6 +27,31 @@
 #include "vehicle.hpp"
 #include "env_emulator.hpp" // read sensor
 
+Turret::Turret()
+    : m_yaw(0.0f), m_pitch(0.0f)
+{
+    // Position and size init is up to mechanical design, but here is a basic example:
+    m_yaw_box.setPos({0.f, 0.f, 0.5f});  // position relative to vehicle
+    m_yaw_box.setSize( 0.200f, 0.150f, 0.220f );
+    m_yaw_box.setAng({0.f, 0.f, m_yaw}); 
+
+    m_pitch_box.setPos({0.2f, 0.0f, 0.f});   // relative to yaw box
+    m_pitch_box.setSize( 0.200f, 0.050f, 0.020f );
+    m_pitch_box.setAng({m_pitch, 0.f, 0.f}); 
+
+    m_camera_wide_box.setPos    (  0.023f,  0.008f,  0.045f );
+    m_camera_wide_box.setSize   (  0.010f,  0.020f,  0.010f );
+    m_camera_wide_box.setAng    (  0.000f,  0.000f,  0.000f );
+
+    m_camera_narrow_box.setPos  ( -0.050f,  0.008f,  0.070f );
+    m_camera_narrow_box.setSize (  0.010f,  0.095f,  0.020f );
+    m_camera_narrow_box.setAng  (  0.000f,  0.000f,  0.000f );
+
+    m_laser_box.setPos          ( -0.032f,  0.014f,  0.030f );;
+    m_laser_box.setSize         (  0.025f,  0.040f,  0.025f );;
+    m_laser_box.setAng          (  0.000f,  0.000f,  0.000f );;
+}
+
 Vehicle::Vehicle()
 {
     // populate sensors on vehicle
@@ -37,6 +62,7 @@ Vehicle::Vehicle()
     m_sensor[4] = Sensor_Emulator( E_type_distance, v3f( 0.00, 0,0), v3f(0,0,  0) );
     m_sensor[5] = Sensor_Emulator( E_type_distance, v3f( 0.10, 0,0), v3f(0,0, 20) );
     m_sensor[6] = Sensor_Emulator( E_type_distance, v3f( 0.20, 0,0), v3f(0,0, 50) );
+    m_sensor[7] = Sensor_Emulator( E_type_turret_encoder, v3f(0,0,0), v3f(0,0,0) );
 
     m_vel = v3f( 0,0,0 );
     m_acc = v3f( 0,0,0 );
@@ -46,8 +72,7 @@ Vehicle::Vehicle()
     m_bb3d.setAng(0,0,0);
 }
 
-Vehicle::Vehicle( const Vehicle& other ):
-    m_num_sensors(other.m_num_sensors)
+Vehicle::Vehicle( const Vehicle& other )
 {
     for( int i = 0; i < m_num_sensors; i++ )
     {
@@ -60,10 +85,42 @@ Vehicle::Vehicle( const Vehicle& other ):
     m_mass = other.m_mass;
 }
 
-Vehicle& Vehicle::operator =( const Vehicle& rhs )
+/*
+Vehicle& Vehicle::operator =(const Vehicle& rhs)
 {
-    return *this = Vehicle(rhs);
+    if (this != &rhs) {  // Kendisine atama yapılmadığını kontrol et
+        // DONT. this is constexpr. this is hardcoded. m_num_sensors = rhs.m_num_sensors;
+        // Diğer üyeleri kopyala (örneğin m_turret)
+    }
+    return *this;
 }
+*/
+//arranged according to the directive
+/* BUT THERE ARE STILL PROBLEMMM
+Vehicle& Vehicle::operator=(const Vehicle& rhs)
+{
+    if (this != &rhs) 
+    {
+        // copy the sensors 
+        for (int i = 0; i < m_num_sensors; i++)
+        {
+            m_sensor[i] = rhs.m_sensor[i];
+        }
+
+        // copy other members
+        m_bb3d = rhs.m_bb3d;
+        m_vel = rhs.m_vel;
+        m_acc = rhs.m_acc;
+        m_turn_radius = rhs.m_turn_radius;
+        m_mass = rhs.m_mass;
+        m_turret = rhs.m_turret; // <<<<<< 
+        m_angVel = rhs.m_angVel;
+        m_angAcc = rhs.m_angAcc;
+        m_sensor_data = rhs.m_sensor_data;
+    }
+    return *this;
+}
+*/
 
 BB3D Vehicle::getBox() const { return m_bb3d; }
 
@@ -102,10 +159,7 @@ float Vehicle::readSensor( const unsigned short int number )
 }
 
 
-void Vehicle::overridePos( const v3f pos )
-{
-    m_bb3d.setPos(pos);
-}
+void Vehicle::overridePos( const v3f pos ) { m_bb3d.setPos(pos); }
 
 void Vehicle::setNavigationState( const int time_step_milli )
 {
@@ -145,3 +199,59 @@ void Vehicle::setNavigationState( const int time_step_milli )
     */
 }
 
+// Vehicle sınıfının Turret nesnesiyle ilgili fonksiyonlarının implementasyonu
+
+Turret& Vehicle::getTurret() {
+    return m_turret;  // m_turret, Vehicle sınıfındaki Turret üyesi
+}
+
+const Turret& Vehicle::getTurret() const {
+    return m_turret;
+}
+
+void Turret::setYaw(float yaw_angle) {
+    m_yaw = yaw_angle;
+    //m_yaw_box.setAng({0, 0, yaw_angle});
+    m_yaw_box.setAng( {yaw_angle, 0, 0} );
+}
+
+// Pitch açısını ayarlayan fonksiyon
+void Turret::setPitch(float pitch_angle) {
+    m_pitch = pitch_angle;
+    //m_pitch_box.setAng({pitch_angle, 0, 0});  // pitch is around X
+    m_pitch_box.setAng( {0, pitch_angle, 0} );
+}
+
+// Yaw açısını döndüren fonksiyon
+float Turret::getYaw() const {
+    return m_yaw;
+}
+
+// Pitch açısını döndüren fonksiyon
+float Turret::getPitch() const {
+    return m_pitch;
+}
+
+BB3D Turret::getYawBox() const {
+    return m_yaw_box;
+}
+
+BB3D Turret::getPitchBox() const {
+    return m_pitch_box.onTop( m_yaw_box );
+}
+
+// Final camera bounding box, including both yaw and pitch
+BB3D Turret::getCameraWideBox() const {
+    return m_camera_wide_box.onTop( m_pitch_box.onTop( m_yaw_box ) );
+}
+
+BB3D Turret::getCameraNarrowBox() const {
+    return m_camera_narrow_box.onTop( m_pitch_box.onTop( m_yaw_box ) );
+}
+
+BB3D Turret::getLaserBox() const {
+    return m_laser_box.onTop( m_pitch_box.onTop( m_yaw_box ) );
+}
+
+bool Turret::getLaserStatus() const { return m_laser_active; }
+void Turret::setLaserStatus( bool inp ) { m_laser_active = inp; }

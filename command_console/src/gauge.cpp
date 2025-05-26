@@ -25,315 +25,213 @@
 
 #include "gauge.hpp"
 
-///// Gauge /////
-
-Gauge::Gauge(gauge_type gt, sf::Vector2f pos, float dia)
+Gauge::Gauge(gauge_type gt, Vector2 pos, float dia)
+    : m_type(gt), m_pos(pos), m_dia(dia)
 {
-    m_size = sf::Vector2f(dia, dia);
-    m_pos = pos;
-    m_dia = dia;
-    m_type = gt;
 
-    // uploading Font   
-    if (!m_font.loadFromFile("./assets/fonts/arial.ttf")) {
-        std::cerr << "Error: gauge class could not load font\n";
+    m_font = LoadFont("./assets/fonts/arial.ttf");
+  
+    switch (gt) {
+        case type_compass:
+            m_max_value = 360; m_min_value = 0; m_value = 0;
+            // Center positions
+            compass_bg_pos = { m_pos.x + m_dia/2, m_pos.y + m_dia/2 };
+            compass_ticks_pos = compass_bg_pos;
+            return; 
+
+        case type_temperature:
+            m_label_text = "temp C: ";
+            m_max_value = 120; m_min_value = -5; m_value = -5;
+            break;
+
+        case type_amp:
+            m_label_text = "current A: ";
+            m_max_value = 40; m_min_value = 0; m_value = 0;
+            break;
+        case type_speedometer:
+            m_label_text = "km/h: ";
+            m_max_value = 40; m_min_value = 0; m_value = 0;
+            break;
+        case type_tachometer:
+            m_label_text = "RPM: ";
+            m_max_value = 40; m_min_value = 0; m_value = 0;
+            break;
+        case type_battery:
+            m_label_text = "Battery %: ";
+            m_max_value = 100; m_min_value = 0; m_value = 100;
+            break;
+        case type_signal:
+            m_label_text = "Signal Power: ";
+            m_max_value = 100; m_min_value = 0; m_value = 100;
+            break;
+        default: 
+            m_label_text = "value: ";
+            m_max_value = 120; m_min_value = -10; m_value = 0;
+            break;
+    }
+
+    // Needle angle range
+    m_needle_min_degree = -150;
+    m_needle_max_degree = 150;
+    // Precompute ticks and labels
+    for (int i = 0; i <= 20; ++i) {
+        float angleDeg = m_needle_min_degree + i * (m_needle_max_degree - m_needle_min_degree) / 20.0f;
+        float angleRad = angleDeg * PI / 180.0f;
+        Vector2 center = { m_pos.x + m_dia/2, m_pos.y + m_dia/2 };
+        float outerR = m_dia/2;
+        float innerR = (i % 2 == 0) ? outerR - 20 : outerR - 10;
+        // Tick endpoints
+        Vector2 outer = { center.x + outerR * cosf(angleRad), center.y + outerR * sinf(angleRad) };
+        Vector2 inner = { center.x + innerR * cosf(angleRad), center.y + innerR * sinf(angleRad) };
+        m_ticks.push_back(outer);
+        m_ticks.push_back(inner);
+        // Labels every other tick
+        if (i % 2 == 0) {
+            std::string lbl;
+            if (gt == type_temperature) {
+                float v = i * (m_max_value - m_min_value) / 20.0f + m_min_value;
+                lbl = TextFormat("%g", v);
+            } else if (gt == type_amp || gt == type_tachometer) {
+                lbl = TextFormat("%d", i * 2);
+            } else if (gt == type_speedometer){
+                lbl = TextFormat("%d", i * 2 );
+            } else {
+                lbl = TextFormat("%d", i * 10);
+            }
+            m_numbers.push_back(lbl);
+        }
+    }
+
+    // Setup frame and needle
+        // Needle color
+    m_needle_color = RED;
+        // Center of gauge for drawing
+    m_center = { m_pos.x + m_dia/2, m_pos.y + m_dia/2 };
+
+    // Label position and style
+    m_label_pos       = { (m_pos.x + m_dia/2 ) - 40 , m_pos.y + m_dia + 10 };
+    m_label_font_size = 15;
+    m_label_color     = BLACK;
+}
+
+void Gauge::init()
+{
+    if( m_type == type_compass )
+    {
+        // Load compass textures
+        compass_bg = LoadTexture("assets/compass/compass_bg_200.png");
+        compass_ticks_numbers = LoadTexture("assets/compass/compass_ticks_numbers_200.png");
+    }
+}
+
+void Gauge::updateVal(const float value) {
+    m_value = value;
+}
+
+void Gauge::updateProportionalVal(const float value) {
+    m_value = value * (m_max_value - m_min_value) + m_min_value;
+}
+
+
+void Gauge::render() {
+    if (m_type == type_compass) {
+        // Draw compass background and rotating layer
+        Rectangle src = { 0, 0, (float)compass_bg.width, (float)compass_bg.height };
+        Rectangle dst = { m_pos.x, m_pos.y, m_dia, m_dia };
+        Vector2 origin = { 0, 0 };
+        // Use Pro to handle rotation around center
+        DrawTexturePro(compass_bg, src, dst, { m_dia/2, m_dia/2 }, 0.0f, WHITE);
+        DrawTexturePro(compass_ticks_numbers, src, dst, { m_dia/2, m_dia/2 }, m_value, WHITE);
+        return;
+    }
+    else if(m_type == type_battery) {
+        const int margin = 5;
+        int maxInnerW = m_dia - margin*2;
+        float pct = m_value / 100.0f;
+        int currentPercent = int(pct * maxInnerW);
+
+        // drawnings
+        DrawRectangle(m_pos.x,           m_pos.y,         m_dia,       m_dia/2,       BLACK);
+        DrawRectangle(m_pos.x+margin,    m_pos.y+margin,  currentPercent, m_dia/2 - margin*2, WHITE);
+        // draw battery value
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%s%.2f", m_label_text.c_str(), m_value);
+        Vector2 lblSize = MeasureTextEx(m_font, buf, m_label_font_size, 1);
+        Vector2 lblPos = { m_pos.x - lblSize.x/2, m_label_pos.y - m_dia/2 };
+        DrawTextEx(m_font, buf, lblPos, m_label_font_size, 1, m_label_color);
+    }
+    else if (m_type == type_signal) {
+        int levels = 4; // Number of bars
+        int barWidth = m_dia / 10; 
+        int spacing = m_dia / 20;  
+        int maxBarHeight = m_dia / 2; 
+    
+        // Drawing bars
+        for (int i = 0; i < levels; i++) {
+            int barHeight = (m_dia / 8) + i * (maxBarHeight / levels); 
+            int xOffset = m_pos.x + i * (barWidth + spacing); 
+            int yOffset = m_pos.y - barHeight;
+    
+            // Determine the fill percentage for each bar
+            float fillRatio = (m_value - (i * 25)) / 25.0f; // Ratio for the current bar
+            fillRatio = (fillRatio > 1.0f) ? 1.0f : ((fillRatio < 0.0f) ? 0.0f : fillRatio); // Clamp between 0 and 1
+    
+            // Calculate filled and empty bar sections
+            int filledHeight = barHeight * fillRatio;
+            int emptyHeight = barHeight - filledHeight;
+    
+            // Draw filled and empty sections of the bar
+            DrawRectangle(xOffset, yOffset + emptyHeight, barWidth, filledHeight, GREEN);  // Filled part
+            DrawRectangle(xOffset, yOffset, barWidth, emptyHeight, LIGHTGRAY);            // Empty part
+        }
+    
+        // Display "Signal Power" text below the bars
+
+        DrawTextEx(m_font,TextFormat("Signal Power: %.0f%%", m_value), {m_pos.x, m_pos.y + maxBarHeight / 2 - 15}, m_label_font_size, 1, BLACK);
     }
     
+    else{
+    // Draw gauge frame
+    DrawCircleLines((int)m_center.x, (int)m_center.y, m_dia/2, BLACK);
+    DrawCircle((int)m_center.x, (int)m_center.y, m_dia/2 - 5, WHITE);
 
-    // TODO write a big switch statement for setting up different gauge types
-    switch (gt)
-    {
-    default:
-        m_max_value = 120;
-        m_min_value = -10;
-        m_value = 0;
-
-        m_needle_min_degree = -150;   // angle at which needle rests when min
-        m_needle_max_degree = 150;
-
-        m_red_start_value = m_max_value * 0.80f;
-        m_red_end_value = m_max_value;
-
-        m_green_start_value = m_max_value * 0.25f;
-        m_green_end_value = m_max_value * 0.35f;
-
-        for (int i = 0; i <= 20; i++) {
-            // creating gauge marks
-            float angle = (i * 15 + m_needle_min_degree) * PI / 180.0f;
-            float outerRadius = m_dia / 2;
-            float innerRadius = (i % 2 == 0) ? outerRadius - 20 : outerRadius - 10;
-
-            sf::Vector2f center(m_pos.x + m_dia / 2, m_pos.y + m_dia / 2);
-            sf::Vector2f outerPoint(center.x + outerRadius * cos(angle),
-                center.y + outerRadius * sin(angle));
-            sf::Vector2f innerPoint(center.x + innerRadius * cos(angle),
-                center.y + innerRadius * sin(angle));
-
-            m_ticks.push_back(sf::Vertex(outerPoint, sf::Color::Black));
-            m_ticks.push_back(sf::Vertex(innerPoint, sf::Color::Black));
-
-            // creating numbers
-            float textRadius = (m_dia / 2) - 30;
-
-            if (i % 2 == 0) {
-                sf::Text text(std::to_string(i*10), m_font, 16);
-                text.setFillColor(i <= 6 ? sf::Color::Black : (i <= 10 ? sf::Color::Yellow : sf::Color::Red));
-                // getting text bounds to center text
-                sf::FloatRect textBounds = text.getLocalBounds();
-                text.setOrigin(textBounds.width / 2, textBounds.height / 2);
-                // get new calculated position
-                sf::Vector2f textPos(center.x + textRadius * cos(angle),
-                    center.y + textRadius * sin(angle));
-                text.setPosition(textPos);
-                m_numbers.push_back(text);
-            } 
-        }
-        // create needle
-        setupNeedle(); 
-        break;
-    case type_temperature:
-        setupGaugeFrame();
-		m_label_text = "temp C: ";
-        m_label = sf::Text(m_label_text + std::to_string(m_value), m_font, 14);
-
-        m_max_value = 120;
-		m_min_value = -5;
-        
-        m_value = 0;
-
-        m_needle_min_degree = -150;   // angle at which needle rests when min
-        m_needle_max_degree = 150;
-
-        m_red_start_value = m_max_value * 0.80f;
-        m_red_end_value = m_max_value;
-
-        m_green_start_value = m_max_value * 0.25f;
-        m_green_end_value = m_max_value * 0.35f;
-
-        for (int i = 0; i <= 20; i++) {
-            // creating gauge marks
-            float angle = (i * 15 + m_needle_min_degree) * PI / 180.0f;
-            float outerRadius = m_dia / 2;
-            float innerRadius = (i % 2 == 0) ? outerRadius - 20 : outerRadius - 10;
-
-            sf::Vector2f center(m_pos.x + m_dia / 2, m_pos.y + m_dia / 2);
-            sf::Vector2f outerPoint(center.x + outerRadius * cos(angle),
-                center.y + outerRadius * sin(angle));
-            sf::Vector2f innerPoint(center.x + innerRadius * cos(angle),
-                center.y + innerRadius * sin(angle));
-
-            m_ticks.push_back(sf::Vertex(outerPoint, sf::Color::Black));
-            m_ticks.push_back(sf::Vertex(innerPoint, sf::Color::Black));
-
-            // creating numbers
-            float textRadius = (m_dia / 2) - 30;
-
-            if (i % 2 == 0) {
-                double value = (i * 6.25) - 5;
-                std::string textString = std::to_string(value);
-				// Erasing trailing zeros
-                textString.erase(textString.find_last_not_of('0') + 1, std::string::npos);
-                if (textString.back() == '.') textString.pop_back();
-                sf::Text text(textString, m_font, 14);
-                text.setFillColor(i <= 6 ? sf::Color::Black : (i <= 10 ? sf::Color::Yellow : sf::Color::Red));
-                // getting text bounds to center text
-                sf::FloatRect textBounds = text.getLocalBounds();
-                text.setOrigin(textBounds.width / 2, textBounds.height / 2);
-                // get new calculated position
-                sf::Vector2f textPos(center.x + textRadius * cos(angle),
-                    center.y + textRadius * sin(angle));
-                text.setPosition(textPos);
-                m_numbers.push_back(text);
-            }
-        }
-        setupNeedle();
-        break;
-    case type_amp:
-        setupGaugeFrame();
-		m_label_text = "current A: ";
-        m_label = sf::Text(m_label_text + std::to_string(m_value), m_font, 14);
-		
-        m_max_value = 40;
-		m_min_value = 0;
-        
-        m_value = 0;
-
-        m_needle_min_degree = -150;   // angle at which needle rests when min
-        m_needle_max_degree = 150;
-
-        m_red_start_value = m_max_value * 0.80f;
-        m_red_end_value = m_max_value;
-
-        m_green_start_value = m_max_value * 0.25f;
-        m_green_end_value = m_max_value * 0.35f;
-
-        for (int i = 0; i <= 20; i++) {
-            // creating gauge marks
-            float angle = (i * 15 + m_needle_min_degree) * PI / 180.0f;
-            float outerRadius = m_dia / 2;
-            float innerRadius = (i % 2 == 0) ? outerRadius - 20 : outerRadius - 10;
-
-            sf::Vector2f center(m_pos.x + m_dia / 2, m_pos.y + m_dia / 2);
-            sf::Vector2f outerPoint(center.x + outerRadius * cos(angle),
-                center.y + outerRadius * sin(angle));
-            sf::Vector2f innerPoint(center.x + innerRadius * cos(angle),
-                center.y + innerRadius * sin(angle));
-
-            m_ticks.push_back(sf::Vertex(outerPoint, sf::Color::Black));
-            m_ticks.push_back(sf::Vertex(innerPoint, sf::Color::Black));
-
-            // creating numbers
-            float textRadius = (m_dia / 2) - 30;
-
-            if (i % 2 == 0) {
-                sf::Text text(std::to_string(i*2), m_font, 14);
-                text.setFillColor(i <= 6 ? sf::Color::Black : (i <= 10 ? sf::Color::Yellow : sf::Color::Red));
-                // getting text bounds to center text
-                sf::FloatRect textBounds = text.getLocalBounds();
-                text.setOrigin(textBounds.width / 2, textBounds.height / 2);
-                // get new calculated position
-                sf::Vector2f textPos(center.x + textRadius * cos(angle),
-                    center.y + textRadius * sin(angle));
-                text.setPosition(textPos);
-                m_numbers.push_back(text);
-            }
-        }
-        // create needle
-        setupNeedle(); 
-        break;
-    case type_adi:
-        m_max_value = 360;
-        m_min_value = 0;
-        // uploading textures
-        if (!roll_markings.loadFromFile("./assets/attitude_director_indicator/roll_markings_.png")) {
-            std::cerr << "Error: gauge class could not load Roll markings texture!";
-        }
-        if (!pitch_scale.loadFromFile("./assets/attitude_director_indicator/pitch_scale_.png")) {
-            std::cerr << "Error: gauge class could not load Pitch scale texture!";
-        }
-        if (!horizon.loadFromFile("./assets/attitude_director_indicator/horizon.png")) {
-            std::cerr << "Error: gauge class could not load Horizon texture!";
-        }
-        roll_markings_sprite.setTexture(roll_markings);
-        pitch_scale_sprite.setTexture(pitch_scale);
-        horizon_sprite.setTexture(horizon);
-        
-        // Calculate scale factors to match the gauge size
-        roll_markings_sprite.setScale(0.5f,0.5f);
-        pitch_scale_sprite.setScale(0.5f,0.5f);
-        horizon_sprite.setScale(0.5f,0.5f);
-        // Set origin to center of texture
-        roll_markings_sprite.setOrigin(roll_markings.getSize().x / 2.f, roll_markings.getSize().y / 2.f);
-        pitch_scale_sprite.setOrigin(pitch_scale.getSize().x / 2.f, pitch_scale.getSize().y / 2.f);
-        horizon_sprite.setOrigin(horizon.getSize().x / 2.f, horizon.getSize().y / 2.f);
-        
-        // Position at center of gauge
-        roll_markings_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
-        pitch_scale_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
-        horizon_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
-
-        break;
-    case type_compass:
-        m_max_value = 360;
-        m_min_value = 0;
-        if (!compass_bg.loadFromFile("assets/compass/compass_bg.png")) {
-            std::cerr << "Error: gauge class could not load Compass background texture!";
-        }
-        if (!compass_ticks_numbers.loadFromFile("assets/compass/compass_ticks_numbers.png")) {
-            std::cerr << "Error: gauge class could not load Compass ticks and numbers texture!"; 
-        }
-
-        compass_bg_sprite.setTexture(compass_bg);
-        compass_ticks_numbers_sprite.setTexture(compass_ticks_numbers);
-
-        compass_ticks_numbers_sprite.setOrigin(compass_ticks_numbers.getSize().x / 2.f, compass_ticks_numbers.getSize().y / 2.f);
-        compass_bg_sprite.setOrigin(compass_bg.getSize().x / 2.f, compass_bg.getSize().y / 2.f);
-
-        compass_bg_sprite.setScale(0.5f,0.5f);
-        compass_ticks_numbers_sprite.setScale(0.5f,0.5f);
-        
-        compass_bg_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
-        compass_ticks_numbers_sprite.setPosition(m_pos.x , m_pos.y + m_dia / 2.f);
-
-        break;
+    // Draw ticks
+    for (size_t i = 0; i < m_ticks.size(); i += 2) {
+        DrawLineV(m_ticks[i], m_ticks[i+1], BLACK);
     }
-	// label
-	m_label.setPosition(m_pos.x + m_dia / 2 - 50, m_pos.y + m_dia + 10);
-	m_label.setFillColor(sf::Color::Black);
-	m_label.setFont(m_font);
-}
 
-void Gauge::updateVal(const float val)
-{
-        m_value = val;
-}
-
-void Gauge::setupGaugeFrame()
-{
-    m_gaugeFrame.setRadius(m_dia / 2);
-    m_gaugeFrame.setFillColor(sf::Color::White);
-    m_gaugeFrame.setOutlineThickness(5);
-    m_gaugeFrame.setOutlineColor(sf::Color::Black);
-    m_gaugeFrame.setOrigin(m_dia / 2, m_dia / 2);
-    m_gaugeFrame.setPosition(m_pos.x + m_dia / 2, m_pos.y + m_dia / 2);
-}
-
-void Gauge::setupNeedle()
-{
-    // creating needle 
-    m_needle.setSize(sf::Vector2f(m_dia /2, 1.5)); // needle size
-    m_needle.setFillColor(sf::Color::Red);
-    m_needle.setOrigin(0 , .75f); // making left end the rotation point
-    m_needle.setPosition(m_pos.x + m_dia / 2, m_pos.y + m_dia / 2); // center of gauge
-    m_needle.setRotation(m_needle_min_degree); // starting point.
-    //std::cout << "Needle Position: " << m_needle.getPosition().x << ", " << m_needle.getPosition().y << std::endl; // for debugging
-    // center dot
-    m_center.setRadius(5);
-    m_center.setFillColor(sf::Color::Black);
-    m_center.setOrigin(5, 5);
-    m_center.setPosition(m_pos.x + m_dia / 2, m_pos.y + m_dia / 2);
-}
-
-void Gauge::updateProportionalVal(const float prop)
-{
-    m_value = (prop * (m_max_value - m_min_value)) + m_min_value;
-}
-
-void Gauge::render(sf::RenderTarget& target)
-{
-
-    if (m_type == type_compass) 
-    {
-        target.draw(compass_bg_sprite);
-        target.draw(compass_ticks_numbers_sprite);
-        
+    // Draw numbers
+    for (int idx = 0; idx < (int)m_numbers.size(); ++idx) {
+        int i = idx * 2;
+        float angleDeg = m_needle_min_degree + i * (m_needle_max_degree - m_needle_min_degree) / 20.0f;
+        float angleRad = angleDeg * PI / 180.0f;
+        Vector2 center = { m_pos.x + m_dia/2, m_pos.y + m_dia/2 };
+        float textR = (m_dia/2) - 30;
+        Vector2 basePos = { center.x + textR * cosf(angleRad), center.y + textR * sinf(angleRad) };
+        // Center text
+        Vector2 size = MeasureTextEx(m_font, m_numbers[idx].c_str(), m_label_font_size, 1);
+        Vector2 txtPos = { basePos.x - size.x/2, basePos.y - size.y/2 };
+        Color col = (i <= 6) ? BLACK : (i <= 10) ? YELLOW : RED;
+        DrawTextEx(m_font, m_numbers[idx].c_str(), txtPos, m_label_font_size, 1, col);
     }
-    else 
-    {
-        target.draw(m_gaugeFrame);
-        target.draw(m_ticks.data(), m_ticks.size(), sf::Lines);
-        for (const auto& num : m_numbers) {
-            target.draw(num);
-        }
-        std::string value = std::to_string(m_value);
-        value.erase(value.find('.') + 3);
-        if (value.back() == '.') value.pop_back();
-        m_label.setString(m_label_text + value);
-        target.draw(m_label);
-        // needle rotation
-        target.draw(m_needle);
-        target.draw(m_center);
-    
-        //std::cout << "m_value: " << m_value << " -> Needle Angle: " << needleAngle << std::endl; // for debugging
-        // by adding sf::RenderTarget% target parameter i tried to provide some flexibility
+
+    // Draw needle
+    float needleAngle = m_needle_min_degree +
+        (m_value - m_min_value) * (m_needle_max_degree - m_needle_min_degree) /
+        (m_max_value - m_min_value);
+    Rectangle rec = { m_center.x, m_center.y - 1.5f, m_dia/2 -20.f, 3 };
+    DrawRectanglePro(rec, { 0, 1.5f }, needleAngle, m_needle_color);
+
+    // Draw center dot
+    DrawCircle((int)m_center.x, (int)m_center.y, 5, BLACK);
+
+    // Draw label
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%s%.2f", m_label_text.c_str(), m_value);
+    Vector2 lblSize = MeasureTextEx(m_font, buf, m_label_font_size, 1);
+    Vector2 lblPos = { m_pos.x + m_dia/2 - lblSize.x/2, m_label_pos.y };
+    DrawTextEx(m_font, buf, m_label_pos, m_label_font_size, 1, m_label_color);
     }
-        compass_ticks_numbers_sprite.setRotation(m_value);
-        
-        float needleAngle = m_needle_min_degree + (m_value - m_min_value) * (m_needle_max_degree - m_needle_min_degree) / (m_max_value - m_min_value);
-        m_needle.setRotation(needleAngle);
-        
 }
-
-
 
 ///// Gauge end /////

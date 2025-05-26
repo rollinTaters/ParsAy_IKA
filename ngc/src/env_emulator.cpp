@@ -27,6 +27,16 @@
 #include <iostream>     // cerr
 #include "env_emulator.hpp"
 #include "ngc.hpp"  // we gon get commanded speed and rate values
+#include "raylib.h"
+#include "raymath.h"    // matrix
+
+Vector3 toVector3(const v3f& v) {
+    return Vector3{ v.x, v.y, v.z };
+}
+
+namespace GUI{
+    extern Vector3 taters2raylib( v3f );
+}
 
 Env_Emulator::Env_Emulator( const Vehicle& inp_vehicle ):
     m_real_vehicle(inp_vehicle)
@@ -74,15 +84,9 @@ bool Env_Emulator::stopPhysSim()
     return true;
 }
 
-void Env_Emulator::setNGC( NGC * inp )
-{
-    m_ngc = inp;
-}
+void Env_Emulator::setNGC( NGC * inp ) { m_ngc = inp; }
 
-Vehicle Env_Emulator::getRealVehicle() const
-{
-    return m_real_vehicle;
-}
+Vehicle Env_Emulator::getRealVehicle() const { return m_real_vehicle; }
 
 /*
    SWITCH TO CHRONO
@@ -152,9 +156,9 @@ void Env_Emulator::physThreadFunc()
     }
 }
 
+    /*
 float Env_Emulator::shittyPixelMarch( BB3D i_box, v3f i_dir ) const
 {
-    /*
     // pixel marching setup, for direction sensor
     unsigned int max_iteration = 1000;
     unsigned int iteration = 0;
@@ -193,24 +197,69 @@ float Env_Emulator::shittyPixelMarch( BB3D i_box, v3f i_dir ) const
         return 0.f;
     }
     return ( (check_pos - start_pos)*m_metre_per_pixel ).mag();
+}
     */
-    return 0.f;
+
+float Env_Emulator::useRaycast( v3f i_pos, v3f i_dir ) const
+{
+    // Raycollision -> bool hit, float distance, Vector3 point, Vector3 normal
+    // Ray -> Vector3 position, Vector3 direction
+
+    //std::cout<<"useRaycast, direction: "<< i_dir.x <<"x "<<i_dir.y<<"y "<<i_dir.z<<"z\n";
+
+    Vector3 map_offset = GUI::taters2raylib( Point( 0, -1080*m_metre_per_pixel, -0.25 ) );
+
+    Vector3 start_pos = GUI::taters2raylib( i_pos );
+    Vector3 ray_dir = GUI::taters2raylib( i_dir );
+    Ray rey = { start_pos, ray_dir };
+
+    RayCollision collision = GetRayCollisionMesh(
+            rey,
+            m_hm_mesh,
+            getWorldTransform( map_offset ) );
+
+    if( collision.hit )
+        return collision.distance;
+    else
+        return 0.f;
+}
+
+Matrix Env_Emulator::getWorldTransform( Vector3 offset ) const
+{
+    // get quaternions and positions, convert them to raylib axis conventions
+    cQuaternion veh_quat = m_real_vehicle.getBox().getQuaternion();
+    Vector3 veh_quat_axis = GUI::taters2raylib( v3f{ veh_quat.x, veh_quat.y, veh_quat.z } );
+    Vector3 veh_pos = GUI::taters2raylib( m_real_vehicle.getBox().getPos() );
+    veh_pos += offset;
+
+    // convert quaternions and vectors to raylib units
+    Quaternion vehicle_rotation = { veh_quat_axis.x, veh_quat_axis.y, veh_quat_axis.z, -veh_quat.w };
+    Vector3 vehicle_position = { veh_pos.x, veh_pos.y, veh_pos.z };
+
+    Matrix rotation_matrix = QuaternionToMatrix( vehicle_rotation );
+
+    Matrix translation_matrix = MatrixTranslate( -vehicle_position.x, -vehicle_position.y, -vehicle_position.z );
+
+    return MatrixMultiply( translation_matrix, rotation_matrix );
 }
 
 bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) const
 {
+    // nullptr sensor protection
+    if (!sensor) return false;
+
     // determine sensor type
     Sensor_Type sensor_type = sensor->getType();
 
     // determine sensor position
+    //BB3D sensor_box = (sensor->getBox()).onTop( m_real_vehicle.getBox() );
+    //sensor_box += m_real_vehicle.getBox();
     BB3D sensor_box = sensor->getBox();
-    sensor_box += m_real_vehicle.getBox();
     
     // for lidar case
     float rad_increment = (2*PI)/LIDAR_POINTS;
     v3f sensor_direction = sensor_box.getLocalVecY();
     cQuaternion lidar_quat = cQuaternion::fromAxisAngle( sensor_box.getLocalVecZ(), rad_increment );
-
 
     switch( sensor_type )
     {
@@ -220,7 +269,8 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
             return false;
         // ---- Simple distance sensor ----
         case E_type_distance:
-            data.distance = shittyPixelMarch( sensor_box, sensor_box.getLocalVecY() );
+            //data.distance = shittyPixelMarch( sensor_box, sensor_box.getLocalVecY() );
+            data.distance = useRaycast( sensor_box.getPos(), sensor_box.getLocalVecY() );
             return true;
 
         // ---- LIDAR ----
@@ -228,7 +278,8 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
             //std::cout<<"env emulator: reading lidar sensor\n";    // DEBUG
             for( int i = 0; i < LIDAR_POINTS; i++ )
             {
-                data.lidar[i] = shittyPixelMarch( sensor_box, sensor_direction );
+                //data.lidar[i] = shittyPixelMarch( sensor_box, sensor_direction );
+                data.lidar[i] = useRaycast( sensor_box.getPos(), sensor_direction );
                 data.lidar_angle[i] = rad_increment * i;
                 lidar_quat.rotateVector( sensor_direction );
             }
@@ -254,11 +305,14 @@ bool Env_Emulator::getSensorData( Sensor_Emulator* sensor, Sensor_Data& data ) c
             // TODO
             data.electric_current = 0;
             return false;
-    }
-}
+        
+        // ---- Turret Encoders ----
+        case E_type_turret_encoder:
+            data.turret_pitch = m_real_vehicle.getTurret().getPitch();
+            data.turret_yaw = m_real_vehicle.getTurret().getYaw();
+            return true;
 
-namespace GUI{
-    extern Vector3 taters2raylib( v3f );
+    }
 }
 
 bool Env_Emulator::setupModel()
@@ -330,40 +384,17 @@ bool Env_Emulator::unloadModel()
     return false;
 }
 
-void Env_Emulator::drawHMap() const
+void Env_Emulator::drawHMap() 
 {
     if( !m_model_initialized ) return;
 
-    v3f real_vehicle_pos = m_real_vehicle.getBox().getPos();
-    v3f mesh_position;
-    v3f mesh_rot_compensation;
+    // map start position offset
+    //Vector3 map_offset = GUI::taters2raylib( Point(340*m_metre_per_pixel, (1080-775)*m_metre_per_pixel, 0.5f) );
+    Vector3 map_offset = GUI::taters2raylib( Point( 0, -1080*m_metre_per_pixel, -0.25 ) );
 
-    cQuaternion calibration_quat = cQuaternion::fromAxisAngle( {0,0,1}, PI );
-    cQuaternion quat = m_real_vehicle.getBox().getQuaternion();
-    cQuaternion mesh_quat = quat * calibration_quat;
-    v3f rot_axis = {mesh_quat.x, mesh_quat.y, mesh_quat.z};
+    m_hm_model.transform = getWorldTransform( map_offset );
 
-    v3f vehicle_start_pos = Point(340*m_metre_per_pixel, (1080-775)*m_metre_per_pixel, 0.5f);
-    //real_vehicle_pos += v3f( 0, -1080*0.05, -0.25 ); // move map a bit
+    DrawModel( m_hm_model, (Vector3){0,0,0}, 1.f, DARKGREEN );
 
-    // mesh rotates around its 0,0,0 point (top left of image that we loaded)
-    mesh_rot_compensation = real_vehicle_pos;
-    mesh_quat.conjugate().rotateVector( mesh_rot_compensation );
-
-    mesh_position = ( real_vehicle_pos - mesh_rot_compensation ) * -1.f;
-
-    DrawModelEx(
-            m_hm_model,   // model
-            GUI::taters2raylib( mesh_position ),    // position
-            GUI::taters2raylib( rot_axis ),   // rotation axis
-            (mesh_quat.w *2)*(180/PI),   // rotation angle
-            (Vector3){1,1,1},    // scale
-            DARKGREEN );    // tint
-    /*
-    DrawModel(
-            m_hm_model,
-            GUI::taters2raylib(real_vehicle_pos*-1.f),
-            1.f,
-            DARKGREEN );
-            */
 }
+

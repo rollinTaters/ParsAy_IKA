@@ -25,6 +25,8 @@
 
 #include "utility.hpp"
 
+#include <iostream> // DEBUG, OP ostream
+
 // ---- Point ----
 Point::Point():x(0), y(0), z(0) {}
 Point::Point( const float in_x, const float in_y, const float in_z ):
@@ -93,14 +95,14 @@ float Point::heading() const
                 rad = asin( unit_vec.y );
             else
                 rad = (PI/2.f) - acos( unit_vec.x );
-            rad = PI/2.f - rad;
+            //rad = PI/2.f - rad;
         }else{
             // sector II
             if( use_arcsin )
                 rad = asin( unit_vec.y );
             else
                 rad = (PI/2.f) - acos( -unit_vec.x );
-            rad = (3.f*PI)/2.f + rad;
+            rad = /*(3.f*PI)/2.f*/ 2*PI - rad;
         }
     }else{
         if( unit_vec.x > 0 )
@@ -110,7 +112,7 @@ float Point::heading() const
                 rad = asin( -unit_vec.y );
             else
                 rad = (PI/2.f) - acos( unit_vec.x );
-            rad = PI/2.f + rad;
+            rad = PI/*/2.f*/ - rad;
         }else{
             // sector III
             if( use_arcsin )
@@ -120,6 +122,7 @@ float Point::heading() const
             rad = PI + rad;
         }
     }
+
     // fucking finally
     return rad;
 }
@@ -169,6 +172,11 @@ Point& Point::operator/=( const float & f )
     y/=f;
     z/=f;
     return *this;
+}
+
+bool Point::operator==( const Point& p ) const
+{
+    return (x==p.x) && (y==p.y) && (z==p.z);
 }
 
 Point operator+( const Point &p1, const Point &p2 )
@@ -268,12 +276,98 @@ const cQuaternion cQuaternion::fromEuler( v3f euler )
 	float sY = sinf(y);
 	float sZ = sinf(z);
 
-    // YXZ
+#define QUATERNION_EULER_ORDER QUATERNION_EULER_ZXY
+//#define QUATERNION_EULER_ORDER QUATERNION_EULER_XYZ // roll around X, pitch around Y, yaw around Z
+//#define QUATERNION_EULER_ORDER QUATERNION_EULER_YXZ // deviceorientation
+//#define QUATERNION_EULER_ORDER QUATERNION_EULER_ZYX
+//#define QUATERNION_EULER_ORDER QUATERNION_EULER_YZX
+//#define QUATERNION_EULER_ORDER QUATERNION_EULER_XZY
+
+#if QUATERNION_EULER_ORDER == QUATERNION_EULER_ZXY
+	// axisAngle([0, 0, 1], φ) * axisAngle([1, 0, 0], θ) * axisAngle([0, 1, 0], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sY * sZ,
+		sY * cX * cZ - sX * sZ * cY,
+		sX * sY * cZ + sZ * cX * cY,
+		sX * cY * cZ + sY * sZ * cX);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_XYZ // roll around X, pitch around Y, yaw around Z
+	// axisAngle([1, 0, 0], φ) * axisAngle([0, 1, 0], θ) * axisAngle([0, 0, 1], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sY * sZ,
+		sX * cY * cZ + sY * sZ * cX,
+		sY * cX * cZ - sX * sZ * cY,
+		sX * sY * cZ + sZ * cX * cY);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_YXZ // deviceorientation
+	// axisAngle([0, 1, 0], φ) * axisAngle([1, 0, 0], θ) * axisAngle([0, 0, 1], ψ)
 	return cQuaternion(
 		sX * sY * sZ + cX * cY * cZ,
 		sX * sZ * cY + sY * cX * cZ,
 		sX * cY * cZ - sY * sZ * cX,
 		sZ * cX * cY - sX * sY * cZ);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_ZYX
+	// axisAngle([0, 0, 1], φ) * axisAngle([0, 1, 0], θ) * axisAngle([1, 0, 0], ψ)
+	return cQuaternion(
+		sX * sY * sZ + cX * cY * cZ,
+		sZ * cX * cY - sX * sY * cZ,
+		sX * sZ * cY + sY * cX * cZ,
+		sX * cY * cZ - sY * sZ * cX);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_YZX
+	// axisAngle([0, 1, 0], φ) * axisAngle([0, 0, 1], θ) * axisAngle([1, 0, 0], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sY * sZ,
+		sX * sY * cZ + sZ * cX * cY,
+		sX * cY * cZ + sY * sZ * cX,
+		sY * cX * cZ - sX * sZ * cY);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_XZY
+	// axisAngle([1, 0, 0], φ) * axisAngle([0, 0, 1], θ) * axisAngle([0, 1, 0], ψ)
+	return cQuaternion(
+		sX * sY * sZ + cX * cY * cZ,
+		sX * cY * cZ - sY * sZ * cX,
+		sZ * cX * cY - sX * sY * cZ,
+		sX * sZ * cY + sY * cX * cZ);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_ZYZ
+	// axisAngle([0, 0, 1], φ) * axisAngle([0, 1, 0], θ) * axisAngle([0, 0, 1], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sZ * cY,
+		sY * sZ * cX - sX * sY * cZ,
+		sX * sY * sZ + sY * cX * cZ,
+		sX * cY * cZ + sZ * cX * cY);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_ZXZ
+	// axisAngle([0, 0, 1], φ) * axisAngle([1, 0, 0], θ) * axisAngle([0, 0, 1], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sZ * cY,
+		sX * sY * sZ + sY * cX * cZ,
+		sX * sY * cZ - sY * sZ * cX,
+		sX * cY * cZ + sZ * cX * cY);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_YXY
+	// axisAngle([0, 1, 0], φ) * axisAngle([1, 0, 0], θ) * axisAngle([0, 1, 0], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sZ * cY,
+		sX * sY * sZ + sY * cX * cZ,
+		sX * cY * cZ + sZ * cX * cY,
+		sY * sZ * cX - sX * sY * cZ);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_YZY
+	// axisAngle([0, 1, 0], φ) * axisAngle([0, 0, 1], θ) * axisAngle([0, 1, 0], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sZ * cY,
+		sX * sY * cZ - sY * sZ * cX,
+		sX * cY * cZ + sZ * cX * cY,
+		sX * sY * sZ + sY * cX * cZ);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_XYX
+	// axisAngle([1, 0, 0], φ) * axisAngle([0, 1, 0], θ) * axisAngle([1, 0, 0], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sZ * cY,
+		sX * cY * cZ + sZ * cX * cY,
+		sX * sY * sZ + sY * cX * cZ,
+		sX * sY * cZ - sY * sZ * cX);
+#elif QUATERNION_EULER_ORDER == QUATERNION_EULER_XZX
+	// axisAngle([1, 0, 0], φ) * axisAngle([0, 0, 1], θ) * axisAngle([1, 0, 0], ψ)
+	return cQuaternion(
+		cX * cY * cZ - sX * sZ * cY,
+		sX * cY * cZ + sZ * cX * cY,
+		sY * sZ * cX - sX * sY * cZ,
+		sX * sY * sZ + sY * cX * cZ);
+#endif
 }
 
 const cQuaternion cQuaternion::fromAxisAngle( v3f axis, float radian ) 
@@ -293,6 +387,28 @@ const cQuaternion cQuaternion::fromAxisAngle( v3f axis, float radian )
 	ret.z = axis.z * sin_norm;
 
 	return ret;
+}
+
+std::ostream& operator<<( std::ostream& os,  const OP& op )
+{
+    os<< "pos: "
+      << op.pos.x <<"x "
+      << op.pos.y <<"y "
+      << op.pos.z <<"z  mag: "
+      << op.pos.mag() <<"\n";
+    os<< "att: "
+      << op.att.x <<"x "
+      << op.att.y <<"y "
+      << op.att.z <<"z "
+      << op.att.w <<"w  mag: "
+      << op.att.norm() <<"\n";
+    return os;
+}
+
+std::ostream& operator<<( std::ostream& os, const v3f& p )
+{
+    os<< p.x <<"x "<< p.y <<"y "<< p.z <<"z";
+    return os;
 }
 
 
@@ -350,6 +466,12 @@ void BB3D::translateRight( const float meter ) { translateLocal(v3f(0,meter,0));
 void BB3D::translateUp( const float meter )    { translateLocal(v3f(0,0,meter)); }
 
 // -- Setters --
+void BB3D::setOP( const OP op )
+{
+    m_pos = op.pos;
+    m_quat = op.att;
+}
+
 void BB3D::setSize( const v3f size )
 {
     m_size = size;
@@ -380,7 +502,11 @@ void BB3D::setAng( const float x, const float y, const float z )
     setAng( v3f(x,y,z) );
 }
 
+void BB3D::setAtt( const cQuaternion q ) { m_quat = q; }
+
 // -- Getters --
+OP BB3D::getOP() const { return OP{ m_pos, m_quat }; }
+
 v3f BB3D::getSize() const { return m_size; }
 
 v3f BB3D::getPos() const { return m_pos; }
@@ -424,6 +550,31 @@ v3f BB3D::getLocalVecZ() const
     v3f ret(0,0,1);
     m_quat.rotateVector( ret );
     return ret;
+}
+
+BB3D BB3D::onTop( BB3D base ) const
+{
+    // make a copy to modify and return
+    BB3D copy = BB3D(*this);
+
+    // -- translations --
+    // move this by this objects position amount (which is defined relative to base)
+    // on base objects local csys vectors
+    base.translateLocal( m_pos );
+    copy.m_pos = base.m_pos;
+
+    // FIXME this shit be broken
+    // -- rotations --
+    /*
+    v3f q_vec = { m_quat.x, m_quat.y, m_quat.z };
+    base.m_quat.rotateVector( q_vec );
+    copy.m_quat.x = q_vec.x;
+    copy.m_quat.y = q_vec.y;
+    copy.m_quat.z = q_vec.z;
+    */
+    copy.m_quat = base.m_quat * copy.m_quat;
+
+    return copy;
 }
 
 
