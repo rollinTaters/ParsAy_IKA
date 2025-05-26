@@ -45,7 +45,7 @@ struct CommsPacket
 
         // make the input fit between designated sizes value range
         float range = maxval - minval;
-        std::uint8_t byte1 = (std::uint8_t)( input/range *255 );
+        std::uint8_t byte1 = (std::uint8_t)( (input-minval)/range *255 );
 
         std::memcpy( &(data[offset]), &byte1, sizeof( byte1 ) );
     }
@@ -67,7 +67,7 @@ struct CommsPacket
 
         // make the input fit between designated sizes value range
         float range = maxval - minval;
-        std::uint16_t byte2 = (std::uint16_t)( input/range *65535 );
+        std::uint16_t byte2 = (std::uint16_t)( (input-minval)/range *65535 );
 
         std::memcpy( &(data[offset]), &byte2, sizeof( byte2 ) );
     }

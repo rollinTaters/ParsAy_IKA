@@ -163,8 +163,8 @@ void NGC::mainThreadFunc()  // ==== ==== ==== MAIN THREAD FUNC ==== ==== ====
     while( m_run_main_thread )
     {
         // roll rol roll
-        // check if there are any incoming packets
-        if( m_comms_module.packetAvailable() )
+        // check if there are any incoming packets, and process them all
+        while( m_comms_module.packetAvailable() )
         {
             m_comms_module.readPacket( m_command_packet );
             processPacket( m_command_packet );

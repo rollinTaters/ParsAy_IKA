@@ -3,34 +3,8 @@
 
 	Copyright (c) 2025 rollinTaters
 
-	Permission is hereby granted, free of charge, to any person obtaining a copy
-	of this software and associated documentation files (the "Software"), to deal
-	in the Software without restriction, including without limitation the rights
-	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-	copies of the Software, and to permit persons to whom the Software is
-	furnished to do so, subject to the following conditions:
-	
-	The above copyright notice and this permission notice shall be included in all
-	copies or substantial portions of the Software.
-	
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-	SOFTWARE.
 */
 
-
-/*
-   motion actuators emulator:
-   - steer actuators
-     models turn radious, (max and min radious too)
-   - drive actuators
-     models current linear speed, accel, inertia
-   - emulates potential errors (wheel slip, random disturbances)
-*/
 #include <iostream>
 #include "vehicle.hpp"
 #include "env_emulator.hpp"
@@ -50,9 +24,8 @@ std::ostream& operator<<(std::ostream& os, const Vector3& v) {
 #include "../../common_code/src/video_feed.hpp"
 void sendCamera2Console() 
 {
-    static int counter = 0;
     static CommsModule undef_comms( CommsModule::udp, CommsModule::random_channel1 );
-    static VideoFeed videofeed( 5 );
+    static VideoFeed videofeed( 3 );
 
     std::uint8_t *raw_image_data = nullptr;
     int raw_image_data_size = 123;
@@ -60,13 +33,6 @@ void sendCamera2Console()
     int feed_resolution_x = videofeed.getResolutionWidth();
     int feed_resolution_y = videofeed.getResolutionHeight();
 
-
-    // throttling to prevent stealing all the resources
-    counter++;
-    if( counter > 50 )
-        counter = 0;
-    else
-        return;
 
     // RenderTexture2D kamerandan görüntü al
     Image img = LoadImageFromTexture( GUI::turretViewRT.texture ); // BURADA RAM'e çekiyoruz
@@ -193,7 +159,7 @@ int main()
         GUI::drawOverlay(); // nearly all the text is here
 
         // send turret cam view to command console, debug
-        //sendCamera2Console();
+        sendCamera2Console();
 
         EndDrawing();
     }
