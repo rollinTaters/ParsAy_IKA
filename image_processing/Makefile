@@ -8,10 +8,10 @@ BIN_DIR := bin
 OBJ_DIR := obj
 COMMON_OBJ_DIR := ../common_code/obj
 
-LINUX_LDFLAGS := -Wl,-rpath=./lib -I$(SFML_dir_linux)/include -L$(SFML_dir_linux)/lib $(SFML_libs)
+LINUX_LDFLAGS := -Wl,-rpath=./lib:$(SFML_dir_linux)/lib -I$(SFML_dir_linux)/include -L$(SFML_dir_linux)/lib $(SFML_libs)
 
 CXXFLAGS := -Wall -Wextra -std=c++17
-LIBS := `pkg-config --cflags --libs opencv4` -lQt6Core -lQt6Gui -lQt6Widgets -I./../common_code/src -I$(SFML_dir_linux)/include -L$(SFML_dir_linux)/lib $(SFML_libs) -lavcodec -lavformat -lavutil -lswscale -lopencv_core -lopencv_highgui -lopencv_imgcodecs
+LIBS := `pkg-config --cflags --libs opencv4` -I./../common_code/src -I$(SFML_dir_linux)/include -L$(SFML_dir_linux)/lib $(SFML_libs) -lavcodec -lavformat -lavutil -lswscale -lopencv_core -lopencv_highgui -lopencv_imgcodecs
 
 
 COMMON_OBJS := $(wildcard $(COMMON_OBJ_DIR)/*.o)
