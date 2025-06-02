@@ -28,7 +28,7 @@
 Gauge::Gauge(gauge_type gt, Vector2 pos, float dia)
     : m_type(gt), m_pos(pos), m_dia(dia)
 {
-    m_font = LoadFont("./assets/fonts/arial.ttf");
+    //m_font = LoadFontEx("./assets/fonts/arial.ttf",20,0,NULL);
     switch (gt) {
         case type_compass:
             m_max_value = 360; m_min_value = 0; m_value = 0;
@@ -132,6 +132,7 @@ void Gauge::updateProportionalVal(const float value) {
 
 
 void Gauge::render() {
+    m_font = LoadFontEx("./assets/fonts/arial.ttf",20,0,NULL);
     if (m_type == type_compass) {
         // Draw compass background and rotating layer
         Rectangle src = { 0, 0, (float)compass_bg.width, (float)compass_bg.height };
@@ -155,7 +156,7 @@ void Gauge::render() {
         char buf[32];
         snprintf(buf, sizeof(buf), "%s%.2f", m_label_text.c_str(), m_value);
         Vector2 lblSize = MeasureTextEx(m_font, buf, m_label_font_size, 1);
-        Vector2 lblPos = { m_pos.x - lblSize.x/2, m_label_pos.y - m_dia/2 };
+        Vector2 lblPos = { m_pos.x/2, m_label_pos.y - m_dia/2 };
         DrawTextEx(m_font, buf, lblPos, m_label_font_size, 1, m_label_color);
     }
     else if (m_type == type_signal) {
