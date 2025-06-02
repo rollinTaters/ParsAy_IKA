@@ -83,7 +83,10 @@ void UserInput::processInput( CommsPacket &dcp ){
 
     // Hat control mode toggle
     if( IsKeyPressed( KEY_T ) )
-        dcp.setHatMode(1.0f);  // Toggle hat mode
+        if( dcp.getHatMode() > 0 )
+            dcp.setHatMode(-1.0f);  // Toggle hat mode
+        else
+            dcp.setHatMode(1.0f);  // Toggle hat mode
 
     constexpr float ch_speed = 0.1f;
     if( dcp.getHatMode() > 0 )  // Hat mode is active

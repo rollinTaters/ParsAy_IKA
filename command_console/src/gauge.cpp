@@ -28,9 +28,7 @@
 Gauge::Gauge(gauge_type gt, Vector2 pos, float dia)
     : m_type(gt), m_pos(pos), m_dia(dia)
 {
-
     m_font = LoadFont("./assets/fonts/arial.ttf");
-  
     switch (gt) {
         case type_compass:
             m_max_value = 360; m_min_value = 0; m_value = 0;
@@ -211,7 +209,11 @@ void Gauge::render() {
         // Center text
         Vector2 size = MeasureTextEx(m_font, m_numbers[idx].c_str(), m_label_font_size, 1);
         Vector2 txtPos = { basePos.x - size.x/2, basePos.y - size.y/2 };
-        Color col = (i <= 6) ? BLACK : (i <= 10) ? YELLOW : RED;
+        //Color col = (i <= 6) ? BLACK : (i <= 10) ? YELLOW : RED;
+        Color col = BLACK;
+
+        DrawRing(m_center, m_dia/2 - 55, 40, 30, -30, 0 ,Fade(YELLOW,0.5f));
+        DrawRing(m_center, m_dia/2 - 55, 40, 30, 150, 0 ,Fade(RED,0.5f));
         DrawTextEx(m_font, m_numbers[idx].c_str(), txtPos, m_label_font_size, 1, col);
     }
 

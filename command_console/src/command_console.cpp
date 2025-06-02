@@ -57,7 +57,7 @@ int main()
     std::uint8_t *video_frame_raw = new std::uint8_t[1024]{0};
     size_t video_frame_size;
     Texture2D video_texFrame;
-
+    
 
     // main loop
     while (!WindowShouldClose())
@@ -71,10 +71,11 @@ int main()
         BeginDrawing();
         ClearBackground(Color{180, 180, 180, 255});
         // press t for debug test
-        if(IsKeyDown(KEY_T)){
+        if(IsKeyDown(KEY_SPACE)){
 
             cg::DEBUG_gauge_test();
         }
+        DrawTextEx(cg::arial_font, TextFormat("FPS: %d", GetFPS()), {1600, 10}, 20, 1, BLACK); 
         
         // check incoming transmission packets
         if (comms_module.packetAvailable())
@@ -166,8 +167,8 @@ int main()
         // DEBUG END
 
          // for testing purposes we send it to ngc, normally we wanna send to ccm
-        comms_module.sendPacket( packet2send, CommsModule::ngc_channel );  
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        comms_module.sendPacket( packet2send, CommsModule::ngc_channel );
+        std::this_thread::sleep_for(std::chrono::milliseconds(200)); // this is why our command console is running at 5 fps but idk how to fix it.
     }
 
 
