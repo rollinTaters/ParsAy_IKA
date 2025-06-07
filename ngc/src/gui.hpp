@@ -490,6 +490,15 @@ namespace GUI
         }
     }
 
+    void drawMapPoints()
+    {
+        std::vector<Point> pts = ngc_system.getMapPoints();
+        for( Point &p : pts )
+        {
+            DrawSphere( taters2raylib(p), 0.08, BLACK );
+        }
+    }
+
     void drawPath()
     {
         //v3f veh_pos = simulated_vehicle.getBox().getPos();

@@ -142,6 +142,14 @@ bool NGC::executeWPs()
 
 std::vector<Point> NGC::getImObPoints() const { return m_immediate_obstacles; }
 
+std::vector<Point> NGC::getMapPoints() const
+{
+    std::vector<Point> ret;
+    for( auto mp : m_map_points )
+        ret.emplace_back( mp.pos );
+    return ret;
+}
+
 OP* NGC::getPredictOPs() { return m_predict_ops; }
 
 void NGC::directCommand( float speed, float rate )
@@ -177,7 +185,10 @@ void NGC::mainThreadFunc()  // ==== ==== ==== MAIN THREAD FUNC ==== ==== ====
         // read lidar and run markImmediateObstacles
         getLIDARData();
 
-        // TODO run predictTrajectory and send it to command console for debug visualization
+        // do SLAM, maybe dont run this every loop? this is gonna be expensive
+        markObstacles();
+
+        // run predictTrajectory and TODO send it to command console for debug visualization
         predictTrajectory( m_predict_ops, std::size(m_predict_ops) );
 
         // TODO run createTargetWaypoint, createOpenSpaceWaypoint
@@ -266,9 +277,55 @@ void NGC::deadReckonFunc()
     }
 }
 
+MapPoint* NGC::getClosestMapPoint( v3f p, float range, float &distance )
+{
+    distance = 0;
+    if( m_map_points.empty() ) return nullptr;
+    float min_dist = range;
+    float found_dist = 0;
+    MapPoint* ret_val = nullptr;
+
+    for( auto it = m_map_points.begin(); it != m_map_points.end(); it++ )
+    {
+        found_dist = it->pos.absDist( p );
+        if( found_dist < min_dist )
+        {
+            min_dist = found_dist;
+            ret_val = &(*it);
+        }
+    }
+    distance = found_dist;
+    return ret_val;
+}
+
 bool NGC::markObstacles()
 {
-    return false;
+    // loop through all immediate obstacle points and try to add them to the mapped points
+    for( Point p : m_immediate_obstacles )
+    {
+        // convert points relative csys to global csys
+        m_vehicle->getBox().getQuaternion().rotateVector( p );
+        p += m_vehicle->getBox().getPos();
+
+        float dist = 0;
+        // TODO maybe also get X number of closest map points
+        // TODO chunking!!
+        MapPoint* closest_mp = getClosestMapPoint( p, 0.5, dist );
+
+        // if no map point found in given range
+        if( closest_mp == nullptr )
+        {
+            // make new map point
+            m_map_points.push_back( {p, 0.f, 1.f} );
+            continue;
+        }
+
+        // if we found a map point in given range
+        // TODO if p is inside its radius, reduce radius by an amount
+        // TODO if p is inside radius and radius is already min radius value, increase confidence by an amount
+        // TODO if p is outside radius, and map point density is below saturation level, create new map point
+    }
+    return true;
 }
 
 bool NGC::markImmediateObstacles()

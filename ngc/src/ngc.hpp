@@ -45,6 +45,13 @@
 // a little forward decleration, NOTE: remove the environment emulator for hardware tests
 class Env_Emulator;
 
+struct MapPoint
+{
+    v3f pos;
+    float confidence = 0.f;
+    float radius = 1.f;
+};
+
 class NGC
 {
   public:
@@ -67,6 +74,7 @@ class NGC
     bool executeWPs();  // starts executing current waypoints
 
     std::vector<Point> getImObPoints() const;   // immediate obstacles
+    std::vector<Point> getMapPoints() const;   // mapped out points, aka obstacles, aka SLAM points
     OP* getPredictOPs();
 
     // Because we gotta run simulations
@@ -107,6 +115,10 @@ class NGC
     // immediate surrounding obstacles
     // this will most likely be current sensor readings
     std::vector<Point> m_immediate_obstacles;
+
+    // mapped out points, (aka slam points)
+    std::vector<MapPoint> m_map_points;
+    MapPoint* getClosestMapPoint( v3f p, float range, float &distance );
 
     // thread control
     bool m_run_main_thread = false;
