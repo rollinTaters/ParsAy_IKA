@@ -133,8 +133,8 @@ int main()
         BeginMode3D( GUI::camera );  //--- mode 3D start, our debug screen get populated here
 
         env_emulator.drawHMap();
-        GUI::drawMapPoints();
         GUI::drawLIDAR();
+        GUI::drawMapPoints();
         GUI::drawAxisBillboards();
         GUI::drawVehicleBody();
         GUI::drawTurret();
@@ -160,7 +160,7 @@ int main()
         GUI::drawOverlay(); // nearly all the text is here
 
         // send turret cam view to command console, debug
-        sendCamera2Console();
+        //sendCamera2Console();
 
         EndDrawing();
     }

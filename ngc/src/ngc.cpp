@@ -142,13 +142,7 @@ bool NGC::executeWPs()
 
 std::vector<Point> NGC::getImObPoints() const { return m_immediate_obstacles; }
 
-std::vector<Point> NGC::getMapPoints() const
-{
-    std::vector<Point> ret;
-    for( auto mp : m_map_points )
-        ret.emplace_back( mp.pos );
-    return ret;
-}
+std::vector<MapPoint> NGC::getMapPoints() const { return m_map_points; }
 
 OP* NGC::getPredictOPs() { return m_predict_ops; }
 
@@ -294,37 +288,75 @@ MapPoint* NGC::getClosestMapPoint( v3f p, float range, float &distance )
             ret_val = &(*it);
         }
     }
-    distance = found_dist;
+    distance = min_dist;
     return ret_val;
 }
 
 bool NGC::markObstacles()
 {
+    float radius_decrement = -0.010f;
+    float min_radius = 0.050f;
+
+    // capture vehicles instant transformation
+    cQuaternion quat = m_vehicle->getBox().getQuaternion();
+    v3f veh_pos = m_vehicle->getBox().getPos();
+
     // loop through all immediate obstacle points and try to add them to the mapped points
     for( Point p : m_immediate_obstacles )
     {
         // convert points relative csys to global csys
-        m_vehicle->getBox().getQuaternion().rotateVector( p );
-        p += m_vehicle->getBox().getPos();
+        quat.rotateVector( p );
+        p += veh_pos;
+
+        //std::cout<<"checking point "<<p<<"\n";
 
         float dist = 0;
         // TODO maybe also get X number of closest map points
         // TODO chunking!!
-        MapPoint* closest_mp = getClosestMapPoint( p, 0.5, dist );
+        MapPoint* closest_mp = getClosestMapPoint( p, 1.2, dist );
 
         // if no map point found in given range
         if( closest_mp == nullptr )
         {
+            //std::cout<<"\tcreating new map point\n";
+
             // make new map point
             m_map_points.push_back( {p, 0.f, 1.f} );
             continue;
+            //closest_mp = &(m_map_points[0]);
         }
 
         // if we found a map point in given range
-        // TODO if p is inside its radius, reduce radius by an amount
-        // TODO if p is inside radius and radius is already min radius value, increase confidence by an amount
-        // TODO if p is outside radius, and map point density is below saturation level, create new map point
+        // if p is inside the closest map points radius
+        if( dist <= closest_mp->radius )
+        {
+            //std::cout<<"\thad a hit on map point. Dist: "<<dist<<"\n";
+
+            // move map point towards point
+            v3f delta = p - closest_mp->pos;
+            closest_mp->pos += delta * 0.8 * (1 - closest_mp->confidence);
+
+            // adjust confidence
+            float new_conf = 1 / pow((2*dist + 1),4);   // confidence value of map point, determined by this match
+            float old_conf = closest_mp->confidence;    // previous confidence value
+            float delta_conf = (new_conf - old_conf);   // change of confidence for this match
+          
+            closest_mp->confidence += (delta_conf*0.8f);    // apply with a relaxation rate
+            /*std::cout<<
+                "new conf: "<<new_conf<<
+                "\told conf: "<<old_conf<<
+                "\tfinal conf: "<<closest_mp->confidence<<"\n"; */
+
+            // reduce radius    TODO radius should be a function of confidence??
+            if( closest_mp->radius > min_radius )
+                closest_mp->radius += radius_decrement;
+        }else{
+            // TODO if p is outside radius, and map point density is below saturation level, create new map point
+            //m_map_points.push_back( {p, 0.f, 1.f} );
+        }
+
     }
+    //std::cout<<"==== all points done ====\n";
     return true;
 }
 

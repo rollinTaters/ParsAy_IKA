@@ -68,8 +68,8 @@ namespace GUI
         ch_color = LIME;
 
         hat_mode_ch = true;
-        cmd_nom_speed = 1.2;
-        cmd_nom_rate = 10* (PI/180);
+        cmd_nom_speed = 2.5;
+        cmd_nom_rate = 18* (PI/180);
 
         // camera setup
         camera = {0};
@@ -490,12 +490,18 @@ namespace GUI
         }
     }
 
+//#include "ngc.hpp"  // MapPoint struct is here, and this include is out of place. hurray spaghetti code
     void drawMapPoints()
     {
-        std::vector<Point> pts = ngc_system.getMapPoints();
-        for( Point &p : pts )
+        std::vector<MapPoint> pts = ngc_system.getMapPoints();
+        for( MapPoint p : pts )
         {
-            DrawSphere( taters2raylib(p), 0.08, BLACK );
+            p.pos -= simulated_vehicle.getBox().getPos();
+            simulated_vehicle.getBox().getQuaternion().conjugate().rotateVector( p.pos );
+            DrawSphere(
+                    taters2raylib(p.pos),
+                    p.radius,
+                    ColorAlpha(BLACK, std::max( p.confidence, 0.1f )) );
         }
     }
 

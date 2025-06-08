@@ -74,7 +74,7 @@ class NGC
     bool executeWPs();  // starts executing current waypoints
 
     std::vector<Point> getImObPoints() const;   // immediate obstacles
-    std::vector<Point> getMapPoints() const;   // mapped out points, aka obstacles, aka SLAM points
+    std::vector<MapPoint> getMapPoints() const;   // mapped out points, aka obstacles, aka SLAM points
     OP* getPredictOPs();
 
     // Because we gotta run simulations

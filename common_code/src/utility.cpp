@@ -34,7 +34,7 @@ Point::Point( const float in_x, const float in_y, const float in_z ):
 
 float Point::mag() const
 {
-    return sqrt( x*x + y*y + z*z );
+    return std::hypot(x,y,z);
 }
 
 Point Point::unit() const
