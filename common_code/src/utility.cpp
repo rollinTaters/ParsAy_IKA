@@ -130,8 +130,7 @@ float Point::heading() const
 float Point::sqErrSep( const Point p1, float seperation )
 {
     Point delta = *this - p1;
-    float current_sep = abs( delta.mag() );
-    return ( (seperation-current_sep) * (seperation-current_sep) );
+    return std::pow( seperation - delta.mag(), 2 );
 }
 
 Point& Point::operator+=( const Point &rhs )
@@ -192,6 +191,11 @@ Point operator-( const Point &p1, const Point &p2 )
 Point operator*( const Point &p1, const float f )
 {
     return Point( p1.x*f, p1.y*f, p1.z*f );
+}
+
+Point operator/( const Point &p1, const float f )
+{
+    return Point( p1.x/f, p1.y/f, p1.z/f );
 }
 
 // ---- End of Point ----

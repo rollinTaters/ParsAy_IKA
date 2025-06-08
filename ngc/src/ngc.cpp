@@ -69,7 +69,7 @@ bool NGC::stop()
     // check if we have a thread to stop
     if( m_main_thread == nullptr )
     {
-        std::cerr<<"NGC: Warning: Tried to stop main thread. We dont have a main thread to stop.\n";
+        //std::cerr<<"NGC: Warning: Tried to stop main thread. We dont have a main thread to stop.\n";
         return false;
     }
     std::cout<<"NGC: Stopping main thread\n";
@@ -465,6 +465,7 @@ bool NGC::predictTrajectory( OP predicted_points[], int num_points )
             d1[i].att = {0,0,0};
             continue;
         }
+        
 
         //  ---- calculating rates ----
         // prepare the box for hitWP
@@ -536,25 +537,29 @@ bool NGC::createOpenSpaceWaypoint( Point& start_point )
     // Iterating to find an output point that satisfies given seperation with relevant points
     // iteration controls
     unsigned int current_it = 0;
-    unsigned int max_it = 100;
-    float target_mean_sq_err = 0.5f;
+    unsigned int max_it = 60;
+    float target_sq_err = 0.05f;
 
     // iteration variables
-    float total_sq_err = 0;
-    float mean_sq_err = 0;
+    //float total_sq_err = 0;
+    //float mean_sq_err = 0;
     Point out_point = start_point;
     Point total_sq_err_vector;
 
     // nudge output point to be seperation distance away from relevant points
     while( true )
     {
+        //total_sq_err = 0;
+        //mean_sq_err = 0;
+        total_sq_err_vector = {0,0,0};
+
         for( Point p : relevant_points )
         {
             // find square of error
             float sq_err = out_point.sqErrSep( p, target_seperation );
 
             // add it to total squared error accumulator
-            total_sq_err += sq_err;
+            //total_sq_err += sq_err;
 
             // find error direction
             Point sq_err_vector = out_point - p;
@@ -568,12 +573,26 @@ bool NGC::createOpenSpaceWaypoint( Point& start_point )
             // add it to total squared error vector
             total_sq_err_vector += sq_err_vector;
         }
-        mean_sq_err = total_sq_err / relevant_points.size();
+        //mean_sq_err = total_sq_err / relevant_points.size();
+
+        // clamp total sq err vector to a reasonable displacement amount
+        if( total_sq_err_vector.mag() > 1 )
+            total_sq_err_vector = total_sq_err_vector.unit();
+
+        /*
+        std::cout<<"\n"
+            "iteration: "<<current_it<<"   "<<
+            "num of relevant points: "<<relevant_points.size()<<"   "<<
+            //"mse: "<<mean_sq_err<<"\n"<<
+            "total squared error vector: "<<total_sq_err_vector<<"\n"<<
+            "output point: "<<out_point<<" --> "<<
+            (out_point-(total_sq_err_vector*0.1f))<<"\n\n";
+        */
 
         // nudge output point by total squared error vector
-        out_point += total_sq_err_vector * 0.5f;    // FIXME is this + or -
+        out_point -= total_sq_err_vector * 0.1f;
 
-        if( mean_sq_err < target_mean_sq_err )
+        if( total_sq_err_vector.mag() < target_sq_err )
         {   // success
             break;
         }
@@ -582,7 +601,7 @@ bool NGC::createOpenSpaceWaypoint( Point& start_point )
         {   // fail
             std::cerr<<"NGC: createOpenSpaceWaypoint method exeded max iteration limit ("
                 <<current_it<<"/"<<max_it<<")\n";
-            std::cerr<<"---: mse: "<<mean_sq_err<<" | target mse: "<<target_mean_sq_err<<"\n";
+            std::cerr<<"---: sq err: "<<total_sq_err_vector.mag()<<" | target sq err: "<<target_sq_err<<"\n";
             return false;
         }
         // increment iteration counter
