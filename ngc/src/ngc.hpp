@@ -150,7 +150,6 @@ class NGC
     // - using the LIDAR data mark obstacles on internal world map
     //  this adds them to the world map as permanent obstacles
     //  is used for mapping an area (aka SLAM)
-    // TODO
     bool markObstacles();
 
     // immediate obstacle mark function: ( NAVIGATION )

@@ -191,13 +191,19 @@ void NGC::mainThreadFunc()  // ==== ==== ==== MAIN THREAD FUNC ==== ==== ====
 
         if( !m_waypoints.empty() )
         {
-            m_target_wp = nextWP( m_target_wp, m_vehicle->getBox(), 0.150f );
+            m_target_wp = nextWP( m_target_wp, m_vehicle->getBox(), 0.350f );
 
             if( m_execute_waypoints )
             {
                 float spiid, reyt;
                 hitWP( m_target_wp, m_vehicle->getBox(), spiid, reyt );
                 setControlOutput_rate( spiid, reyt );
+                /*
+                std::cout<<"\nNGC: hitWP output:"<<
+                    "\ntarget: "<<m_target_wp<<
+                    "\nbox: "<<m_vehicle->getBox().getPos()<<
+                    "\ncontrol speed: "<<spiid<<
+                    "\ncontrol rate: "<<reyt<<"\n";*/
             }else{
                 halt();
             }
@@ -449,7 +455,16 @@ bool NGC::predictTrajectory( OP predicted_points[], int num_points )
         d0[i].att.normalize();
 
         // do wp satisfaction check and get next wp
-        t_wp = nextWP( t_wp, box, 0.250f );
+        t_wp = nextWP( t_wp, box, 0.350f );
+
+        // check if target wp is legit
+        if( t_wp == box.getPos() )
+        {
+            // we have reached the end of waypoints. rest of calculations are no-op
+            d1[i].pos = {0,0,0};
+            d1[i].att = {0,0,0};
+            continue;
+        }
 
         //  ---- calculating rates ----
         // prepare the box for hitWP
@@ -590,9 +605,10 @@ Point NGC::nextWP( std::vector<Point>::const_iterator wp_it, const BB3D& box, fl
         return *wp_it;
 
     // if we have a next wp on the list
-    if( wp_it != m_waypoints.end() )
+    if( wp_it+1 != m_waypoints.end() )
     {
         // return next wp in m_waypoints
+        //std::cout<<"\nNGC: nextWP: last wp: "<<*(m_waypoints.end()-1)<<"\n";
         //std::cout<<"NGC: nextWP: sending next wp ("<<*(wp_it)<<") -> ("<<*(wp_it+1)<<")\n";
         return *(wp_it+1);
     }else{
@@ -608,7 +624,7 @@ Point NGC::nextWP( Point wp, const BB3D& box, float closure ) const
         return nextWP( m_waypoints.begin(), box, closure );
 
     // find the iterator to the given wp
-    for( auto it = m_waypoints.begin(); it != m_waypoints.end(); it++ )
+    for( auto it = m_waypoints.begin(); it < m_waypoints.end(); it++ )
     {
         if( *it == wp )
             return nextWP( it, box, closure );
@@ -618,6 +634,13 @@ Point NGC::nextWP( Point wp, const BB3D& box, float closure ) const
 
 int NGC::hitWP( Point wp, const BB3D& box, float& o_speed, float& o_rate )
 {
+    if( box.getPos() == wp )
+    {
+        o_speed = 0;
+        o_rate = 0;
+        return -1;
+    }
+
     int mode = -1;
 
     // TODO what is our target speed for the part of the course, get that from the CCM

@@ -132,7 +132,8 @@ int main()
 
         BeginMode3D( GUI::camera );  //--- mode 3D start, our debug screen get populated here
 
-        env_emulator.drawHMap();
+        if( GUI::display_world )
+            env_emulator.drawHMap();
         GUI::drawLIDAR();
         GUI::drawMapPoints();
         GUI::drawAxisBillboards();

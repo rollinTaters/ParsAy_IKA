@@ -51,6 +51,8 @@ namespace GUI
     double last_wp_update;
     double wp_update_rate;
 
+    bool display_world;
+
     bool hat_mode_ch;
     float cmd_speed;
     float cmd_rate;
@@ -67,6 +69,7 @@ namespace GUI
         ch_len = 0.15;
         ch_color = LIME;
 
+        display_world = true;
         hat_mode_ch = true;
         cmd_nom_speed = 2.5;
         cmd_nom_rate = 18* (PI/180);
@@ -151,6 +154,10 @@ namespace GUI
         // hat control mode
         if( IsKeyPressed( KEY_T ) )
             hat_mode_ch = !hat_mode_ch;
+
+        // toggle between rendering world or not
+        if( IsKeyPressed( KEY_B ) )
+            display_world = !display_world;
 
         constexpr float ch_speed = 0.1;
         if( hat_mode_ch )
@@ -387,6 +394,7 @@ namespace GUI
                 font,
                 "H,J,K,L: camera movement\n"
                 "N,M: zoom\n"
+                "B: show/hide terrain\n"
                 "W,A,S,D,R,F: crosshair move\n"
                 "X: execute waypoints\n"
                 "C: create waypoint\n"
