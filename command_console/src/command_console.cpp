@@ -75,7 +75,7 @@ int main()
 
             cg::DEBUG_gauge_test();
         }
-        DrawTextEx(LoadFont("./assets/fonts/arial.ttf"), TextFormat("FPS: %d", GetFPS()), {1600, 10}, 20, 1, BLACK); 
+        DrawText(TextFormat("FPS: %d", GetFPS()), 1600, 10, 20, BLACK);  
         
         // check incoming transmission packets
         if (comms_module.packetAvailable())

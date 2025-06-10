@@ -25,10 +25,19 @@
 
 #include "gauge.hpp"
 
+// Initialize static members
+Font Gauge::m_font = {0};
+bool Gauge::m_font_loaded = false;
+
 Gauge::Gauge(gauge_type gt, Vector2 pos, float dia)
     : m_type(gt), m_pos(pos), m_dia(dia)
 {
-    //m_font = LoadFontEx("./assets/fonts/arial.ttf",20,0,NULL);
+    // Load font once in constructor
+    m_font = LoadFontEx("./assets/fonts/arial.ttf", 20, 0, NULL);
+    if (m_font.texture.id == 0) {
+        std::cerr << "Failed to load font!" << std::endl;
+    }
+
     switch (gt) {
         case type_compass:
             m_max_value = 360; m_min_value = 0; m_value = 0;
@@ -132,7 +141,12 @@ void Gauge::updateProportionalVal(const float value) {
 
 
 void Gauge::render() {
-    m_font = LoadFontEx("./assets/fonts/arial.ttf",20,0,NULL);
+    // Load font only once when first needed
+    if (!m_font_loaded) {
+        m_font = LoadFontEx("./assets/fonts/arial.ttf", 20, 0, NULL);
+        m_font_loaded = true;
+    }
+
     if (m_type == type_compass) {
         // Draw compass background and rotating layer
         Rectangle src = { 0, 0, (float)compass_bg.width, (float)compass_bg.height };

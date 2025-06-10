@@ -45,6 +45,7 @@ public:
     };
 
     Gauge(gauge_type type, Vector2 pos, float dia);
+    ~Gauge() { }  // No need to unload font as it's static
 
     void init();    // loads textures, call when opengl context is ready
 
@@ -53,6 +54,9 @@ public:
     void render();
 
 private:
+    static Font m_font;  // Static font shared by all gauges
+    static bool m_font_loaded;  // Flag to track if font is loaded
+
     gauge_type m_type; // to store gauge type
 
     // Compass related
@@ -84,7 +88,6 @@ private:
     Vector2 m_center;   // Center of the gauge
     Vector2 m_needle;   // Needle end position
     Color m_needle_color;
-    Font m_font;
     std::string m_label_text; // Label text (temperature/ampere/etc.)
     Vector2 m_label_pos; // Label position
     float m_label_font_size;
