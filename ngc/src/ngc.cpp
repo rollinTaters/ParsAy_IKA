@@ -116,7 +116,7 @@ bool NGC::addWP( Point wp )
     return true;
 }
 
-bool NGC::addWP( Point wp, int i_num )
+bool NGC::addWP( Point wp, size_t i_num )
 {
     if( i_num > m_waypoints.size() )
         return false;
@@ -142,6 +142,8 @@ bool NGC::executeWPs()
 
 std::vector<Point> NGC::getImObPoints() const { return m_immediate_obstacles; }
 
+OP* NGC::getPredictOPs() { return m_predict_ops; }
+
 void NGC::directCommand( float speed, float rate )
 {
     // override execution status to stop guidance methods from inferring with manual user input
@@ -151,7 +153,7 @@ void NGC::directCommand( float speed, float rate )
 
 // == private: ==
 
-void NGC::mainThreadFunc()
+void NGC::mainThreadFunc()  // ==== ==== ==== MAIN THREAD FUNC ==== ==== ====
 {
     // on first start, check if dead reckoning is active
     if( startDeadReckoning() )
@@ -172,10 +174,11 @@ void NGC::mainThreadFunc()
 
         // TODO check if dead reckoning is still active??
 
-        // TODO run predictTrajectory and send it to command console for debug visualization
-
         // read lidar and run markImmediateObstacles
         getLIDARData();
+
+        // TODO run predictTrajectory and send it to command console for debug visualization
+        predictTrajectory( m_predict_ops, std::size(m_predict_ops) );
 
         // TODO run createTargetWaypoint, createOpenSpaceWaypoint
 
@@ -183,22 +186,14 @@ void NGC::mainThreadFunc()
 
         if( !m_waypoints.empty() )
         {
-            // checking wp satisfaction
-            if( m_waypoints.front().absDist(m_vehicle->getBox().getPos()) < 0.150f )
-            {
-                m_waypoints.erase( m_waypoints.begin() );
-                if( m_waypoints.empty() )
-                {
-                    m_execute_waypoints = false;
-                    halt();
-                }
-            }
+            m_target_wp = nextWP( m_target_wp, m_vehicle->getBox(), 0.150f );
 
             if( m_execute_waypoints )
             {
-                hitWP( m_waypoints.front() );
+                float spiid, reyt;
+                hitWP( m_target_wp, m_vehicle->getBox(), spiid, reyt );
+                setControlOutput_rate( spiid, reyt );
             }else{
-                m_execute_waypoints = false;
                 halt();
             }
         }
@@ -221,7 +216,7 @@ bool NGC::getLIDARData()
     
     v3f sensor_position = sensor_box.getPos();
     v3f sensor_direction = sensor_box.getLocalVecY();
-    v3f sensor_Z = sensor_box.getLocalVecZ();
+    //v3f sensor_Z = sensor_box.getLocalVecZ();
     //cQuaternion lidar_quat = cQuaternion{ 0, sensor_Z.x, sensor_Z.y, sensor_Z.z };
     Sensor_Data data = m_vehicle->getSensorData();
 
@@ -281,9 +276,131 @@ bool NGC::markImmediateObstacles()
     return false;
 }
 
-bool NGC::predictTrajectory()
+bool NGC::predictTrajectory( OP predicted_points[], int num_points )
 {
-    return false;
+    float step_time = 0.8f;  // seconds
+    int control_output_run_period = 1;  // every x amount of integration steps, run control method (hitWP)
+
+    if( m_waypoints.empty() )
+        return false;
+
+    v3f t_wp = m_target_wp;
+
+    // define iteration variables
+    float speed, rate;
+    cQuaternion attitude;
+    BB3D box;
+
+    box = m_vehicle->getBox();
+    OP d0[num_points];  // 0th derivative, position and attitude
+    OP d1[num_points];  // 1st derivative, velocity and angular rate values
+
+
+    // initial position
+    OP d0_initial{ 
+        m_vehicle->getBox().getPos(),
+        m_vehicle->getBox().getQuaternion() };
+
+    // rotate local csys of vehicle velocity to global csys
+    v3f init_vel = m_vehicle->getVel();
+    d0_initial.att.rotateVector( init_vel );
+
+    OP d1_initial{
+        init_vel,
+        cQuaternion::fromEuler({m_vehicle->getAngVel().z,
+                                m_vehicle->getAngVel().x,
+                                m_vehicle->getAngVel().y }) };
+
+    /*// DEBUG
+    v3f test{0,1,0};
+    d1_initial.att.rotateVector( test );
+
+    std::cout<<"d1_initial.att: "<<
+        d1_initial.att.w<<"w "<<
+        d1_initial.att.x<<"x "<<
+        d1_initial.att.y<<"y "<<
+        d1_initial.att.z<<"z\n";
+    std::cout<<"d1_initial.att rotates (0,1,0) to: "<<
+        test.x<<"x "<<test.y<<"y "<<test.z<<"z\ntest.mag(): "<<test.mag()<<"\n";
+    std::cout<<"d1_initial.att: "<<
+        d1_initial.att.w<<"w "<<
+        d1_initial.att.x<<"x "<<
+        d1_initial.att.y<<"y "<<
+        d1_initial.att.z<<"z\n";
+
+    cQuaternion test2 = (d1_initial.att*step_time);
+    test2.normalize();
+    test = {0,1,0};
+    test2.rotateVector( test );
+    std::cout<<"scaled quat: "<<
+        test2.w<<"w "<<
+        test2.x<<"x "<<
+        test2.y<<"y "<<
+        test2.z<<"z\n";
+    std::cout<<"scaled quat rotates (0,1,0) to: "<<
+        test.x<<"x "<<test.y<<"y "<<test.z<<"z\ntest.mag(): "<<test.mag()<<"\n";
+    std::cout<<"---- ---- ----\n\n\n";
+    // DEBUG END
+    */
+
+    OP d0_prev = d0_initial;
+    OP d1_prev = d1_initial;
+
+    for( int i = 0; i < num_points; i++ )
+    {
+        if( i != 0 )
+        {
+            d0_prev = d0[i-1];
+            d1_prev = d1[i-1];
+        }
+
+        // use eulers method (yes this is very crude)
+        d0[i].pos = d0_prev.pos + (d1_prev.pos*step_time);
+        d0[i].att = (d1_prev.att*step_time) * d0_prev.att;
+        d0[i].att.normalize();
+
+        // do wp satisfaction check and get next wp
+        t_wp = nextWP( t_wp, box, 0.250f );
+
+        //  ---- calculating rates ----
+        // prepare the box for hitWP
+        box.setOP( d0[i] );
+        if( i % control_output_run_period == 0 )
+        {
+            // get the control output for given box (position and attitude)
+            hitWP( t_wp, box, speed, rate );
+            //std::cout<<"ran control output method at predicted op num "<<i<<"\n";
+        }
+
+        // converting scalar speed to vectoral velocity in global csys
+        d1[i].pos = {0, speed, 0};
+        // rotate velocity to global csys
+        d0[i].att.rotateVector( d1[i].pos );
+
+        // converting scalar rate to vectoral quaternion
+        d1[i].att = cQuaternion::fromAxisAngle( {0,0,1}, rate );    // TODO this axis should be localVecZ
+        // rotate quaternion to global csys
+        d1[i].att = d0[i].att * d1[i].att;
+        d1[i].att.normalize();
+    }
+
+    //std::memcpy( predicted_points, d0, sizeof(OP)*num_points );
+    for( int i = 0; i < num_points; i++ )
+    {
+        predicted_points[i] = d0[i];
+    }
+
+    /*// DEBUG
+    std::cout<<"\nops printing:\n";
+    for( int i = 0; i < 10; i++ )
+    {
+        std::cout<<"NGC: op"<<i<<" d0:\n"<<d0[i];
+        std::cout<<"NGC: op"<<i<<" d1:\n"<<d1[i];
+        std::cout<<"----\n";
+    }
+    std::cout<<"ops done\n\n";
+    */
+    return true;
 }
 
 bool NGC::createTargetWaypoint()
@@ -294,7 +411,7 @@ bool NGC::createTargetWaypoint()
 bool NGC::createOpenSpaceWaypoint( Point& start_point )
 {
     // output waypoint will be at least this distance away from any obstacles
-    float avoid_radius = 1.f; // metre 
+    //float avoid_radius = 1.f; // metre 
 
     float target_seperation = 1.5f; // metre
 
@@ -376,7 +493,41 @@ bool NGC::createOpenSpaceWaypoint( Point& start_point )
     return true;
 }
 
-int NGC::hitWP( Point wp )
+Point NGC::nextWP( std::vector<Point>::const_iterator wp_it, const BB3D& box, float closure ) const
+{
+    // if we havent satisfied the closure distance
+    if( wp_it->absDist( box.getPos() ) >= closure )
+        // still not satisfied the closure, return the given wp
+        return *wp_it;
+
+    // if we have a next wp on the list
+    if( wp_it != m_waypoints.end() )
+    {
+        // return next wp in m_waypoints
+        //std::cout<<"NGC: nextWP: sending next wp ("<<*(wp_it)<<") -> ("<<*(wp_it+1)<<")\n";
+        return *(wp_it+1);
+    }else{
+        // return box position
+        return box.getPos();
+    }
+}
+
+Point NGC::nextWP( Point wp, const BB3D& box, float closure ) const
+{
+    // if wp is zero, assume first wp on list
+    if( wp == v3f(0,0,0) && !m_waypoints.empty() )
+        return nextWP( m_waypoints.begin(), box, closure );
+
+    // find the iterator to the given wp
+    for( auto it = m_waypoints.begin(); it != m_waypoints.end(); it++ )
+    {
+        if( *it == wp )
+            return nextWP( it, box, closure );
+    }
+    return box.getPos();
+}
+
+int NGC::hitWP( Point wp, const BB3D& box, float& o_speed, float& o_rate )
 {
     int mode = -1;
 
@@ -387,8 +538,6 @@ int NGC::hitWP( Point wp )
 
     float t_speed = 0;  // will be set accordingly
     float t_radius = 0; // will be calculated if needed
-    BB3D box = m_vehicle->getBox();
-    
 
     // delta between target wp and vehicle position
     Point d_wp( wp.x - box.getPos().x,
@@ -450,7 +599,9 @@ int NGC::hitWP( Point wp )
     if( t_bearing <= fwd_r_nt || t_bearing >= fwd_l_nt )
     {   // forward no turn
         //std::cout<<"mode: forward no turn\n";
-        setControlOutput_rate( target_speed, 0 );
+        //setControlOutput_rate( target_speed, 0 );
+        o_speed = target_speed;
+        o_rate = 0;
         return 1;
 
     }else if( t_bearing <= fwd_r_at )
@@ -462,7 +613,9 @@ int NGC::hitWP( Point wp )
     }else if( t_bearing <= bcw_r_at )
     {   // Point turn right
         //std::cout<<"mode: forward point turn right\n";
-        setControlOutput_rate( 0, -point_turn_rate );
+        //setControlOutput_rate( 0, -point_turn_rate );
+        o_speed = 0;
+        o_rate = -point_turn_rate;
         return 3;
 
     }else if( t_bearing <= bcw_r_nt )
@@ -474,7 +627,9 @@ int NGC::hitWP( Point wp )
     }else if( t_bearing <= bcw_l_nt )
     {   // backward no turn
         //std::cout<<"mode: backward no turn\n";
-        setControlOutput_rate( target_reverse_speed, 0 );
+        //setControlOutput_rate( target_reverse_speed, 0 );
+        o_speed = target_reverse_speed;
+        o_rate = 0;
         return 5;
 
     }else if( t_bearing <= bcw_l_at )
@@ -486,7 +641,9 @@ int NGC::hitWP( Point wp )
     }else if( t_bearing <= fwd_l_at )
     {   // forward left point turn
         //std::cout<<"mode: forward point turn left\n";
-        setControlOutput_rate( 0, point_turn_rate );
+        //setControlOutput_rate( 0, point_turn_rate );
+        o_speed = 0;
+        o_rate = point_turn_rate;
         return 7;
 
     }else //if( t_bearing <= fwd_l_nt )
@@ -516,7 +673,9 @@ int NGC::hitWP( Point wp )
     // -- setting target speed as necessary --
 
     // send a "target speed" signal to drive motor controller program
-    setControlOutput_radius( t_speed, t_radius );
+    //setControlOutput_radius( t_speed, t_radius );
+    o_speed = t_speed;
+    o_rate = -fabs(t_speed)/t_radius;
     return mode;
 }
 
@@ -543,6 +702,10 @@ void NGC::setControlOutput_rate( float speed, float turn_rate )
     // because i am doin it the dirty way
     hey_emulator_speed = speed;
     hey_emulator_rate = turn_rate;
+
+    // update member variables for later queries
+    m_control_speed = speed;
+    m_control_rate = turn_rate;
 }
 
 void NGC::setControlOutput_radius( float speed, float turn_radius )
@@ -551,6 +714,10 @@ void NGC::setControlOutput_radius( float speed, float turn_radius )
     {
         motor_R.setSpeed( speed );
         motor_L.setSpeed( speed );
+        m_control_speed = speed;
+
+        // because i am doin it the dirty way
+        hey_emulator_speed = speed;
         return;
     }
 
@@ -578,6 +745,10 @@ void NGC::setControlOutput_radius( float speed, float turn_radius )
     // because i am doin it the dirty way
     hey_emulator_speed = speed;
     hey_emulator_rate = -fabs(speed)/turn_radius;
+
+    // update member variables for later queries
+    m_control_speed = speed;
+    m_control_rate = -fabs(speed)/turn_radius;
 }
 
 void NGC::processPacket( CommsPacket &packet )
@@ -605,3 +776,10 @@ void NGC::processPacket( CommsPacket &packet )
     // DEBUG END
 }
 
+float NGC::getTurnRadius()
+{
+    if( m_control_rate == 0 )
+        return 0.f;
+    else
+        return -fabs(m_control_speed)/m_control_rate;
+}

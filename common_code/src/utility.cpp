@@ -25,7 +25,7 @@
 
 #include "utility.hpp"
 
-//#include <iostream> // DEBUG
+#include <iostream> // DEBUG, OP ostream
 
 // ---- Point ----
 Point::Point():x(0), y(0), z(0) {}
@@ -172,6 +172,11 @@ Point& Point::operator/=( const float & f )
     y/=f;
     z/=f;
     return *this;
+}
+
+bool Point::operator==( const Point& p ) const
+{
+    return (x==p.x) && (y==p.y) && (z==p.z);
 }
 
 Point operator+( const Point &p1, const Point &p2 )
@@ -384,6 +389,28 @@ const cQuaternion cQuaternion::fromAxisAngle( v3f axis, float radian )
 	return ret;
 }
 
+std::ostream& operator<<( std::ostream& os,  const OP& op )
+{
+    os<< "pos: "
+      << op.pos.x <<"x "
+      << op.pos.y <<"y "
+      << op.pos.z <<"z  mag: "
+      << op.pos.mag() <<"\n";
+    os<< "att: "
+      << op.att.x <<"x "
+      << op.att.y <<"y "
+      << op.att.z <<"z "
+      << op.att.w <<"w  mag: "
+      << op.att.norm() <<"\n";
+    return os;
+}
+
+std::ostream& operator<<( std::ostream& os, const v3f& p )
+{
+    os<< p.x <<"x "<< p.y <<"y "<< p.z <<"z";
+    return os;
+}
+
 
 BB3D::BB3D()
 {
@@ -439,6 +466,12 @@ void BB3D::translateRight( const float meter ) { translateLocal(v3f(0,meter,0));
 void BB3D::translateUp( const float meter )    { translateLocal(v3f(0,0,meter)); }
 
 // -- Setters --
+void BB3D::setOP( const OP op )
+{
+    m_pos = op.pos;
+    m_quat = op.att;
+}
+
 void BB3D::setSize( const v3f size )
 {
     m_size = size;
@@ -469,7 +502,11 @@ void BB3D::setAng( const float x, const float y, const float z )
     setAng( v3f(x,y,z) );
 }
 
+void BB3D::setAtt( const cQuaternion q ) { m_quat = q; }
+
 // -- Getters --
+OP BB3D::getOP() const { return OP{ m_pos, m_quat }; }
+
 v3f BB3D::getSize() const { return m_size; }
 
 v3f BB3D::getPos() const { return m_pos; }

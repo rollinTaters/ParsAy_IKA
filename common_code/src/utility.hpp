@@ -31,6 +31,7 @@
 #pragma once
 
 #include <cmath>
+#include <iostream>     // DEBUG
 
 #ifndef PI
 #define PI 3.141592
@@ -59,6 +60,7 @@ struct Point
     Point& operator*=( const Point & );
     Point& operator*=( const float & );
     Point& operator/=( const float & );
+    bool operator==(const Point & ) const;
 
 };
 
@@ -84,6 +86,7 @@ class cQuaternion
     cQuaternion &operator=( const cQuaternion &rhs );
     cQuaternion &operator*=( const cQuaternion &q );
     const cQuaternion operator*( const cQuaternion &q ) const { return cQuaternion(*this) *= q; }
+    const cQuaternion operator*( const float fl ) const { return cQuaternion(w*fl,x*fl,y*fl,z*fl); }
 
     float dot( const cQuaternion &q ) const;
     float norm() const;
@@ -96,6 +99,18 @@ class cQuaternion
     static const cQuaternion fromEuler( v3f euler );
     static const cQuaternion fromAxisAngle( v3f axis, float radian );
 };
+
+// Oriented Point
+struct OP
+{
+    v3f pos{0,0,0};             // position
+    cQuaternion att{0,0,0,0};   // attitude
+};
+
+// DEBUG
+std::ostream& operator<<( std::ostream& os, const OP& op );
+std::ostream& operator<<( std::ostream& os, const v3f& p );
+
 
 // 3 dimensional bounding box geometry
 struct BB3D
@@ -119,6 +134,7 @@ struct BB3D
 
 
     // -- setters --
+    void setOP( const OP );
     void setSize( const v3f size );
     void setSize( const float x, const float y, const float z );
 
@@ -127,8 +143,11 @@ struct BB3D
 
     void setAng( const v3f euler );    // (radian)
     void setAng( const float x, const float y, const float z ); // (radian)
+    void setAtt( const cQuaternion );
 
     // -- getters --
+    OP getOP() const;
+
     v3f getSize() const;
 
     v3f getPos() const;

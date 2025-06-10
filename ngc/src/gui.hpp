@@ -490,5 +490,50 @@ namespace GUI
         }
     }
 
+    void drawPath()
+    {
+        //v3f veh_pos = simulated_vehicle.getBox().getPos();
+        //v3f veh_X = simulated_vehicle.getBox().getLocalVecX();
+        //v3f veh_Z = simulated_vehicle.getBox().getLocalVecZ();
+        float turn_radius = ngc_system.getTurnRadius();
+
+        v3f center_point = v3f(1,0,0) * turn_radius;
+
+        /// TODO this shit be broken. I cant lay the circle parallel to the ground. 
+        // Vector3 center, float radius, Vector3 rotation_axis, float rotation_angle, Color color
+        DrawCircle3D(
+                GUI::taters2raylib(center_point),
+                turn_radius,
+                {1,0,0},
+                PI/8,
+                YELLOW );
+
+    }
+
+    void drawPredictOPs()
+    {
+        OP *pOPs;
+        pOPs = ngc_system.getPredictOPs();
+        Point p_veh = simulated_vehicle.getPos();
+        Point p_prev;
+
+        //std::cout<<"ops printing:\n";
+        for( int i = 0; i < 40; i++ )
+        {
+            Point p_op = pOPs[i].pos-p_veh;
+            if( i == 0 )
+                p_prev = {0,0,0}; // p_veh-p_veh
+            else
+                p_prev = pOPs[i-1].pos-p_veh;
+
+            simulated_vehicle.getBox().getQuaternion().conjugate().rotateVector( p_op );
+            simulated_vehicle.getBox().getQuaternion().conjugate().rotateVector( p_prev );
+            DrawSphere( taters2raylib( p_op ), 0.1, YELLOW );
+            DrawLine3D( taters2raylib( p_op ), taters2raylib( p_prev ), YELLOW );
+            //std::cout<<"op: "<<op.pos.x<<"x "<<op.pos.y<<"y "<<op.pos.z<<"z\n";
+        }
+        //std::cout<<"ops done\n\n";
+    }
+
 
 };
