@@ -37,6 +37,9 @@ int main()
     // create communications module
     CommsModule comms_module(CommsModule::udp, CommsModule::console_channel);
     VideoFeed streamer( 5 );    // using resolution mode 1
+    std::chrono::steady_clock m_clock;
+    std::chrono::milliseconds m_frame_cent_interval = std::chrono::milliseconds(50);
+    std::chrono::time_point<std::chrono::steady_clock> m_frame_cent_time;
 
     // declare dummy packets
     CommsPacket packet; // this one we use for the data we received
@@ -63,6 +66,7 @@ int main()
     while (!WindowShouldClose())
     {
         // event processing
+        
         if (IsKeyPressed(KEY_ESCAPE)) {
             // ESC to close the application
             break;
@@ -95,6 +99,7 @@ int main()
                     cg::gauge_adi.updateRollVal (packet.ct_getRoll());
                     cg::gauge_adi.updatePitchVal(packet.ct_getPitch());
                     cg::gauge_speed.updateVal   (packet.ct_getSpeed());
+                    cg::steering_wheel.updateVal(packet.getManualSteer());
                     break;
 
                 case CommsPacket::console_command:
@@ -166,9 +171,15 @@ int main()
         std::cout<<"\n";
         // DEBUG END
 
-         // for testing purposes we send it to ngc, normally we wanna send to ccm
+        // check if its time to send packet
+        if( m_clock.now() < m_frame_cent_time + m_frame_cent_interval )
+        {
+            std::this_thread::sleep_for( m_frame_cent_interval /5 );
+            continue;
+        }
+
         comms_module.sendPacket( packet2send, CommsModule::ngc_channel );
-        std::this_thread::sleep_for(std::chrono::milliseconds(200)); // this is why our command console is running at 5 fps but idk how to fix it.
+        m_frame_cent_time = m_clock.now();
     }
 
 

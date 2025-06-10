@@ -41,7 +41,8 @@ public:
         type_speedometer,
         type_tachometer,
         type_battery,
-        type_signal
+        type_signal,
+        type_steering_wheel
     };
 
     Gauge(gauge_type type, Vector2 pos, float dia);
@@ -64,7 +65,9 @@ private:
     Texture2D compass_ticks_numbers; // compass ticks and numbers
     Vector2 compass_bg_pos;
     Vector2 compass_ticks_pos;
-
+    // steering wheel related
+    Texture2D steering_wheel;
+    Vector2 steering_wheel_pos;
     // Ampere and temperature meter related
     Vector2 m_pos; // Top left corner
     float m_dia;   // Diameter in pixels

@@ -24,6 +24,7 @@
 
 
 #include "gauge.hpp"
+#include <raylib.h>
 
 // Initialize static members
 Font Gauge::m_font = {0};
@@ -70,6 +71,10 @@ Gauge::Gauge(gauge_type gt, Vector2 pos, float dia)
         case type_signal:
             m_label_text = "Signal Power: ";
             m_max_value = 100; m_min_value = 0; m_value = 100;
+            break;
+        case type_steering_wheel:
+            m_label_text = "Steering: ";
+            m_max_value = 90; m_min_value = -90; m_value = 0;  // -540 to +540 degrees
             break;
         default: 
             m_label_text = "value: ";
@@ -129,6 +134,9 @@ void Gauge::init()
         compass_bg = LoadTexture("assets/compass/compass_bg_200.png");
         compass_ticks_numbers = LoadTexture("assets/compass/compass_ticks_numbers_200.png");
     }
+    else if( m_type == type_steering_wheel){
+        steering_wheel = LoadTexture("./assets/steering_wheel.png");
+    }
 }
 
 void Gauge::updateVal(const float value) {
@@ -156,6 +164,20 @@ void Gauge::render() {
         DrawTexturePro(compass_bg, src, dst, { m_dia/2, m_dia/2 }, 0.0f, WHITE);
         DrawTexturePro(compass_ticks_numbers, src, dst, { m_dia/2, m_dia/2 }, m_value, WHITE);
         return;
+    }
+    else if(m_type == type_steering_wheel){
+        Rectangle src = {0,0, (float)steering_wheel.width,(float)steering_wheel.height};
+        Rectangle dst = {m_pos.x, m_pos.y, m_dia, m_dia };
+        Vector2 origin = {m_dia/2,m_dia/2};
+        char buf[32];
+        // Show absolute value with direction indicator (R for right turn, L for left turn, nothing for center)
+        const char* direction = m_value > 0 ? "L" : (m_value < 0 ? "R" : "");
+        snprintf(buf, sizeof(buf), "%s%s %.1f", m_label_text.c_str(), direction, std::abs(m_value));
+        Vector2 lblSize = MeasureTextEx(m_font, buf, m_label_font_size, 1);
+        Vector2 lblPos = { m_pos.x- m_pos.x/20, m_pos.y + m_dia/2 };
+        DrawTextEx(m_font, buf, lblPos, m_label_font_size, 1, m_label_color);
+        // Negative value for clockwise rotation (right turn), positive for counter-clockwise (left turn)
+        DrawTexturePro(steering_wheel, src, dst, origin, -m_value, WHITE);
     }
     else if(m_type == type_battery) {
         const int margin = 5;
