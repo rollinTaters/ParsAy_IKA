@@ -903,13 +903,14 @@ void NGC::processPacket( CommsPacket &packet )
         packet.getManualSpeed(),
         packet.getManualSteer() );
 
+    /*
     // DEBUG
     std::cout<<"NGC: packet type: "<< (int)packet.packet_type<<" "
         <<"data: \n";
     for( std::uint8_t d : packet.data )
         std::cout<< (int)d << " ";
     std::cout<<"\n";
-    // DEBUG END
+    // DEBUG END    */
 }
 
 bool NGC::sendTelemetry()
@@ -931,6 +932,7 @@ bool NGC::sendTelemetry()
 
     // TODO these packets should be forwarded to the physical comms module
     m_comms_module.sendPacket( m_telemetry_packet, CommsModule::console_channel );
+    m_comms_module.sendPacket( m_telemetry_packet, CommsModule::ccm_channel );
 
     // TODO no checks if packet was sent??
     return true;
