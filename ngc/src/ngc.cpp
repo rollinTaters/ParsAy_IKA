@@ -171,8 +171,13 @@ void NGC::mainThreadFunc()  // ==== ==== ==== MAIN THREAD FUNC ==== ==== ====
             m_comms_module.readPacket( m_command_packet );
             processPacket( m_command_packet );
         }
-        // TODO send telemetry back
-        // sendTelemetry();
+
+        // send telemetry back
+        if( m_clock.now() > m_last_telemetry_time + m_telemetry_interval )
+        {
+            sendTelemetry();
+            m_last_telemetry_time = m_clock.now();
+        }
 
         // TODO check if dead reckoning is still active??
 
@@ -905,6 +910,30 @@ void NGC::processPacket( CommsPacket &packet )
         std::cout<< (int)d << " ";
     std::cout<<"\n";
     // DEBUG END
+}
+
+bool NGC::sendTelemetry()
+{
+    BB3D box = m_vehicle->getBox();
+
+    m_telemetry_packet.ct_setMotor1Amps( 2 );
+    m_telemetry_packet.ct_setMotor1Temp( 2 );
+    m_telemetry_packet.ct_setMotor1Vel( 2 );
+
+    m_telemetry_packet.ct_setMotor2Amps( 2 );
+    m_telemetry_packet.ct_setMotor2Temp( 2 );
+    m_telemetry_packet.ct_setMotor2Vel( 2 );
+
+    m_telemetry_packet.ct_setHeading( box.getAngEuler().z );
+    m_telemetry_packet.ct_setPitch( box.getAngEuler().x );
+    m_telemetry_packet.ct_setRoll( box.getAngEuler().y );
+    m_telemetry_packet.ct_setSpeed( m_control_speed );
+
+    // TODO these packets should be forwarded to the physical comms module
+    m_comms_module.sendPacket( m_telemetry_packet, CommsModule::console_channel );
+
+    // TODO no checks if packet was sent??
+    return true;
 }
 
 float NGC::getTurnRadius()

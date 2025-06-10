@@ -82,6 +82,11 @@ void sendCamera2Console()
     delete raw_image_data;
 }
 
+// a clock for sending camera view, DEBUG
+std::chrono::steady_clock m_clock;
+std::chrono::milliseconds m_camera_send_interval = std::chrono::milliseconds(50);
+std::chrono::time_point<std::chrono::steady_clock> m_last_camera_send_time;
+// END OF CAMERA DEBUG
 
 // this is the vehicle we are managing/controlling
 Vehicle simulated_vehicle;
@@ -95,6 +100,8 @@ NGC ngc_system( &simulated_vehicle );
 int main()
 {
     std::cout<<"ULV NGC Emulator v0.2\n";
+
+    m_last_camera_send_time = m_clock.now();    // DEBUG
 
     // introduce ngc to the env emulator, because I gave up on a better way to do this
     env_emulator.setNGC( &ngc_system );
@@ -161,7 +168,11 @@ int main()
         GUI::drawOverlay(); // nearly all the text is here
 
         // send turret cam view to command console, debug
-        //sendCamera2Console();
+        if( m_clock.now() > m_last_camera_send_time + m_camera_send_interval )
+        {
+            sendCamera2Console();
+            m_last_camera_send_time = m_clock.now();
+        }
 
         EndDrawing();
     }

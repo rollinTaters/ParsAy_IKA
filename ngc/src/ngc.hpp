@@ -106,6 +106,8 @@ class NGC
     std::chrono::steady_clock m_clock;
     std::chrono::milliseconds m_dead_reckoning_interval = std::chrono::milliseconds(50);
     std::chrono::time_point<std::chrono::steady_clock> m_last_dead_reckon_time;
+    std::chrono::milliseconds m_telemetry_interval = std::chrono::milliseconds(200);
+    std::chrono::time_point<std::chrono::steady_clock> m_last_telemetry_time;
 
     // controlled vehicle
     Vehicle* m_vehicle = nullptr;
@@ -131,6 +133,8 @@ class NGC
     CommsPacket m_command_packet{ CommsPacket::ngc_command };
     CommsPacket m_telemetry_packet = CommsPacket::ngc_telemetry;
     void processPacket( CommsPacket& );
+    bool sendTelemetry();
+
 
     
 
