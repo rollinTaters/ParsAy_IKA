@@ -71,7 +71,7 @@
         extern Gauge gauge_signal;
         extern Adi   gauge_adi;
         extern UserInput input;
-
+        extern Gauge steering_wheel;
 
         void InitWindowSafe(int width, int height, const char* title);
 

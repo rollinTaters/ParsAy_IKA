@@ -24,6 +24,7 @@
 
 
 #include "console_graphics.hpp"
+#include "gauge.hpp"
 namespace cg {
 
     static bool _initialized = false;
@@ -37,6 +38,7 @@ namespace cg {
         _initialized = true;  
         gauge_compass.init();
         gauge_adi.init();
+        steering_wheel.init();
     }
 
     bool isInitialized() {
@@ -61,6 +63,7 @@ namespace cg {
     Gauge gauge_signal    (Gauge::type_signal,      {170, 60}, 100.0f);
     Adi   gauge_adi       ({150, 500},  300.0f);
     UserInput input;
+    Gauge steering_wheel  (Gauge::type_steering_wheel, {665,620}, 200.0f);
 
     void renderGauges()
     {
@@ -75,6 +78,7 @@ namespace cg {
         gauge_compass.render();
         gauge_battery.render();
         gauge_signal.render();
+        steering_wheel.render();
     }
 
     // -- DEBUG --
@@ -87,7 +91,7 @@ namespace cg {
    
     void DEBUG_gauge_test()
     {
-        static float g_values[11] = {0};
+        static float g_values[12] = {0};
 
        // nudge value towards a random direction
         for( float &g : g_values )
@@ -107,6 +111,7 @@ namespace cg {
         gauge_compass.   updateProportionalVal( g_values[8] );
         gauge_signal.    updateProportionalVal( g_values[9] );
         gauge_tachometer.updateProportionalVal( g_values[10] );
+        steering_wheel.updateProportionalVal(g_values[11]);
     }
     // -- END OF DEBUG --
 }

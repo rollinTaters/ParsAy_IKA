@@ -41,10 +41,12 @@ public:
         type_speedometer,
         type_tachometer,
         type_battery,
-        type_signal
+        type_signal,
+        type_steering_wheel
     };
 
     Gauge(gauge_type type, Vector2 pos, float dia);
+    ~Gauge() { }  // No need to unload font as it's static
 
     void init();    // loads textures, call when opengl context is ready
 
@@ -53,6 +55,9 @@ public:
     void render();
 
 private:
+    static Font m_font;  // Static font shared by all gauges
+    static bool m_font_loaded;  // Flag to track if font is loaded
+
     gauge_type m_type; // to store gauge type
 
     // Compass related
@@ -60,7 +65,9 @@ private:
     Texture2D compass_ticks_numbers; // compass ticks and numbers
     Vector2 compass_bg_pos;
     Vector2 compass_ticks_pos;
-
+    // steering wheel related
+    Texture2D steering_wheel;
+    Vector2 steering_wheel_pos;
     // Ampere and temperature meter related
     Vector2 m_pos; // Top left corner
     float m_dia;   // Diameter in pixels
@@ -84,7 +91,6 @@ private:
     Vector2 m_center;   // Center of the gauge
     Vector2 m_needle;   // Needle end position
     Color m_needle_color;
-    Font m_font;
     std::string m_label_text; // Label text (temperature/ampere/etc.)
     Vector2 m_label_pos; // Label position
     float m_label_font_size;
