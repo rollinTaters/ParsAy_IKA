@@ -23,35 +23,7 @@ void UserInput::switchDriveMode( DriveMode newMode )
 void UserInput::processInput( CommsPacket &dcp )
 {
 
-    /*
-    FIXME there are two identifier things about comms modules:
-    - one is where you send the packet to:
-        comms_module.sendPacket( XX, CommsModule::ngc_channel );
-        comms_module.sendPacket( XX, CommsModule::console_channel );
-        comms_module.sendPacket( XX, CommsModule::drive_channel );
-        comms_module.sendPacket( XX, CommsModule::turret_channel );
-
-    - the other is what type of packet you send:
-        CommsPacket packet1( CommsPacket::drive_command );
-        CommsPacket packet1( CommsPacket::drive_telemetry );
-        CommsPacket packet1( CommsPacket::ngc_command );
-        CommsPacket packet1( CommsPacket::turret );
-        CommsPacket packet1( CommsPacket::video_packet );
-
-    So...
-    when you call this process input method, what king of packet will you send?
-    and to where will you send it?
-    ( you probably always want to send it to Central Command Module (CCM) )
-
-    for now, for testing purposes, this packet is modified to be a ngc_command packet
-    */
-    dcp.packet_type = CommsPacket::ngc_command;
-
-    // XXX
-    // TODO grab all the commands from ngc/gui.hpp and implement them here
-    // XXX
-
-    // Camera movement controls
+    // Turret movement controls
     if( IsKeyDown( KEY_H ) )
         dcp.setCamera(-2*DEG2RAD);  // Rotate camera left
     if( IsKeyDown( KEY_L ) )

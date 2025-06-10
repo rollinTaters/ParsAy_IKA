@@ -21,6 +21,7 @@ struct CommsPacket
         video_packet,       // image processing -> console
         console_telemetry,  // CCM -> console
         console_command,    // console -> CCM
+        console_cammand_custom,  // console -> CCM
 
         request1,   // this is an idea
         request2,   // this is an idea
@@ -94,6 +95,16 @@ struct CommsPacket
         std::uint16_t b1 = data[offset];
         std::uint16_t b2 = data[offset+1];
         return ( b1 | (b2 << 8) );
+    }
+
+    void write_1( std::uint8_t input, int offset )
+    {
+        data[offset] = input;
+    }
+
+    std::uint8_t read_1( int offset ) const
+    {
+        return data[offset];
     }
     public:
 
@@ -218,32 +229,23 @@ struct CommsPacket
     void ct_setSpeed  ( float inp ){ writeFloat_2( inp, 12, -5.f, 5.f ); }    // m/s   
 
     // ---- Console Command, from Console to CCM ----
-    void setManualSpeed( float inp ){ writeFloat_2( inp, 0, -5.f, 5.f ); }  // m/s
-    void setManualSteer( float inp ){ writeFloat_2( inp, 2, -1.f, 1.f );}   // unitless
+    void cc_setManualSpeed( float inp ){ writeFloat_2( inp, 0, -5.f, 5.f ); }  // m/s
+    void cc_setManualSteer( float inp ){ writeFloat_2( inp, 2, -1.f, 1.f );}   // unitless
 
-    float getManualSpeed(){ return readFloat_2( 0, -5.f, 5.f ); }   // m/s
-    float getManualSteer(){ return readFloat_2( 2, -1.f, 1.f ); }   // unitless
+    float cc_getManualSpeed(){ return readFloat_2( 0, -5.f, 5.f ); }   // m/s
+    float cc_getManualSteer(){ return readFloat_2( 2, -1.f, 1.f ); }   // unitless
 
-    // Camera commands for debugging purposes there won't be any camera in real life
-    void setCamera(float inp) { writeFloat_2(inp, 14, -PI, PI); }
-    float getCamera() const { return readFloat_2(14, -PI, PI); }
+    void cc_setTurret_azimuth( float rad ) { writeFloat_2( rad, 4, 0, 2*PI ); }
+    void cc_setTurret_elevation( float rad ) { writeFloat_2( rad, 6, -PI, PI ); }
+    float cc_getTurret_azimuth() { return readFloat_2( 4, 0, 2*PI ); }
+    float cc_getTurret_elevation() { return readFloat_2( 6, -PI, PI ); }
+    
+    void cc_setLaserStatus( std::uint8_t mode ) { write_1( mode, 8 ); }
 
-    // Mode commands
-    void setHatMode(float inp) { writeFloat_2(inp, 16, -1.0f, 1.0f); }
-    float getHatMode() const { return readFloat_2(16, -1.0f, 1.0f); }
-
-    // Crosshair commands
-    void setCrosshair(float inp) { writeFloat_2(inp, 18, -1.0f, 1.0f); }
-    float getCrosshair() const { return readFloat_2(18, -1.0f, 1.0f); }
-
-    // Turret commands
-    void setTurret(float inp) { writeFloat_2(inp, 20, -PI, PI); }
-    float getTurret() const { return readFloat_2(20, -PI, PI); }
-
+    // alternate packet type, this is CommsPacket::console_command_custom
     // Waypoint commands
-    void setWaypoint(float inp) { writeFloat_2(inp, 22, -1.0f, 1.0f); }
-    float getWaypoint() const { return readFloat_2(22, -1.0f, 1.0f); }
-
+    void ccc_setAddWaypoint( float x, float y, float z ) { /* TODO */ }
+    void ccc_getAddWaypoint( float &x, float &y, float &z ) const { /* TODO */ }
 
 };
 
