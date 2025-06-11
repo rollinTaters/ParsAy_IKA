@@ -96,3 +96,6 @@ $(WIN_CCM_RELEASE_OBJECTS): obj/win_%.o : src/%.cpp
 
 
 
+serial_arduino: src/serial_arduino.cpp
+	mkdir -p bin
+	$(CXX) -o bin/serial_arduino src/serial_arduino.cpp
