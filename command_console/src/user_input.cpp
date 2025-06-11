@@ -7,8 +7,8 @@
 
 #include "user_input.hpp"
 #include <raylib.h>
-#include <iostream>
-#include "../../common_code/src/comms_module.hpp"
+//#include <iostream> // for debugging
+//#include "../../common_code/src/comms_module.hpp"
 
 
 UserInput::UserInput()
@@ -22,7 +22,8 @@ void UserInput::switchDriveMode( DriveMode newMode )
 
 void UserInput::processInput( CommsPacket &dcp )
 {
-
+    switchDriveMode(manuel); // temporary solution
+/*
     // Turret movement controls
     if( IsKeyDown( KEY_H ) )
         dcp.setCamera(-2*DEG2RAD);  // Rotate camera left
@@ -43,10 +44,12 @@ void UserInput::processInput( CommsPacket &dcp )
             dcp.setHatMode(-1.0f);  // Toggle hat mode
         else
             dcp.setHatMode(1.0f);  // Toggle hat mode
+                        */
 
     constexpr float ch_speed = 0.1f;
-    if( dcp.getHatMode() > 0 )  // Hat mode is active
+    if( m_drive_mode == autonomous)  // temporary solution
     {
+        /*
         // Moving crosshair
         if( IsKeyDown( KEY_W ) )
             dcp.setCrosshair(ch_speed);  
@@ -60,6 +63,7 @@ void UserInput::processInput( CommsPacket &dcp )
             dcp.setCrosshair(ch_speed);   
         if( IsKeyDown( KEY_F ) )
             dcp.setCrosshair(-ch_speed);  
+        */
     }
     else  // Manual control mode
     {
@@ -77,33 +81,36 @@ void UserInput::processInput( CommsPacket &dcp )
         if( IsKeyDown( KEY_D ) )
             cmd_rate = -1*cmd_nom_rate;
 
-        dcp.setManualSpeed(cmd_speed);
-        dcp.setManualSteer(cmd_rate);
+        dcp.cc_setManualSpeed(cmd_speed);
+        dcp.cc_setManualSteer(cmd_rate);
     }
 
-    // Turret controls
-    const float deltaYaw = 0.01f;
-    const float deltaPitch = 0.01f;
+    // Turret Controls
+    constexpr float deltaYaw = 0.01f;     
+    constexpr float deltaPitch = 0.01f;    
 
     if (IsKeyDown(KEY_LEFT))  // ←
-        dcp.setTurret(deltaYaw);    // Rotate left
+        dcp.cc_setTurret_azimuth(dcp.cc_getTurret_azimuth() - deltaYaw);   
     if (IsKeyDown(KEY_RIGHT)) // →
-        dcp.setTurret(-deltaYaw);   // Rotate right
+        dcp.cc_setTurret_azimuth(dcp.cc_getTurret_azimuth() + deltaYaw);    
     if (IsKeyDown(KEY_UP))    // ↑
-        dcp.setTurret(deltaPitch);  // Rotate up
+        dcp.cc_setTurret_elevation(dcp.cc_getTurret_elevation() + deltaPitch);  
     if (IsKeyDown(KEY_DOWN))  // ↓
-        dcp.setTurret(-deltaPitch); // Rotate down
+        dcp.cc_setTurret_elevation(dcp.cc_getTurret_elevation() - deltaPitch);  
 
     if( IsKeyPressed(KEY_O) )  // o
-        dcp.setTurret(1.0f);  // Toggle camera
-    if( IsKeyPressed(KEY_I) )  // i
-        dcp.setTurret(-1.0f); // Toggle laser
-
+        //dcp.setTurret(1.0f);  // Toggle camera
+    if( IsKeyPressed(KEY_I) ){
+        dcp.cc_setLaserStatus( !dcp.cc_getLaserStatus() );//toggle laser
+        
+    }
+/*
     // Waypoint commands
     if( IsKeyPressed( KEY_X ) )
-        dcp.setWaypoint(1.0f);  // Execute waypoints
+        //dcp.ccc_setAddWaypoint(float x, float y, float z);  // Execute waypoints 
     if( IsKeyPressed( KEY_C ) )
-        dcp.setWaypoint(-1.0f); // Create waypoint
+        //dcp.getAddWaypoint(-1.0f); // Create waypoint
+*/
 
     // Handle gamepad input
     if (IsGamepadAvailable(0)) 
@@ -117,19 +124,19 @@ void UserInput::processInput( CommsPacket &dcp )
         
         // Small joystick movements are ignored to ensure stable controls
         if (leftX > 0.1f) { // Creating deadzone because we don't want our little vehicle to shake
-            dcp.setManualSteer(leftX); 
+            dcp.cc_setManualSteer(leftX); 
         } else if (leftX < -0.1f) {
-            dcp.setManualSteer(leftX); 
+            dcp.cc_setManualSteer(leftX); 
         } else {
-            dcp.setManualSteer(0);
+            dcp.cc_setManualSteer(0);
         }
 
         if (leftY > 0.1f) {
-            dcp.setManualSpeed(leftY);  
+            dcp.cc_setManualSpeed(leftY);  
         } else if (leftY < -0.1f) {
-            dcp.setManualSpeed(leftY); 
+            dcp.cc_setManualSpeed(leftY); 
         } else {
-            dcp.setManualSpeed(0);
+            dcp.cc_setManualSpeed(0);
         }
     }
 }

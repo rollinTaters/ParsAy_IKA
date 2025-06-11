@@ -241,7 +241,7 @@ struct CommsPacket
     float cc_getTurret_elevation() { return readFloat_2( 6, -PI, PI ); }
     
     void cc_setLaserStatus( std::uint8_t mode ) { write_1( mode, 8 ); }
-
+    float cc_getLaserStatus() {return read_1(8); } 
     // alternate packet type, this is CommsPacket::console_command_custom
     // Waypoint commands
     void ccc_setAddWaypoint( float x, float y, float z ) { /* TODO */ }

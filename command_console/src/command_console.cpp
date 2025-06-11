@@ -5,29 +5,33 @@
 
 */
 
-#include <iostream>
+//#include <iostream>
 #include <chrono>   // throttling of packet sends
 #include <thread>   // this_thread::sleep_for
 #include "console_graphics.hpp"
 #include "../../common_code/src/comms_module.hpp"
 #include "../../common_code/src/video_feed.hpp"
 #include "raylib.h"
+#include <chrono>
+#include <thread>
+//#include "gui.hpp"
 
 int main()
 {
     std::cout << "Unmanned Land Vehicle Command Console v0.2\n";
     
-    std::chrono::steady_clock clock;
-    std::chrono::time_point< std::chrono::steady_clock > last_transmission_time;
-    std::chrono::milliseconds transmission_interval(200);
 
     // create communications module
     CommsModule comms_module(CommsModule::udp, CommsModule::console_channel);
     VideoFeed streamer( 3 );    // using resolution mode 3
+    std::chrono::steady_clock m_clock;
+    std::chrono::milliseconds m_frame_cent_interval = std::chrono::milliseconds(50);
+    std::chrono::time_point<std::chrono::steady_clock> m_frame_cent_time;
 
     // declare dummy packets
     CommsPacket packet; // this one we use for the data we received
     CommsPacket packet2send( CommsPacket::console_command ); // this one we use for sending console packets
+
 
     // graphics initialization
     const int screenWidth = 1900;
@@ -46,25 +50,29 @@ int main()
     std::uint8_t *video_frame_raw = new std::uint8_t[1024]{0};
     size_t video_frame_size;
     Texture2D video_texFrame;
-    video_texFrame = LoadTextureFromImage( video_frame );  // default no signal screen
-
 
     // main loop
     while (!WindowShouldClose())
     {
         // event processing
+        
         if (IsKeyPressed(KEY_ESCAPE)) {
             // ESC to close the application
             break;
         }            
+
+        
         // clear window for next frame
         BeginDrawing();
         ClearBackground(Color{180, 180, 180, 255});
 
-        // press t for debug test
-        if(IsKeyDown(KEY_T)){
+        // Video feed
+        DrawTextureEx( video_texFrame, {960,50}, 0.f, 3.f, WHITE);
+        if(IsKeyDown(KEY_SPACE)){
             cg::DEBUG_gauge_test();
         }
+        // FPS 
+        DrawText(TextFormat("FPS: %d", GetFPS()), 1600, 10, 20, BLACK);  
         
         // check incoming transmission packets, ALL OF THEM.
         while (comms_module.packetAvailable())
@@ -84,6 +92,7 @@ int main()
                     cg::gauge_adi.updateRollVal (packet.ct_getRoll());
                     cg::gauge_adi.updatePitchVal(packet.ct_getPitch());
                     cg::gauge_speed.updateVal   (packet.ct_getSpeed());
+                    cg::steering_wheel.updateVal(packet.cc_getManualSteer());
                     break;
 
                 case CommsPacket::console_command:
@@ -92,38 +101,11 @@ int main()
 
                 case CommsPacket::video_packet:
                     streamer.receivePacket( packet );
-                    /*// DEBUG        ----------------
-                    std::cout<<"received video packet. frameID: "<<streamer.getCurrentFrameID()<<"\n";
-                    for( auto d : packet.data )
-                    {
-                        std::cout<< (int)d <<" ";
-                    }
-                    std::cout<<"\n";
-                    // DEBUG END    ---------------- */
-
                     if( streamer.isFrameReady() )
                     {
                         streamer.RXFrame( video_frame_raw, video_frame_size );
-                        /*// DEBUG        ----------------
-                        std::cout<<"Command Console Main.cpp:\nRX frame size: "
-                            <<video_frame_size<<"\n";
-                        std::cout<<"raw frames:\n";
-                        for( int i = 0; i < video_frame_size; i++ )
-                        {
-                            std::cout<< (int)( video_frame_raw[i] ) << " ";
-                        }
-                        std::cout<<"\n";
-                        // DEBUG END    ---------------- */
-
-                        //ImageFormat( &video_frame, PIXELFORMAT_UNCOMPRESSED_R8G8B8 );  // revert back to 3 channels
                         UnloadImage(video_frame);
                         video_frame = LoadImageFromMemory( ".png", video_frame_raw, video_frame_size );
-
-                        // because there is a bug in raylib and UpdateTexture function only accepts this format
-                        //ImageFormat( &video_frame, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 ); 
-                        //Color* pixels = LoadImageColors( video_frame );
-                        //UpdateTexture( video_texFrame, pixels );
-
                         UnloadTexture( video_texFrame );
                         video_texFrame = LoadTextureFromImage(video_frame);
                     }
@@ -141,31 +123,30 @@ int main()
 
         // render gauges
         cg::renderGauges();
-        DrawTextureEx( video_texFrame, {960,50}, 0.f, 3.f, WHITE);
         EndDrawing();
 
         // process input
         cg::input.processInput( packet2send );
 
-        if( clock.now() >= last_transmission_time + transmission_interval )
+        std::cout<<"we be sending this data: \n";
+        for( auto d: packet2send.data )
         {
-            // for testing purposes we send it to ngc, normally we wanna send to ccm
-            comms_module.sendPacket( packet2send, CommsModule::ngc_channel );  
-            last_transmission_time = clock.now();
+            std::cout<<(int)d<<" ";
+        }
+        std::cout<<"\n";
 
-            /*// DEBUG
-            std::cout<<"we be sending this data: \n";
-            for( auto d: packet2send.data )
-            {
-                std::cout<<(int)d<<" ";
-            }
-            std::cout<<"\n";
-            // DEBUG END*/
+
+        // check if its time to send packet
+        if( m_clock.now() < m_frame_cent_time + m_frame_cent_interval )
+        {
+            std::this_thread::sleep_for( m_frame_cent_interval /5 );
+            continue;
         }
 
-        // some sleep time to stop hogging the cpu, maybe raylibs fps limiter handles this but im adding it anyway
-        std::this_thread::sleep_for( std::chrono::milliseconds( 50 ) );
+        comms_module.sendPacket( packet2send, CommsModule::ngc_channel );
+        m_frame_cent_time = m_clock.now();
     }
+
 
 
     UnloadTexture(video_texFrame);
