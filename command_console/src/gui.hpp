@@ -6,9 +6,9 @@
 #include "raylib.h"
 #include "raymath.h"
 #include <vector>
-#include <iostream>
+//#include <iostream> //debugging
 #include "../../ngc/src/ngc.hpp"
-#include "../../ngc/src/vehicle.hpp"
+//#include "../../ngc/src/vehicle.hpp"
 #include "../../ngc/src/env_emulator.hpp"
 // a slight nod to external objects
 extern NGC ngc_system;
@@ -138,7 +138,7 @@ namespace GUI
         DrawLine3D( pos, pos+ax_y, color_y );
         DrawLine3D( pos, pos+ax_z, color_z );
     }
-
+/*
     void checkUserInput()
     {
         // moving camera around
@@ -257,6 +257,7 @@ namespace GUI
 
 
     }
+*/
 
     void drawAxisBillboards()
     {
@@ -324,7 +325,7 @@ namespace GUI
         // turret pitch platform (pitch)
         BB3D pitch_box = turret.getPitchBox();
         DrawCubeV(taters2raylib(pitch_box.getPos()), taters2raylib(pitch_box.getSize()), BLUE);
-        
+        /*
         // turret general purpose camera
         BB3D w_cam_box = turret.getCameraWideBox();
         DrawCubeV( taters2raylib( w_cam_box.getPos() ), taters2raylib( w_cam_box.getSize() ), SKYBLUE );
@@ -332,16 +333,18 @@ namespace GUI
         // turret aiming camera
         BB3D n_cam_box = turret.getCameraNarrowBox();
         DrawCubeV( taters2raylib( n_cam_box.getPos() ), taters2raylib( n_cam_box.getSize() ), SKYBLUE );
+        */
 
         BB3D laser_box = turret.getLaserBox();
         DrawCubeV( taters2raylib( laser_box.getPos() ), taters2raylib( laser_box.getSize() ), MAROON );
         if( turret.getLaserStatus() )
             DrawLine3D( taters2raylib( laser_box.getPos() ), taters2raylib( laser_box.getPos()+(laser_box.getLocalVecY())*100.f ), RED );
-       
+       /*
         // camera direction line
         Vector3 cam_pos = taters2raylib( w_cam_box.getPos() );
         Vector3 cam_dir = taters2raylib( w_cam_box.getLocalVecY() );
         DrawLine3D(cam_pos, Vector3Add( cam_pos, Vector3Scale(cam_dir, 1.0f)), YELLOW );
+       */
 
         /*// DEBUG
         drawAxes( yaw_box );
@@ -350,7 +353,7 @@ namespace GUI
         drawAxes( n_cam_box );
         */
     }
-
+/*
     void drawCrosshair()
     {
         // x+
@@ -390,6 +393,7 @@ namespace GUI
 
 
     }
+*/
 
     void drawOverlay()
     {
@@ -408,11 +412,12 @@ namespace GUI
                 "Left/Right: turret yaw\n"
                 "Up/Down: turret pitch\n",
                 (Vector2){10,500}, 20, 2, BLACK ); //cannot see stuff, changed to black
-        DrawTextEx(
+        /*DrawTextEx(
                 font,
                 TextFormat("crosshair: %3.2fx %3.2fy %3.2fz \n\theading: %3.2f",
                     crosshair.x, crosshair.y, crosshair.z, (v3f){crosshair.x, crosshair.y, crosshair.z}.heading()),
                 (Vector2){10,30}, 20, 2, DARKGRAY );
+        */
         DrawTextEx(
                 font,
                 TextFormat("num WPs: %d", ngc_wps.size()),
