@@ -8,9 +8,12 @@ SFML_libs := -lsfml-system -lsfml-network
 # ==== command console objects ====
 CC_OBJECTS := command_console.o console_graphics.o gauge.o adi.o user_input.o
 COMMON_OBJECTS := utility.o comms_module.o video_feed.o
+NGC_OBJECTS := vehicle.o ngc.o sensor_emulator.o env_emulator.o traction_motor.o wheel.o
 
 LINUX_CC_RELEASE_OBJECTS = $(addprefix obj/linux_, $(CC_OBJECTS))
 LINUX_COMMON_OBJECTS = $(addprefix ../common_code/obj/linux_, $(COMMON_OBJECTS))
+LINUX_NGC_OBJECTS = $(addprefix obj/debug_o3_, $(NGC_OBJECTS))
+LINUX_NGC_RELEASE_OBJECTS = $(addprefix obj/linux_, $(NGC_OBJECTS))
 LINUX_CC_DEBUG_O3_OBJECTS = $(addprefix obj/debug_o3_, $(CC_OBJECTS))
 LINUX_CC_DEBUG_O0_OBJECTS = $(addprefix obj/debug_o0_, $(CC_OBJECTS))
 WIN_CC_RELEASE_OBJECTS = $(addprefix obj/win_, $(CC_OBJECTS))
@@ -35,18 +38,20 @@ RELEASE_PATH := release_builds/v$(BUILD_VER)
 
 
 # ==== Command Console Linux Debug buid ====
-command_console: $(LINUX_CC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS)
-	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) $(LINUX_CC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS) -o command_console $(LINUX_DEBUG_LDFLAGS)
+command_console: $(LINUX_CC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS) $(LINUX_NGC_OBJECTS)
+	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) $(LINUX_CC_DEBUG_O3_OBJECTS) $(LINUX_COMMON_OBJECTS) $(LINUX_NGC_OBJECTS) -o command_console $(LINUX_DEBUG_LDFLAGS)
 
 $(LINUX_COMMON_OBJECTS): ../common_code/obj/linux_%.o: ../common_code/src/%.cpp ../common_code/src/%.hpp
 	make -C ../common_code
+
+$(LINUX_NGC_OBJECTS): obj/debug_o3_%.o: ../ngc/src/%.cpp ../ngc/src/%.hpp
+	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) -DDEBUG_GUI -c $< -o $@ $(LINUX_DEBUG_LDFLAGS)
 
 $(LINUX_CC_DEBUG_O3_OBJECTS): obj/debug_o3_%.o: src/%.cpp src/%.hpp
 	$(LINUX_COMPILER) $(DEBUG_FLAGS_O3) -c $< -o $@ $(LINUX_LDFLAGS)
 
 clean:
 	rm -f *.o obj/*.o command_console ../common_code/obj/*.o
-	make command_console
 
 
 
@@ -67,16 +72,19 @@ $(RELEASE_PATH):
 	mkdir $(RELEASE_PATH)/linux/cc
 
 # ==== Linux Release build ====
-CC_linux: $(LINUX_CC_RELEASE_OBJECTS)
+CC_linux: $(LINUX_CC_RELEASE_OBJECTS) $(LINUX_NGC_RELEASE_OBJECTS)
 	cp -r $(SFML_dir_linux)/lib $(RELEASE_PATH)/linux/cc/lib
 	cp -r gfx $(RELEASE_PATH)/linux/cc/gfx
-	$(LINUX_COMPILER) $(RELEASE_FLAGS) $(LINUX_CC_RELEASE_OBJECTS) -o $(RELEASE_PATH)/linux/cc/CC_linux $(LINUX_LDFLAGS)
+	$(LINUX_COMPILER) $(RELEASE_FLAGS) $(LINUX_CC_RELEASE_OBJECTS) $(LINUX_NGC_RELEASE_OBJECTS) -o $(RELEASE_PATH)/linux/cc/CC_linux $(LINUX_LDFLAGS)
 
 $(LINUX_CC_RELEASE_OBJECTS): obj/linux_%.o : src/%.cpp
 	$(LINUX_COMPILER) $(RELEASE_FLAGS) -c $< -o $@ $(LINUX_LDFLAGS)
 
+$(LINUX_NGC_RELEASE_OBJECTS): obj/linux_%.o : ../ngc/src/%.cpp
+	$(LINUX_COMPILER) $(RELEASE_FLAGS) -DDEBUG_GUI -c $< -o $@ $(LINUX_LDFLAGS)
+
 # ==== Windows Release build ====
-CC_win64: $(WIN_CC_RELEASE_OBJECTS)
+CC_win64: $(WIN_CC_RELEASE_OBJECTS) $(LINUX_NGC_RELEASE_OBJECTS)
 	cp -r $(SFML_dir_win)/lib/sfml-graphics-2.dll $(RELEASE_PATH)/win/cc/sfml-graphics-2.dll
 	cp -r $(SFML_dir_win)/lib/sfml-system-2.dll $(RELEASE_PATH)/win/cc/sfml-system-2.dll
 	cp -r $(SFML_dir_win)/lib/sfml-window-2.dll $(RELEASE_PATH)/win/cc/sfml-window-2.dll
@@ -84,7 +92,7 @@ CC_win64: $(WIN_CC_RELEASE_OBJECTS)
 	cp /usr/lib/gcc/x86_64-w64-mingw32/10-posix/libstdc++-6.dll $(RELEASE_PATH)/win/cc/libstdc++-6.dll
 	cp /usr/x86_64-w64-mingw32/lib/libwinpthread-1.dll $(RELEASE_PATH)/win/cc/libwinpthread-1.dll
 	cp -r gfx $(RELEASE_PATH)/win/cc/gfx
-	$(WIN_COMPILER) $(RELEASE_FLAGS) $(WIN_CC_RELEASE_OBJECTS) -o $(RELEASE_PATH)/win/cc/CC_win64 $(WIN_LDFLAGS) 
+	$(WIN_COMPILER) $(RELEASE_FLAGS) $(WIN_CC_RELEASE_OBJECTS) $(LINUX_NGC_RELEASE_OBJECTS) -o $(RELEASE_PATH)/win/cc/CC_win64 $(WIN_LDFLAGS)
 
 $(WIN_CC_RELEASE_OBJECTS): obj/win_%.o : src/%.cpp
 	$(WIN_COMPILER) $(RELEASE_FLAGS) -c $< -o $@ $(WIN_LDFLAGS)

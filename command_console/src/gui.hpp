@@ -8,7 +8,7 @@
 #include <vector>
 //#include <iostream> //debugging
 #include "../../ngc/src/ngc.hpp"
-//#include "../../ngc/src/vehicle.hpp"
+#include "../../ngc/src/vehicle.hpp"
 #include "../../ngc/src/env_emulator.hpp"
 // a slight nod to external objects
 extern NGC ngc_system;
@@ -78,7 +78,7 @@ namespace GUI
         cmd_nom_speed = 2.5;
         cmd_nom_rate = 18* (PI/180);
 
-        // camera setup
+        // camera setup - adjusted for left half of screen
         camera = {0};
         camera.position = (Vector3){ 0.f, 10.f, 10.f };
         camera.target = (Vector3){ 0.f, 0.f, 0.f };
@@ -86,7 +86,7 @@ namespace GUI
         camera.fovy = 45.f;
         camera.projection = CAMERA_PERSPECTIVE;
 
-        font = LoadFont( "./gfx/PixeloidSans.ttf" );
+        font = LoadFont( "./assets/fonts/PixeloidSans.ttf" );
         texture_xp = LoadTextureFromImage( ImageTextEx( font, "X+", 110, 5, BLACK ) );
         texture_xn = LoadTextureFromImage( ImageTextEx( font, "X-", 110, 5, BLACK ) );
         texture_yp = LoadTextureFromImage( ImageTextEx( font, "Y+", 110, 5, BLACK ) );
@@ -100,10 +100,8 @@ namespace GUI
         last_wp_update = GetTime();
         wp_update_rate = 1; // seconds
 
-        turretViewRT = LoadRenderTexture(
-                            simulated_vehicle.getTurret().camera_wide_resolution_x,
-                            simulated_vehicle.getTurret().camera_wide_resolution_y );
-        turretCam = camera;  // Aynı ayarları kullanabiliriz
+        // Note: We don't need turret view in command console since we'll use real camera feed
+        // turretViewRT and turretCam are kept for compatibility but not initialized here
 
     }
 
@@ -115,7 +113,7 @@ namespace GUI
         UnloadTexture( texture_yn );
         UnloadTexture( texture_zp );
         UnloadTexture( texture_zn );
-        UnloadRenderTexture( turretViewRT );
+        // Note: turretViewRT is not initialized in command console
         // de-initialization of window and opengl context
         CloseWindow();
     }

@@ -10,7 +10,7 @@
     NOTE: To be used by Environment Emulator class for simuations. DO NOT add into vehicle class
 */
 
-#include "utility.hpp"
+#include "../../common_code/src/utility.hpp"
 
 struct ContactPatch
 {
@@ -50,6 +50,6 @@ class Wheel
     const float m_thickness;
 
     float m_torque;
-    ContactPatch[3] m_patches;
+    ContactPatch m_patches[3];
 
 };

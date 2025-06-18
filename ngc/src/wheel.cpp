@@ -1,4 +1,4 @@
-#include "wheel.cpp"
+#include "wheel.hpp"
 
 v3f ContactPatch::getFrictionForce()
 {
@@ -35,13 +35,13 @@ Wheel::Wheel( v3f pos, v3f axis, v3f steer_axis, float dia, float thickness ):
     for( int i = 0; i < 3; i++ )
     {
         // to rotate(offset) each patch to its position on wheel surface
-        cQuaternion q = cQuaternion::FromAxisAngle( m_nominal_axis, (30*(PI/180)) - (i*30*PI/180) );
+        cQuaternion q = cQuaternion::fromAxisAngle( m_nominal_axis, (30*(PI/180)) - (i*30*PI/180) );
         m_patches[i].pos = /*m_pos -*/ v3f(0,0,-m_dia/2);
-        q.rotateVector( m_patches[0].pos );
+        q.rotateVector( m_patches[i].pos );
 
         // calculate normal vectors
-        m_patches[i].normal = -m_patches.pos;
-        m_patches[i].normal = m_patches[i].normal.norm();
+        m_patches[i].normal = -m_patches[i].pos;
+        m_patches[i].normal = m_patches[i].normal.unit();
     }
 
     m_torque = 0;
@@ -50,7 +50,7 @@ Wheel::Wheel( v3f pos, v3f axis, v3f steer_axis, float dia, float thickness ):
 void Wheel::setSteerAngle( float radian )
 {
     v3f new_axis = m_nominal_axis;
-    cQuaternion q = cQuaternion::FromAxisAngle( m_steer_axis, radian );
+    cQuaternion q = cQuaternion::fromAxisAngle( m_steer_axis, radian );
     q.rotateVector( new_axis );
     m_axis = new_axis;
 }

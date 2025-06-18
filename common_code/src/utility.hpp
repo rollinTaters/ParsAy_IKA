@@ -69,7 +69,9 @@ typedef Point v3f;
 Point operator+( const Point &, const Point & );
 Point operator-( const Point &, const Point & );
 Point operator*( const Point &, const float );
+Point operator*( const Point &, const Point & );
 Point operator/( const Point &, const float );
+Point operator-( const Point & );  // unary minus
 
 class cQuaternion
 {

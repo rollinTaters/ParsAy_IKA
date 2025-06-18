@@ -14,7 +14,12 @@
 #include "raylib.h"
 #include <chrono>
 #include <thread>
-//#include "gui.hpp"
+#include "gui.hpp"
+
+// Global variable definitions for GUI
+Vehicle simulated_vehicle;
+Env_Emulator env_emulator(simulated_vehicle);
+NGC ngc_system(&simulated_vehicle);
 
 int main()
 {
@@ -37,7 +42,14 @@ int main()
     const int screenWidth = 1900;
     const int screenHeight = 900;
 
+    // Initialize gauges (but don't create window - that's done by GUI::initGUI)
     cg::InitWindowSafe(screenWidth,screenHeight,"Command Console");
+
+    // Initialize GUI for 3D visualization
+    GUI::initGUI();
+    
+    // Setup environment emulator model after OpenGL context is created
+    env_emulator.setupModel();
 
     Image video_frame = GenImageColor(
                             streamer.getResolutionWidth(),
@@ -66,14 +78,32 @@ int main()
         BeginDrawing();
         ClearBackground(Color{180, 180, 180, 255});
 
+        // 3D Visualization (left half only)
+        BeginMode3D(GUI::camera);
+        
+        // Draw 3D environment based on real sensor data
+        GUI::drawLIDAR();        // LIDAR points from real sensors
+        GUI::drawMapPoints();    // SLAM points from real sensors
+        GUI::drawVehicleBody();  // Vehicle body in 3D
+        GUI::drawTurret();       // Turret in 3D
+        GUI::drawWPs();          // Waypoints in 3D
+        GUI::drawPredictOPs();   // Predicted trajectory
+        GUI::drawAxisBillboards(); // Coordinate system
+        
+        EndMode3D();
+
+        // 2D Elements (right side of screen)
         // Video feed
         DrawTextureEx( video_texFrame, {960,50}, 0.f, 3.f, WHITE);
         if(IsKeyDown(KEY_SPACE)){
             cg::DEBUG_gauge_test();
         }
         // FPS 
-        DrawText(TextFormat("FPS: %d", GetFPS()), 1600, 10, 20, BLACK);  
+        DrawText(TextFormat("FPS: %d", GetFPS()), 1600, 10, 20, BLACK);
         
+        // GUI overlay with vehicle info
+        GUI::drawOverlay();
+
         // check incoming transmission packets, ALL OF THEM.
         while (comms_module.packetAvailable())
         {
@@ -93,6 +123,10 @@ int main()
                     cg::gauge_adi.updatePitchVal(packet.ct_getPitch());
                     cg::gauge_speed.updateVal   (packet.ct_getSpeed());
                     cg::steering_wheel.updateVal(packet.cc_getManualSteer());
+                    
+                    // Update simulated vehicle with real telemetry data for 3D visualization
+                    // This will make the 3D vehicle position match the real vehicle
+                    // Note: We'll need to add methods to update vehicle position/attitude
                     break;
 
                 case CommsPacket::console_command:
@@ -151,6 +185,11 @@ int main()
 
     UnloadTexture(video_texFrame);
     UnloadImage(video_frame);
+    
+    // Cleanup GUI and environment emulator
+    env_emulator.unloadModel();
+    GUI::deInitGUI();
+    
     CloseWindow();
     std::cout << "Exiting. Have a nice day\n";
     return 0;
