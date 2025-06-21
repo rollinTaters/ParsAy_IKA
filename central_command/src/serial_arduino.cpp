@@ -1,70 +1,64 @@
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
-#include <unistd.h>
-#include <string.h>
+#include <cstring>
+#include "serial_arduino.hpp"
+ //Arduino ile USB üzerinden haberleşme yapan sınıf
+// Set serial port path according to your setup
+#define SERIAL_PORT "/dev/ttyUSB0"  //it may be with  S for example S0 , S1 , S2 , S3 
 
-//!!!!!!!!!!!!!!ATTENTION!!!!!!!
-// THAT CODE IS JUST FOR TEST SO IT IS USELESS
-
-// Arduino'ya giden portu ayarla
-#define SERIAL_PORT "/dev/ttyS0"
-#define BAUDRATE B9600
-
-int main() {
-    int serial_port = open(SERIAL_PORT, O_RDWR);
-
-    if (serial_port < 0) {
-        std::cerr << "Seri port açılamadı\n";
-        return 1;
+SerialArduino::SerialArduino(const std::string& device, int baudrate) {
+    if (!initializeSerialPort(device, baudrate)) {
+        std::cerr << "SerialArduino: Initialization failed\n";
     }
+}
 
-    struct termios tty;
+SerialArduino::~SerialArduino() {
+    if (serial_fd >= 0) {
+        close(serial_fd);
+    }
+}
+
+bool SerialArduino::initializeSerialPort(const std::string& device,[[maybe_unused]] int baudrate) {
+    serial_fd = open(device.c_str(), O_RDWR | O_NOCTTY);
+    if (serial_fd < 0) return false;
+
+    termios tty;
     memset(&tty, 0, sizeof tty);
 
-    if (tcgetattr(serial_port, &tty) != 0) {
-        std::cerr << "Ayarlar alınamadı\n";
-        return 1;
-    }
+    if (tcgetattr(serial_fd, &tty) != 0) return false;
 
-    cfsetispeed(&tty, BAUDRATE);
-    cfsetospeed(&tty, BAUDRATE);
+    speed_t baud = B9600;
+    cfsetispeed(&tty, baud);
+    cfsetospeed(&tty, baud);
 
-    tty.c_cflag &= ~PARENB; // Parity yok
-    tty.c_cflag &= ~CSTOPB; // 1 stop bit
+    tty.c_cflag |= (CLOCAL | CREAD); // enable receiver
+    tty.c_cflag &= ~PARENB;
+    tty.c_cflag &= ~CSTOPB;
     tty.c_cflag &= ~CSIZE;
-    tty.c_cflag |= CS8;     // 8 bit veri
+    tty.c_cflag |= CS8;
 
-    tty.c_cflag &= ~CRTSCTS;
-    tty.c_cflag |= CREAD | CLOCAL;
+    tty.c_lflag = 0;
+    tty.c_oflag = 0;
+    tty.c_iflag = 0;
 
-    tty.c_lflag &= ~ICANON;
-    tty.c_lflag &= ~ECHO;
-    tty.c_lflag &= ~ECHOE;
-    tty.c_lflag &= ~ISIG;
+    tcflush(serial_fd, TCIFLUSH);
+    if (tcsetattr(serial_fd, TCSANOW, &tty) != 0) return false;
 
-    tty.c_iflag &= ~(IXON | IXOFF | IXANY);
-    tty.c_iflag &= ~(ICRNL | INLCR);
+    return true;
+}
 
-    tty.c_oflag &= ~OPOST;
+bool SerialArduino::sendCommand(const std::string& command) {
+    std::string cmd_with_newline = command + "\n";
+    return write(serial_fd, cmd_with_newline.c_str(), cmd_with_newline.length()) > 0;
+}
 
-    tcsetattr(serial_port, TCSANOW, &tty);
-
-    // Arduino'ya veri gönder
-    std::string msg = "Merhaba Arduino!\n";
-    write(serial_port, msg.c_str(), msg.size());
-
-    // Arduino'dan veri oku
-    char read_buf[256];
-    memset(&read_buf, '\0', sizeof(read_buf));
-    int n = read(serial_port, &read_buf, sizeof(read_buf));
-
-    if (n > 0) {
-        std::cout << "Arduino'dan gelen: " << read_buf << "\n";
-    } else {
-        std::cout << "Arduino'dan veri alınamadı\n";
-    }
-
-    close(serial_port);
-    return 0;
+std::string SerialArduino::readResponse() {
+    char buf[256];
+    ssize_t n = read(serial_fd, buf, sizeof(buf));
+    if (n > 0) return std::string(buf, n);
+    return "";
 }

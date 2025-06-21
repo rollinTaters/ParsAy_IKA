@@ -5,7 +5,7 @@ SFML_libs := -lsfml-audio -lsfml-graphics -lsfml-window -lsfml-system -lsfml-net
 #SFML_libs_static := -DSFML_STATIC -MMD -MP -static-libstdc++ -static-libgcc -lsfml-main -lsfml-audio-s -lsfml-graphics-s -lsfml-window-s -lsfml-system-s -lsfml-network-s  -lopengl32 -lfreetype -lwinmm -lgdi32 -lopenal32 -lFLAC -lvorbisenc -lvorbis -logg -lws2_32
 
 # ==== Navigation Guidance and Control objects ====
-CCM_OBJECTS := central_command.o
+CCM_OBJECTS :=   central_command.o serial_arduino.o  # changed from central_command.o
 COMMON_OBJECTS := utility.o comms_module.o
 
 LINUX_CCM_RELEASE_OBJECTS = $(addprefix obj/linux_, $(CCM_OBJECTS))
@@ -96,6 +96,6 @@ $(WIN_CCM_RELEASE_OBJECTS): obj/win_%.o : src/%.cpp
 
 
 
-serial_arduino: src/serial_arduino.cpp
+test_serial_arduino: src/test_serial_arduino.cpp
 	mkdir -p bin
-	$(CXX) -o bin/serial_arduino src/serial_arduino.cpp
+	$(CXX) -o bin/test_serial_arduino src/test_serial_arduino.cpp

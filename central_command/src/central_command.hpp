@@ -27,6 +27,7 @@
 // is responsible for overall vehicle control
 
 #include "../../common_code/src/comms_module.hpp"
+#include "../../common_code/src/comms_packets.hpp"
 
 struct OperationMode
 {

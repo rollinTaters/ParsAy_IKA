@@ -31,7 +31,7 @@
 
 // FORCE DEFINE LOCALHOST FOR TESTING
 #define LOCALHOST
-
+#pragma once
 #include "comms_packets.hpp"
 #include <iostream> // cerr
 

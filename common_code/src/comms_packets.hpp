@@ -1,4 +1,5 @@
-
+#ifndef COMMS_PACKETS_HPP
+#define COMMS_PACKETS_HPP
 #include <cstdint>
 
 // Base for all packet types, this is the data that is actually being sent
@@ -17,12 +18,13 @@ enum PacketType{
     drive_telemetry1,
     drive_telemetry2,
     turret,
+    turret_telemetry,
     ngc_command,
     ngc_telemetry,
 
-    request1,
-    request2,
-    request3
+    image_status,   // formerly request1
+    image_command,  // formerly request2
+    image_response  // formerly request3
 };
 
 /*
@@ -66,15 +68,20 @@ struct Drive_Telemetry_Packet2 : public PacketBase
     std::uint16_t getMotor2Amps(){ return data2; }
     std::uint16_t getMotor2Vel() { return data3; }
 
-    void setMotor1Temp( std::uint16_t inp ){ data1 = inp; }
+    void setMotor2Temp( std::uint16_t inp ){ data1 = inp; }
     void setMotor2Amps( std::uint16_t inp ){ data2 = inp; }
-    void setMotor3Vel ( std::uint16_t inp ){ data3 = inp; }
+    void setMotor2Vel ( std::uint16_t inp ){ data3 = inp; }
 };
 
 
 // data sent/received to/from the turret module
 struct Turret_Packet : public PacketBase
 {
+
+    float yaw = 0.0f;
+    float pitch = 0.0f;
+    bool fire = false;
+
     std::uint16_t getPan() { return data1; }
     std::uint16_t getTilt(){ return data2; }
     std::uint16_t getLaserStatus(){ return data3; }
@@ -105,6 +112,24 @@ struct NGC_Telemetry_Packet : public PacketBase
     void setRoll   ( std::uint16_t inp ){ data3 = inp; }
 };
 
+// Status information from the image processing module
+struct ImageStatus_Packet : public PacketBase
+{
 
+    bool detected_target = false;
+    float target_yaw = 0.0f;
+    float target_pitch = 0.0f;
 
+    ImageStatus_Packet() { packet_type = image_status; }
+
+    std::uint16_t getFrameID()     { return data1; }
+    std::uint16_t getStatusCode()  { return data2; }
+    std::uint16_t getObjectCount() { return data3; }
+
+    void setFrameID(std::uint16_t inp)     { data1 = inp; }
+    void setStatusCode(std::uint16_t inp)  { data2 = inp; }
+    void setObjectCount(std::uint16_t inp) { data3 = inp; }
+};
+
+#endif
 
