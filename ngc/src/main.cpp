@@ -20,6 +20,7 @@ std::ostream& operator<<(std::ostream& os, const Vector3& v) {
     return os;
 }
 
+#ifdef DEBUG_GUI
 // DEBUG -- sends env_emulators cam view to command console
 #include "../../common_code/src/video_feed.hpp"
 void sendCamera2Console() 
@@ -81,6 +82,7 @@ void sendCamera2Console()
     UnloadImage(img);
     delete raw_image_data;
 }
+#endif
 
 // a clock for sending camera view, DEBUG
 std::chrono::steady_clock m_clock;
