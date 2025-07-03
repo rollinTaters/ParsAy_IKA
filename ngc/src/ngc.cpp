@@ -900,8 +900,8 @@ void NGC::processPacket( CommsPacket &packet )
         return;
 
     directCommand(
-        packet.getManualSpeed(),
-        packet.getManualSteer() );
+        packet.cc_getManualSpeed(),
+        packet.cc_getManualSteer() );
 
     /*
     // DEBUG
